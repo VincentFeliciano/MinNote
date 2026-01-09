@@ -58,15 +58,24 @@ body.dark .note mark { background: #ffd60a; color: #000; }
   }
 }
 
-/* Mobile: limit to 5 notes before scroll */
+/* Mobile: dynamic height - grows with notes up to 5, then scrolls */
 @media (max-width: 768px) {
   .main { flex-direction: column; } 
   .list { 
     width: 100%; 
     border-right: none; 
     border-bottom: 1px solid var(--border);
-    max-height: calc(5 * 40px + 12px); /* 5 rows × ~40px row-height + 12px vertical padding */
-    min-height: calc(5 * 40px + 12px); /* Ensure consistent height */
+    /* Dynamic height based on number of notes */
+    max-height: calc(5 * 40px + 12px); /* Maximum height for 5 notes */
+    min-height: 40px; /* Minimum height for empty state */
+    overflow-y: auto; /* Scroll when exceeds max-height */
+  }
+  
+  /* When we have notes, use dynamic height */
+  .list:has(.note:not(.empty-state)) {
+    min-height: auto;
+    height: auto;
+    max-height: calc(5 * 40px + 12px); /* Cap at 5 notes height */
   }
 }
 
