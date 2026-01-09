@@ -41,11 +41,11 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
-            background: #888;
-            height: 100vh;
+            background: var(--bg);
             color: var(--text);
-            /* Prevent pull-to-refresh on mobile */
-            overscroll-behavior-y: none;
+            height: 100vh;
+            overflow: hidden;
+            /* Prevent body scrolling */
         }
 
         .app {
@@ -65,6 +65,8 @@
             padding: 8px 12px;
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
+            z-index: 10;
+            background: var(--bg);
         }
 
         .logo-btn {
@@ -121,11 +123,63 @@
         .list {
             width: 28%;
             border-right: 1px solid var(--border);
-            padding: 6px;
-            overflow-y: auto;
-            /* scroll when needed */
             background: var(--bg-secondary);
-            /* REMOVED max-height from base class */
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .list-header {
+            display: none;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+            cursor: pointer;
+            user-select: none;
+            flex-shrink: 0;
+            z-index: 5;
+        }
+
+        .expand-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px;
+            margin-right: 8px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .expand-btn:hover {
+            background: var(--bg-hover);
+        }
+
+        .expand-btn.rotated {
+            transform: rotate(180deg);
+        }
+
+        .current-note-title {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--text);
+        }
+
+        .note-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px;
         }
 
         .note {
@@ -258,6 +312,7 @@
             color: var(--text);
             font-family: inherit;
             min-height: 0;
+            cursor: text;
         }
 
         #editor>div:first-child {
@@ -285,47 +340,108 @@
             .list {
                 height: auto;
                 /* Let content determine height */
+                overflow-y: hidden;
+                /* Scroll is handled by note-list-container */
+            }
+            
+            .note-list-container {
                 overflow-y: auto;
                 /* Scroll when content exceeds available space */
             }
         }
 
-        /* Mobile: dynamic height - grows with notes up to 5, then scrolls */
+        /* Mobile: editor on top, collapsible list below */
         @media (max-width: 768px) {
+            body {
+                overflow: hidden;
+                /* Prevent body scrolling on mobile */
+            }
+            
+            .app {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                max-width: 100%;
+                margin: 0;
+                height: 100vh;
+            }
+
             .main {
                 flex-direction: column;
+                height: calc(100vh - 49px);
+                /* Subtract topbar height */
+                flex: 1;
+                min-height: 0;
             }
 
             .list {
                 width: 100%;
                 border-right: none;
-                border-bottom: 1px solid var(--border);
-                /* Dynamic height based on number of notes */
-                max-height: calc(5 * 40px + 12px);
-                /* Maximum height for 5 notes */
-                min-height: 40px;
-                /* Minimum height for empty state */
-                overflow-y: auto;
-                /* Scroll when exceeds max-height */
+                border-top: 1px solid var(--border);
+                max-height: 50px;
+                /* Only show header when collapsed */
+                transition: max-height 0.3s ease;
                 flex-shrink: 0;
+                position: relative;
+                z-index: 5;
             }
 
-            /* When we have notes, use dynamic height */
-            .list:has(.note:not(.empty-state)) {
-                min-height: auto;
-                height: auto;
-                max-height: calc(5 * 40px + 12px);
-                /* Cap at 5 notes height */
+            .list.expanded {
+                max-height: calc(100vh - 49px - 50%);
+                /* Take up to 50% of remaining space */
+                flex: 1;
+                min-height: 0;
+            }
+
+            .list-header {
+                display: flex;
+                position: sticky;
+                top: 0;
+                z-index: 2;
+            }
+
+            .note-list-container {
+                overflow-y: auto;
+                flex: 1;
+                min-height: 0;
+                max-height: calc(100vh - 49px - 50px - 50px);
+                /* Account for topbar, header, and some margin */
+            }
+
+            .list:not(.expanded) .note-list-container {
+                display: none;
+            }
+
+            .editor-container {
+                flex: 1;
+                min-height: 0;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                position: relative;
+                height: calc(100% - 50px);
+                /* Subtract list header height */
+            }
+
+            .list.expanded + .editor-container {
+                height: 50%;
+                /* When list is expanded, editor takes 50% height */
+                min-height: 0;
             }
 
             .editor {
                 padding: 12px 16px;
                 flex: 1;
                 overflow-y: auto;
+                min-height: 0;
+                height: 100%;
             }
 
             .hint {
                 padding: 0 16px 12px;
+                flex-shrink: 0;
             }
 
             /* When virtual keyboard is active */
@@ -335,6 +451,13 @@
 
             .keyboard-active .hint {
                 display: none;
+            }
+            
+            /* Adjust for iOS Safari bottom bar */
+            @supports (-webkit-touch-callout: none) {
+                .app {
+                    height: -webkit-fill-available;
+                }
             }
         }
 
@@ -442,7 +565,16 @@
             <button class="btn" id="newNote">＋</button>
         </div>
         <div class="main">
-            <div class="list" id="noteList"></div>
+            <!-- Desktop: list on left, editor on right -->
+            <div class="list" id="noteList">
+                <div class="list-header" id="listHeader">
+                    <button class="expand-btn" id="expandBtn">▼</button>
+                    <div class="current-note-title" id="currentNoteTitle">Notes</div>
+                </div>
+                <div class="note-list-container" id="noteListContainer">
+                    <!-- Notes will be rendered here -->
+                </div>
+            </div>
             <div class="editor-container">
                 <div class="editor">
                     <div id="editor" contenteditable="true" spellcheck="false" data-placeholder="Start typing…"></div>
@@ -483,6 +615,7 @@
         let isMobile = window.innerWidth <= 768;
         let keyboardActive = false;
         let windowHeight = window.innerHeight;
+        let listCollapsed = true; // Start collapsed on mobile
 
         /* ---------- keyboard detection ---------- */
         function checkKeyboard() {
@@ -533,6 +666,13 @@
                     const editor = $('#editor');
                     editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 300);
+                
+                // Auto-collapse list when editor is focused
+                if (isMobile && !listCollapsed) {
+                    setTimeout(() => {
+                        collapseList();
+                    }, 100);
+                }
             }
         });
 
@@ -544,11 +684,43 @@
             }
         });
 
+        // Auto-collapse when clicking on editor content
+        $('#editor').addEventListener('click', () => {
+            if (isMobile && !listCollapsed) {
+                setTimeout(() => {
+                    collapseList();
+                }, 100);
+            }
+        });
+
         // Update isMobile on window resize
-        window.addEventListener('resize', () => {
+        window.addEventListener('resize', handleResize);
+
+        function handleResize() {
+            const wasMobile = isMobile;
             isMobile = window.innerWidth <= 768;
             windowHeight = window.innerHeight;
-        });
+            
+            // Reset list state when switching between mobile and desktop
+            if (wasMobile !== isMobile) {
+                const list = $('#noteList');
+                const expandBtn = $('#expandBtn');
+                
+                if (!isMobile) {
+                    // On desktop, always show full list
+                    list.classList.remove('expanded');
+                    expandBtn.classList.remove('rotated');
+                    listCollapsed = false;
+                } else {
+                    // On mobile, start with list collapsed
+                    list.classList.remove('expanded');
+                    expandBtn.classList.add('rotated');
+                    listCollapsed = true;
+                }
+                
+                updateCurrentNoteTitle();
+            }
+        }
 
         /* ---------- update logo based on theme ---------- */
         function updateLogo() {
@@ -565,6 +737,67 @@
         <path d="M4.09943 0.997175L8.31818 14.2585H8.48011L12.7074 0.997175H16.7983L10.7813 18.4517H6.02557L7.30157e-07 0.997175H4.09943ZM17.151 18.4517V5.36081H20.7816V18.4517H17.151ZM18.9748 3.67331C18.4351 3.67331 17.972 3.49433 17.5856 3.13638C17.2049 2.77274 17.0146 2.33808 17.0146 1.8324C17.0146 1.3324 17.2049 0.903425 17.5856 0.545471C17.972 0.181834 18.4351 1.57356e-05 18.9748 1.57356e-05C19.5146 1.57356e-05 19.9748 0.181834 20.3555 0.545471C20.7419 0.903425 20.9351 1.3324 20.9351 1.8324C20.9351 2.33808 20.7419 2.77274 20.3555 3.13638C19.9748 3.49433 19.5146 3.67331 18.9748 3.67331ZM25.6407 10.8835V18.4517H22.01V5.36081H25.4703V7.67047H25.6237C25.9134 6.90911 26.3992 6.30683 27.0811 5.86365C27.7629 5.41479 28.5896 5.19036 29.5612 5.19036C30.4703 5.19036 31.2629 5.38922 31.939 5.78695C32.6151 6.18468 33.1407 6.75286 33.5157 7.49149C33.8907 8.22445 34.0782 9.09945 34.0782 10.1165V18.4517H30.4475V10.7642C30.4532 9.96308 30.2487 9.33808 29.8339 8.88922C29.4191 8.43468 28.8481 8.2074 28.1208 8.2074C27.6322 8.2074 27.2004 8.31252 26.8254 8.52274C26.4561 8.73297 26.1663 9.03979 25.9561 9.4432C25.7515 9.84093 25.6464 10.321 25.6407 10.8835Z" fill="black"/>
       </svg>
     `;
+            }
+        }
+
+        /* ---------- update current note title ---------- */
+        function updateCurrentNoteTitle() {
+            if (!isMobile) return;
+            
+            const currentNoteTitle = $('#currentNoteTitle');
+            if (activeId) {
+                const note = notes.find(n => n.id === activeId);
+                if (note) {
+                    const title = (note.text.split('\n')[0] || 'Untitled').substring(0, 50);
+                    currentNoteTitle.textContent = title || 'Empty Note';
+                } else {
+                    currentNoteTitle.textContent = 'Notes';
+                }
+            } else {
+                currentNoteTitle.textContent = 'Notes';
+            }
+        }
+
+        /* ---------- collapse list helper ---------- */
+        function collapseList() {
+            if (!isMobile || listCollapsed) return;
+            
+            listCollapsed = true;
+            const list = $('#noteList');
+            const expandBtn = $('#expandBtn');
+            
+            list.classList.remove('expanded');
+            expandBtn.classList.add('rotated');
+            
+            // Restore editor to full height
+            const editorContainer = $('.editor-container');
+            editorContainer.style.height = 'calc(100% - 50px)';
+        }
+
+        /* ---------- expand list helper ---------- */
+        function expandList() {
+            if (!isMobile || !listCollapsed) return;
+            
+            listCollapsed = false;
+            const list = $('#noteList');
+            const expandBtn = $('#expandBtn');
+            
+            list.classList.add('expanded');
+            expandBtn.classList.remove('rotated');
+            
+            // Adjust editor height when list is expanded
+            const editorContainer = $('.editor-container');
+            editorContainer.style.height = '50%';
+        }
+
+        /* ---------- toggle list ---------- */
+        function toggleList() {
+            if (!isMobile) return;
+            
+            if (listCollapsed) {
+                expandList();
+            } else {
+                collapseList();
             }
         }
 
@@ -597,15 +830,16 @@
             // On mobile, ensure editor is visible
             if (isMobile) {
                 setTimeout(() => {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Just focus, don't scroll since app is fixed
+                    el.focus();
                 }, 100);
             }
         }
 
         /* ---------- render ---------- */
         function render(filter = '') {
-            const list = $('#noteList');
-            list.innerHTML = '';
+            const listContainer = $('#noteListContainer');
+            listContainer.innerHTML = '';
             const f = filter.toLowerCase();
             const filtered = notes.filter(n => !f || n.text.toLowerCase().includes(f));
 
@@ -613,7 +847,7 @@
                 const e = document.createElement('div');
                 e.className = 'empty-state';
                 e.textContent = f ? 'No notes match your search' : 'No notes yet';
-                list.appendChild(e);
+                listContainer.appendChild(e);
                 return;
             }
 
@@ -672,10 +906,22 @@
                 content.appendChild(del);
                 wrap.appendChild(content);
 
-                wrap.onclick = () => selectNote(n.id);
+                wrap.onclick = () => {
+                    selectNote(n.id);
+                    // Auto-collapse on mobile after selecting a note
+                    if (isMobile && !listCollapsed) {
+                        setTimeout(() => {
+                            collapseList();
+                        }, 100);
+                    }
+                };
+                
                 addSwipe(wrap, n.id);
-                list.appendChild(wrap);
+                listContainer.appendChild(wrap);
             });
+            
+            // Update current note title
+            updateCurrentNoteTitle();
         }
 
         /* ---------- swipe ---------- */
@@ -729,6 +975,12 @@
                     // Only select the note if it wasn't a significant swipe
                     if (swipePercentage < 0.3) {
                         selectNote(id);
+                        // Auto-collapse on mobile after selecting a note
+                        if (isMobile && !listCollapsed) {
+                            setTimeout(() => {
+                                collapseList();
+                            }, 100);
+                        }
                     }
                 }
             });
@@ -758,11 +1010,14 @@
             save();
             setTimeout(() => {
                 caretEnd($('#editor'));
-                // On mobile without keyboard, stay at top
-                if (isMobile && !keyboardActive) {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                // On mobile, just focus without scrolling
+                if (isMobile) {
+                    $('#editor').focus();
                 }
             }, 0);
+            
+            // Update title after selection
+            updateCurrentNoteTitle();
         }
 
         function createNote() {
@@ -774,11 +1029,21 @@
             save();
             setTimeout(() => {
                 caretEnd($('#editor'));
-                // On mobile without keyboard, stay at top
-                if (isMobile && !keyboardActive) {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                // On mobile, just focus without scrolling
+                if (isMobile) {
+                    $('#editor').focus();
                 }
             }, 0);
+            
+            // Update title after creation
+            updateCurrentNoteTitle();
+            
+            // Auto-collapse on mobile when creating new note
+            if (isMobile && !listCollapsed) {
+                setTimeout(() => {
+                    collapseList();
+                }, 100);
+            }
         }
 
         /* ---------- Delete with confirmation (desktop) ---------- */
@@ -822,6 +1087,9 @@
             
             if (activeId === id) notes.length ? selectNote(notes[0].id) : createNote();
             else { render($('.search').value); save(); }
+            
+            // Update title after deletion
+            updateCurrentNoteTitle();
         }
 
         // Modal button handlers
@@ -842,6 +1110,7 @@
             note.text = Array.from($('#editor').querySelectorAll('div')).map(d => d.innerText).join('\n');
             render($('.search').value);
             save();
+            updateCurrentNoteTitle(); // Update title when note content changes
         });
 
         /* ---------- search ---------- */
@@ -852,6 +1121,8 @@
 
         /* ---------- buttons ---------- */
         $('#newNote').onclick = createNote;
+        $('#expandBtn').onclick = toggleList;
+        $('#listHeader').onclick = toggleList;
 
         // Make logo button inactive (non-clickable)
         $('#logoBtn').onclick = (e) => {
@@ -884,6 +1155,16 @@
             // Initial check
             windowHeight = window.innerHeight;
             isMobile = window.innerWidth <= 768;
+            
+            // Set initial mobile state
+            if (isMobile) {
+                const list = $('#noteList');
+                const expandBtn = $('#expandBtn');
+                list.classList.remove('expanded');
+                expandBtn.classList.add('rotated');
+                listCollapsed = true;
+                updateCurrentNoteTitle();
+            }
         }
         init();
     </script>
