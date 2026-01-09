@@ -1,327 +1,579 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8"/>
-<title>Minimal Notes – Fixed</title>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<style>
-:root {
-  --bg: #ffffff; --bg-secondary: #fbfbfc; --bg-hover: #ececee; --bg-active: #e0e0e5;
-  --border: #e5e5e7; --text: #1c1c1e; --text-muted: #8e8e93; --input-bg: #f9f9fa;
-  --delete-red: #ff3b30; --delete-dark: #ff453a;
-}
-body.dark {
-  --bg: #1c1c1e; --bg-secondary: #2c2c2e; --bg-hover: #3a3a3c; --bg-active: #48484a;
-  --border: #3a3a3c; --text: #f2f2f7; --text-muted: #a1a1a6; --input-bg: #2c2c2e;
-  --delete-red: #ff453a;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
-  background: #888; height: 100vh; color: var(--text);
-}
-.app { height: 100vh; max-width: 1200px; margin: 0 auto; background: var(--bg); display: flex; flex-direction: column; }
-.topbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
-.search { flex: 1; padding: 6px 8px; font-size: 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text); }
-.btn { padding: 6px 10px; font-size: 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text); cursor: pointer; }
-.main { display: flex; flex: 1; min-height: 0; }
-.list {
-  width: 28%;
-  border-right: 1px solid var(--border);
-  padding: 6px;
-  overflow-y: auto;                 /* scroll when needed */
-  background: var(--bg-secondary);
-  /* REMOVED max-height from base class */
-}
-.note { position: relative; border-radius: 6px; margin-bottom: 2px; overflow: hidden; }
-.note .swipe-bg { position: absolute; inset: 0; background: var(--delete-red); display: flex; align-items: center; justify-content: flex-end; padding-right: 12px; color: #fff; font-weight: bold; z-index: 0; border-radius: 6px; }
-.note > div:nth-child(2) { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; background: var(--bg-secondary); padding: 8px 10px; font-size: 14px; cursor: pointer; border-radius: 6px; transition: background .2s, transform .2s; }
-.note.active > div:nth-child(2) { background: var(--bg-active); font-weight: 500; }
-.note:hover > div:nth-child(2) { background: var(--bg-hover); }
-.note mark { background: #ffd600; color: inherit; }
-body.dark .note mark { background: #ffd60a; color: #000; }
-.delete-btn { opacity: 0; border: none; background: transparent; cursor: pointer; font-size: 14px; color: var(--text-muted); padding: 4px; }
-.note:hover .delete-btn { opacity: 1; }
-.delete-btn:hover { color: var(--text); }
-.empty-state { text-align: center; padding: 24px 12px; color: var(--text-muted); font-size: 14px; }
-.editor { flex: 1; padding: 16px 20px; display: flex; flex-direction: column; }
-#editor { flex: 1; outline: none; font-size: 16px; line-height: 1.6; white-space: pre-wrap; color: var(--text); font-family: inherit; }
-#editor > div:first-child { font-size: 20px; font-weight: 600; line-height: 1.3; margin-bottom: 8px; }
-#editor:empty:before { content: attr(data-placeholder); color: var(--text-muted); }
-.hint { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
+    <meta charset="UTF-8" />
+    <title>Minimal Notes – Fixed</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        :root {
+            --bg: #ffffff;
+            --bg-secondary: #fbfbfc;
+            --bg-hover: #ececee;
+            --bg-active: #e0e0e5;
+            --border: #e5e5e7;
+            --text: #1c1c1e;
+            --text-muted: #8e8e93;
+            --input-bg: #f9f9fa;
+            --delete-red: #ff3b30;
+            --delete-dark: #ff453a;
+        }
 
-/* Desktop: show all notes, scroll when needed */
-@media (min-width: 769px) {
-  .list {
-    height: auto; /* Let content determine height */
-    overflow-y: auto; /* Scroll when content exceeds available space */
-  }
-}
+        body.dark {
+            --bg: #1c1c1e;
+            --bg-secondary: #2c2c2e;
+            --bg-hover: #3a3a3c;
+            --bg-active: #48484a;
+            --border: #3a3a3c;
+            --text: #f2f2f7;
+            --text-muted: #a1a1a6;
+            --input-bg: #2c2c2e;
+            --delete-red: #ff453a;
+        }
 
-/* Mobile: dynamic height - grows with notes up to 5, then scrolls */
-@media (max-width: 768px) {
-  .main { flex-direction: column; } 
-  .list { 
-    width: 100%; 
-    border-right: none; 
-    border-bottom: 1px solid var(--border);
-    /* Dynamic height based on number of notes */
-    max-height: calc(5 * 40px + 12px); /* Maximum height for 5 notes */
-    min-height: 40px; /* Minimum height for empty state */
-    overflow-y: auto; /* Scroll when exceeds max-height */
-  }
-  
-  /* When we have notes, use dynamic height */
-  .list:has(.note:not(.empty-state)) {
-    min-height: auto;
-    height: auto;
-    max-height: calc(5 * 40px + 12px); /* Cap at 5 notes height */
-  }
-}
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-#undoToast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--bg-secondary); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; display: none; align-items: center; gap: 8px; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.15); z-index: 1000; }
-#undoBtn { border: none; background: transparent; color: #007aff; cursor: pointer; font-weight: bold; }
-</style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+            background: #888;
+            height: 100vh;
+            color: var(--text);
+        }
+
+        .app {
+            height: 100vh;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo-btn {
+            background: transparent;
+            border: none;
+            cursor: default;
+            /* Make it non-clickable */
+            padding: 0;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 35px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+
+        .logo-btn svg {
+            width: 35px;
+            height: 19px;
+        }
+
+        .search {
+            flex: 1;
+            padding: 6px 8px;
+            font-size: 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text);
+            margin-left: 0;
+            /* Reset any left margin */
+        }
+
+        .btn {
+            padding: 6px 10px;
+            font-size: 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .main {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .list {
+            width: 28%;
+            border-right: 1px solid var(--border);
+            padding: 6px;
+            overflow-y: auto;
+            /* scroll when needed */
+            background: var(--bg-secondary);
+            /* REMOVED max-height from base class */
+        }
+
+        .note {
+            position: relative;
+            border-radius: 6px;
+            margin-bottom: 2px;
+            overflow: hidden;
+        }
+
+        .note .swipe-bg {
+            position: absolute;
+            inset: 0;
+            background: var(--delete-red);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12px;
+            color: #fff;
+            font-weight: bold;
+            z-index: 0;
+            border-radius: 6px;
+        }
+
+        .note>div:nth-child(2) {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-secondary);
+            padding: 8px 10px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background .2s, transform .2s;
+        }
+
+        .note.active>div:nth-child(2) {
+            background: var(--bg-active);
+            font-weight: 500;
+        }
+
+        .note:hover>div:nth-child(2) {
+            background: var(--bg-hover);
+        }
+
+        .note mark {
+            background: #ffd600;
+            color: inherit;
+        }
+
+        body.dark .note mark {
+            background: #ffd60a;
+            color: #000;
+        }
+
+        .delete-btn {
+            opacity: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-muted);
+            padding: 4px;
+        }
+
+        .note:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn:hover {
+            color: var(--text);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 24px 12px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .editor {
+            flex: 1;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #editor {
+            flex: 1;
+            outline: none;
+            font-size: 16px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: var(--text);
+            font-family: inherit;
+        }
+
+        #editor>div:first-child {
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: 8px;
+        }
+
+        #editor:empty:before {
+            content: attr(data-placeholder);
+            color: var(--text-muted);
+        }
+
+        .hint {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Desktop: show all notes, scroll when needed */
+        @media (min-width: 769px) {
+            .list {
+                height: auto;
+                /* Let content determine height */
+                overflow-y: auto;
+                /* Scroll when content exceeds available space */
+            }
+        }
+
+        /* Mobile: dynamic height - grows with notes up to 5, then scrolls */
+        @media (max-width: 768px) {
+            .main {
+                flex-direction: column;
+            }
+
+            .list {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                /* Dynamic height based on number of notes */
+                max-height: calc(5 * 40px + 12px);
+                /* Maximum height for 5 notes */
+                min-height: 40px;
+                /* Minimum height for empty state */
+                overflow-y: auto;
+                /* Scroll when exceeds max-height */
+            }
+
+            /* When we have notes, use dynamic height */
+            .list:has(.note:not(.empty-state)) {
+                min-height: auto;
+                height: auto;
+                max-height: calc(5 * 40px + 12px);
+                /* Cap at 5 notes height */
+            }
+        }
+
+        #undoToast {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+            z-index: 1000;
+        }
+
+        #undoBtn {
+            border: none;
+            background: transparent;
+            color: #007aff;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
 </head>
+
 <body>
-<div class="app">
-  <div class="topbar">
-    <input class="search" placeholder="Search…"/>
-    <button class="btn" id="toggleTheme">🌙</button>
-    <button class="btn" id="newNote">＋</button>
-  </div>
-  <div class="main">
-    <div class="list" id="noteList"></div>
-    <div class="editor">
-      <div id="editor" contenteditable="true" spellcheck="false" data-placeholder="Start typing…"></div>
-      <div class="hint">Everything saves automatically • Esc: Clear search</div>
+    <div class="app">
+        <div class="topbar">
+            <!-- Logo button (inactive) -->
+            <button class="logo-btn" id="logoBtn">
+                <!-- Light mode logo (black) by default -->
+                <svg width="35" height="19" viewBox="0 0 35 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M4.09943 0.997175L8.31818 14.2585H8.48011L12.7074 0.997175H16.7983L10.7813 18.4517H6.02557L7.30157e-07 0.997175H4.09943ZM17.151 18.4517V5.36081H20.7816V18.4517H17.151ZM18.9748 3.67331C18.4351 3.67331 17.972 3.49433 17.5856 3.13638C17.2049 2.77274 17.0146 2.33808 17.0146 1.8324C17.0146 1.3324 17.2049 0.903425 17.5856 0.545471C17.972 0.181834 18.4351 1.57356e-05 18.9748 1.57356e-05C19.5146 1.57356e-05 19.9748 0.181834 20.3555 0.545471C20.7419 0.903425 20.9351 1.3324 20.9351 1.8324C20.9351 2.33808 20.7419 2.77274 20.3555 3.13638C19.9748 3.49433 19.5146 3.67331 18.9748 3.67331ZM25.6407 10.8835V18.4517H22.01V5.36081H25.4703V7.67047H25.6237C25.9134 6.90911 26.3992 6.30683 27.0811 5.86365C27.7629 5.41479 28.5896 5.19036 29.5612 5.19036C30.4703 5.19036 31.2629 5.38922 31.939 5.78695C32.6151 6.18468 33.1407 6.75286 33.5157 7.49149C33.8907 8.22445 34.0782 9.09945 34.0782 10.1165V18.4517H30.4475V10.7642C30.4532 9.96308 30.2487 9.33808 29.8339 8.88922C29.4191 8.43468 28.8481 8.2074 28.1208 8.2074C27.6322 8.2074 27.2004 8.31252 26.8254 8.52274C26.4561 8.73297 26.1663 9.03979 25.9561 9.4432C25.7515 9.84093 25.6464 10.321 25.6407 10.8835Z"
+                        fill="black" />
+                </svg>
+            </button>
+
+            <input class="search" placeholder="Search…" />
+            <button class="btn" id="toggleTheme">🌙</button>
+            <button class="btn" id="newNote">＋</button>
+        </div>
+        <div class="main">
+            <div class="list" id="noteList"></div>
+            <div class="editor">
+                <div id="editor" contenteditable="true" spellcheck="false" data-placeholder="Start typing…"></div>
+                <div class="hint">Everything saves automatically • Esc: Clear search</div>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
-<div id="undoToast">Note deleted <button id="undoBtn">Undo</button></div>
+    <div id="undoToast">Note deleted <button id="undoBtn">Undo</button></div>
 
-<script>
-/* ---------- helpers ---------- */
-const $ = q => document.querySelector(q);
-const escapeHTML = t => {
-  const d = document.createElement('div');
-  d.textContent = t;
-  return d.innerHTML;
-};
+    <script>
+        /* ---------- helpers ---------- */
+        const $ = q => document.querySelector(q);
+        const escapeHTML = t => {
+            const d = document.createElement('div');
+            d.textContent = t;
+            return d.innerHTML;
+        };
 
-/* ---------- state ---------- */
-let notes = JSON.parse(localStorage.getItem('notes')) || [];
-let activeId = localStorage.getItem('activeId');
-let theme = localStorage.getItem('theme') || 'light';
-let lastDeleted = null;
-let searchTimeout = null;
+        /* ---------- state ---------- */
+        let notes = JSON.parse(localStorage.getItem('notes')) || [];
+        let activeId = localStorage.getItem('activeId');
+        let theme = localStorage.getItem('theme') || 'light';
+        let lastDeleted = null;
+        let searchTimeout = null;
 
-/* ---------- theme ---------- */
-function applyTheme() {
-  document.body.classList.toggle('dark', theme === 'dark');
-  $('#toggleTheme').textContent = theme === 'dark' ? '🌞' : '🌙';
-  localStorage.setItem('theme', theme);
-}
-$('#toggleTheme').onclick = () => { theme = theme === 'dark' ? 'light' : 'dark'; applyTheme(); };
-applyTheme();
+        /* ---------- update logo based on theme ---------- */
+        function updateLogo() {
+            const logoBtn = $('#logoBtn');
+            if (theme === 'dark') {
+                logoBtn.innerHTML = `
+      <svg width="35" height="19" viewBox="0 0 35 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4.09943 0.99716L8.31818 14.2585H8.48011L12.7074 0.99716H16.7983L10.7813 18.4517H6.02557L7.30157e-07 0.99716H4.09943ZM17.151 18.4517V5.3608H20.7816V18.4517H17.151ZM18.9748 3.6733C18.4351 3.6733 17.972 3.49432 17.5856 3.13636C17.2049 2.77273 17.0146 2.33807 17.0146 1.83239C17.0146 1.33239 17.2049 0.90341 17.5856 0.545456C17.972 0.181819 18.4351 4.76837e-07 18.9748 4.76837e-07C19.5146 4.76837e-07 19.9748 0.181819 20.3555 0.545456C20.7419 0.90341 20.9351 1.33239 20.9351 1.83239C20.9351 2.33807 20.7419 2.77273 20.3555 3.13636C19.9748 3.49432 19.5146 3.6733 18.9748 3.6733ZM25.6407 10.8835V18.4517H22.01V5.3608H25.4703V7.67046H25.6237C25.9134 6.90909 26.3992 6.30682 27.0811 5.86364C27.7629 5.41477 28.5896 5.19034 29.5612 5.19034C30.4703 5.19034 31.2629 5.38921 31.939 5.78693C32.6151 6.18466 33.1407 6.75284 33.5157 7.49148C33.8907 8.22443 34.0782 9.09943 34.0782 10.1165V18.4517H30.4475V10.7642C30.4532 9.96307 30.2487 9.33807 29.8339 8.88921C29.4191 8.43466 28.8481 8.20739 28.1208 8.20739C27.6322 8.20739 27.2004 8.3125 26.8254 8.52273C26.4561 8.73296 26.1663 9.03977 25.9561 9.44318C25.7515 9.84091 25.6464 10.321 25.6407 10.8835Z" fill="white"/>
+      </svg>
+    `;
+            } else {
+                logoBtn.innerHTML = `
+      <svg width="35" height="19" viewBox="0 0 35 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4.09943 0.997175L8.31818 14.2585H8.48011L12.7074 0.997175H16.7983L10.7813 18.4517H6.02557L7.30157e-07 0.997175H4.09943ZM17.151 18.4517V5.36081H20.7816V18.4517H17.151ZM18.9748 3.67331C18.4351 3.67331 17.972 3.49433 17.5856 3.13638C17.2049 2.77274 17.0146 2.33808 17.0146 1.8324C17.0146 1.3324 17.2049 0.903425 17.5856 0.545471C17.972 0.181834 18.4351 1.57356e-05 18.9748 1.57356e-05C19.5146 1.57356e-05 19.9748 0.181834 20.3555 0.545471C20.7419 0.903425 20.9351 1.3324 20.9351 1.8324C20.9351 2.33808 20.7419 2.77274 20.3555 3.13638C19.9748 3.49433 19.5146 3.67331 18.9748 3.67331ZM25.6407 10.8835V18.4517H22.01V5.36081H25.4703V7.67047H25.6237C25.9134 6.90911 26.3992 6.30683 27.0811 5.86365C27.7629 5.41479 28.5896 5.19036 29.5612 5.19036C30.4703 5.19036 31.2629 5.38922 31.939 5.78695C32.6151 6.18468 33.1407 6.75286 33.5157 7.49149C33.8907 8.22445 34.0782 9.09945 34.0782 10.1165V18.4517H30.4475V10.7642C30.4532 9.96308 30.2487 9.33808 29.8339 8.88922C29.4191 8.43468 28.8481 8.2074 28.1208 8.2074C27.6322 8.2074 27.2004 8.31252 26.8254 8.52274C26.4561 8.73297 26.1663 9.03979 25.9561 9.4432C25.7515 9.84093 25.6464 10.321 25.6407 10.8835Z" fill="black"/>
+      </svg>
+    `;
+            }
+        }
 
-/* ---------- storage ---------- */
-function save() {
-  localStorage.setItem('notes', JSON.stringify(notes));
-  localStorage.setItem('activeId', activeId);
-}
+        /* ---------- theme ---------- */
+        function applyTheme() {
+            document.body.classList.toggle('dark', theme === 'dark');
+            $('#toggleTheme').textContent = theme === 'dark' ? '🌞' : '🌙';
+            localStorage.setItem('theme', theme);
+            updateLogo(); // Update logo when theme changes
+        }
+        $('#toggleTheme').onclick = () => { theme = theme === 'dark' ? 'light' : 'dark'; applyTheme(); };
+        applyTheme();
 
-/* ---------- caret ---------- */
-function caretEnd(el) {
-  el.focus();
-  const r = document.createRange();
-  r.selectNodeContents(el);
-  r.collapse(false);
-  const s = window.getSelection();
-  s.removeAllRanges();
-  s.addRange(r);
-}
+        /* ---------- storage ---------- */
+        function save() {
+            localStorage.setItem('notes', JSON.stringify(notes));
+            localStorage.setItem('activeId', activeId);
+        }
 
-/* ---------- render ---------- */
-function render(filter = '') {
-  const list = $('#noteList');
-  list.innerHTML = '';
-  const f = filter.toLowerCase();
-  const filtered = notes.filter(n => !f || n.text.toLowerCase().includes(f));
+        /* ---------- caret ---------- */
+        function caretEnd(el) {
+            el.focus();
+            const r = document.createRange();
+            r.selectNodeContents(el);
+            r.collapse(false);
+            const s = window.getSelection();
+            s.removeAllRanges();
+            s.addRange(r);
+        }
 
-  if (!filtered.length) {
-    const e = document.createElement('div');
-    e.className = 'empty-state';
-    e.textContent = f ? 'No notes match your search' : 'No notes yet';
-    list.appendChild(e);
-    return;
-  }
+        /* ---------- render ---------- */
+        function render(filter = '') {
+            const list = $('#noteList');
+            list.innerHTML = '';
+            const f = filter.toLowerCase();
+            const filtered = notes.filter(n => !f || n.text.toLowerCase().includes(f));
 
-  const toShow = filtered;   // show every note, let CSS clamp the height
-  toShow.forEach(n => {
-    const wrap = document.createElement('div');
-    wrap.className = 'note' + (n.id === activeId ? ' active' : '');
-    wrap.dataset.noteId = n.id;
+            if (!filtered.length) {
+                const e = document.createElement('div');
+                e.className = 'empty-state';
+                e.textContent = f ? 'No notes match your search' : 'No notes yet';
+                list.appendChild(e);
+                return;
+            }
 
-    const bg = document.createElement('div');
-    bg.className = 'swipe-bg';
-    bg.textContent = 'Delete';
-    wrap.appendChild(bg);
+            const toShow = filtered;   // show every note, let CSS clamp the height
+            toShow.forEach(n => {
+                const wrap = document.createElement('div');
+                wrap.className = 'note' + (n.id === activeId ? ' active' : '');
+                wrap.dataset.noteId = n.id;
 
-    const content = document.createElement('div');
-    let preview = (n.text.split('\n')[0] || 'Untitled').substring(0, 100);
-    if (f) {
-      const idx = n.text.toLowerCase().indexOf(f);
-      if (idx !== -1) {
-        const start = Math.max(0, idx - 20);
-        const end   = Math.min(n.text.length, idx + f.length + 30);
-        let snippet = n.text.substring(start, end);
-        if (start > 0) snippet = '…' + snippet;
-        if (end < n.text.length) snippet += '…';
-        preview = escapeHTML(snippet).replace(
-          new RegExp(`(${escapeHTML(filter)})`, 'gi'),
-          '<mark>$1</mark>'
-        );
-      }
-    } else preview = escapeHTML(preview);
+                const bg = document.createElement('div');
+                bg.className = 'swipe-bg';
+                bg.textContent = 'Delete';
+                wrap.appendChild(bg);
 
-    const title = document.createElement('span');
-    title.innerHTML = preview;
-    title.style.cssText =
-      'flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                const content = document.createElement('div');
+                let preview = (n.text.split('\n')[0] || 'Untitled').substring(0, 100);
+                if (f) {
+                    const idx = n.text.toLowerCase().indexOf(f);
+                    if (idx !== -1) {
+                        const start = Math.max(0, idx - 20);
+                        const end = Math.min(n.text.length, idx + f.length + 30);
+                        let snippet = n.text.substring(start, end);
+                        if (start > 0) snippet = '…' + snippet;
+                        if (end < n.text.length) snippet += '…';
+                        preview = escapeHTML(snippet).replace(
+                            new RegExp(`(${escapeHTML(filter)})`, 'gi'),
+                            '<mark>$1</mark>'
+                        );
+                    }
+                } else preview = escapeHTML(preview);
 
-    const del = document.createElement('button');
-    del.className = 'delete-btn';
-    del.innerHTML = '🗑';
-    del.setAttribute('aria-label', 'Delete note');
-    del.onclick = e => {
-      e.stopPropagation();
-      deleteNote(n.id);
-    };
+                const title = document.createElement('span');
+                title.innerHTML = preview;
+                title.style.cssText =
+                    'flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
 
-    content.appendChild(title);
-    content.appendChild(del);
-    wrap.appendChild(content);
+                const del = document.createElement('button');
+                del.className = 'delete-btn';
+                del.innerHTML = '🗑';
+                del.setAttribute('aria-label', 'Delete note');
+                del.onclick = e => {
+                    e.stopPropagation();
+                    deleteNote(n.id);
+                };
 
-    wrap.onclick = () => selectNote(n.id);
-    addSwipe(wrap, n.id);
-    list.appendChild(wrap);
-  });
-}
+                content.appendChild(title);
+                content.appendChild(del);
+                wrap.appendChild(content);
 
-/* ---------- swipe ---------- */
-function addSwipe(el, id) {
-  let sx = 0, cx = 0, swiping = false;
-  const content = el.querySelector('div:nth-child(2)');
+                wrap.onclick = () => selectNote(n.id);
+                addSwipe(wrap, n.id);
+                list.appendChild(wrap);
+            });
+        }
 
-  el.addEventListener('touchstart', e => {
-    sx = e.touches[0].clientX;
-    cx = sx;
-    swiping = true;
-  }, {passive: true});
+        /* ---------- swipe ---------- */
+        function addSwipe(el, id) {
+            let sx = 0, cx = 0, swiping = false;
+            const content = el.querySelector('div:nth-child(2)');
 
-  el.addEventListener('touchmove', e => {
-    if (!swiping) return;
-    cx = e.touches[0].clientX;
-    const dx = cx - sx;
-    if (dx < 0) content.style.transform = `translateX(${dx}px)`;
-  }, {passive: true});
+            el.addEventListener('touchstart', e => {
+                sx = e.touches[0].clientX;
+                cx = sx;
+                swiping = true;
+            }, { passive: true });
 
-  el.addEventListener('touchend', () => {
-    swiping = false;
-    const dx = cx - sx;
-    if (dx < -100) {
-      deleteNote(id);
-    } else {
-      content.style.transform = 'translateX(0)';
-      selectNote(id);
-    }
-  });
+            el.addEventListener('touchmove', e => {
+                if (!swiping) return;
+                cx = e.touches[0].clientX;
+                const dx = cx - sx;
+                if (dx < 0) content.style.transform = `translateX(${dx}px)`;
+            }, { passive: true });
 
-  el.addEventListener('touchcancel', () => {
-    swiping = false;
-    content.style.transform = 'translateX(0)';
-  });
-}
+            el.addEventListener('touchend', () => {
+                swiping = false;
+                const dx = cx - sx;
+                if (dx < -100) {
+                    deleteNote(id);
+                } else {
+                    content.style.transform = 'translateX(0)';
+                    selectNote(id);
+                }
+            });
 
-/* ---------- crud ---------- */
-function selectNote(id) {
-  const note = notes.find(n => n.id === id);
-  if (!note) return createNote();
-  activeId = id;
-  $('#editor').innerHTML = note.text.split('\n').map(l => `<div>${escapeHTML(l) || '<br>'}</div>`).join('');
-  render($('.search').value);
-  save();
-  setTimeout(() => caretEnd($('#editor')), 0);
-}
+            el.addEventListener('touchcancel', () => {
+                swiping = false;
+                content.style.transform = 'translateX(0)';
+            });
+        }
 
-function createNote() {
-  const note = { id: Date.now().toString(), text: '' };
-  notes.unshift(note);
-  activeId = note.id;
-  $('#editor').innerHTML = '<div><br></div>';
-  render($('.search').value);
-  save();
-  setTimeout(() => caretEnd($('#editor')), 0);
-}
+        /* ---------- crud ---------- */
+        function selectNote(id) {
+            const note = notes.find(n => n.id === id);
+            if (!note) return createNote();
+            activeId = id;
+            $('#editor').innerHTML = note.text.split('\n').map(l => `<div>${escapeHTML(l) || '<br>'}</div>`).join('');
+            render($('.search').value);
+            save();
+            setTimeout(() => caretEnd($('#editor')), 0);
+        }
 
-function deleteNote(id) {
-  const idx = notes.findIndex(n => n.id === id);
-  if (idx === -1) return;
-  lastDeleted = { note: notes[idx], idx };
-  notes.splice(idx, 1);
-  $('#undoToast').style.display = 'flex';
-  setTimeout(() => { if (lastDeleted) $('#undoToast').style.display = 'none'; }, 5000);
-  if (activeId === id) notes.length ? selectNote(notes[0].id) : createNote();
-  else { render($('.search').value); save(); }
-}
+        function createNote() {
+            const note = { id: Date.now().toString(), text: '' };
+            notes.unshift(note);
+            activeId = note.id;
+            $('#editor').innerHTML = '<div><br></div>';
+            render($('.search').value);
+            save();
+            setTimeout(() => caretEnd($('#editor')), 0);
+        }
 
-$('#undoBtn').onclick = () => {
-  if (!lastDeleted) return;
-  notes.splice(lastDeleted.idx, 0, lastDeleted.note);
-  selectNote(lastDeleted.note.id);
-  lastDeleted = null;
-  $('#undoToast').style.display = 'none';
-  save();
-};
+        function deleteNote(id) {
+            const idx = notes.findIndex(n => n.id === id);
+            if (idx === -1) return;
+            lastDeleted = { note: notes[idx], idx };
+            notes.splice(idx, 1);
+            $('#undoToast').style.display = 'flex';
+            setTimeout(() => { if (lastDeleted) $('#undoToast').style.display = 'none'; }, 5000);
+            if (activeId === id) notes.length ? selectNote(notes[0].id) : createNote();
+            else { render($('.search').value); save(); }
+        }
 
-/* ---------- editor ---------- */
-$('#editor').addEventListener('input', () => {
-  const note = notes.find(n => n.id === activeId);
-  if (!note) return;
-  note.text = Array.from($('#editor').querySelectorAll('div')).map(d => d.innerText).join('\n');
-  render($('.search').value);
-  save();
-});
+        $('#undoBtn').onclick = () => {
+            if (!lastDeleted) return;
+            notes.splice(lastDeleted.idx, 0, lastDeleted.note);
+            selectNote(lastDeleted.note.id);
+            lastDeleted = null;
+            $('#undoToast').style.display = 'none';
+            save();
+        };
 
-/* ---------- search ---------- */
-$('.search').addEventListener('input', () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => render($('.search').value), 200);
-});
+        /* ---------- editor ---------- */
+        $('#editor').addEventListener('input', () => {
+            const note = notes.find(n => n.id === activeId);
+            if (!note) return;
+            note.text = Array.from($('#editor').querySelectorAll('div')).map(d => d.innerText).join('\n');
+            render($('.search').value);
+            save();
+        });
 
-/* ---------- buttons ---------- */
-$('#newNote').onclick = createNote;
+        /* ---------- search ---------- */
+        $('.search').addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => render($('.search').value), 200);
+        });
 
-/* ---------- keyboard ---------- */
-addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); createNote(); }
-  if (e.key === 'Escape' && document.activeElement === $('.search')) {
-    $('.search').value = '';
-    render('');
-    $('#editor').focus();
-  }
-});
+        /* ---------- buttons ---------- */
+        $('#newNote').onclick = createNote;
 
-/* ---------- init ---------- */
-function init() {
-  if (!notes.length) createNote();
-  else {
-    const exists = notes.find(n => n.id === activeId);
-    selectNote(exists ? activeId : notes[0].id);
-  }
-}
-init();
-</script>
+        // Make logo button inactive (non-clickable)
+        $('#logoBtn').onclick = (e) => {
+            e.preventDefault();
+            return false;
+        };
+
+        /* ---------- keyboard ---------- */
+        addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); createNote(); }
+            if (e.key === 'Escape' && document.activeElement === $('.search')) {
+                $('.search').value = '';
+                render('');
+                $('#editor').focus();
+            }
+        });
+
+        /* ---------- init ---------- */
+        function init() {
+            if (!notes.length) createNote();
+            else {
+                const exists = notes.find(n => n.id === activeId);
+                selectNote(exists ? activeId : notes[0].id);
+            }
+        }
+        init();
+    </script>
 </body>
+
 </html>
