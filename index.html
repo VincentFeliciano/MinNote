@@ -46,6 +46,10 @@
             height: 100vh;
             overflow: hidden;
             /* Prevent body scrolling */
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
         }
 
         .app {
@@ -301,6 +305,7 @@
             flex-direction: column;
             min-height: 0;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         #editor {
@@ -313,6 +318,8 @@
             font-family: inherit;
             min-height: 0;
             cursor: text;
+            -webkit-user-select: text;
+            user-select: text;
         }
 
         #editor>div:first-child {
@@ -337,6 +344,16 @@
 
         /* Desktop: show all notes, scroll when needed */
         @media (min-width: 769px) {
+            body {
+                position: static;
+                overflow: auto;
+            }
+            
+            .app {
+                height: auto;
+                min-height: 100vh;
+            }
+            
             .list {
                 height: auto;
                 /* Let content determine height */
@@ -353,8 +370,11 @@
         /* Mobile: editor on top, collapsible list below */
         @media (max-width: 768px) {
             body {
+                position: fixed;
+                width: 100%;
+                height: 100%;
                 overflow: hidden;
-                /* Prevent body scrolling on mobile */
+                touch-action: none;
             }
             
             .app {
@@ -365,15 +385,17 @@
                 bottom: 0;
                 max-width: 100%;
                 margin: 0;
-                height: 100vh;
+                height: 100%;
+                overflow: hidden;
             }
 
             .main {
                 flex-direction: column;
-                height: calc(100vh - 49px);
+                height: calc(100% - 49px);
                 /* Subtract topbar height */
                 flex: 1;
                 min-height: 0;
+                overflow: hidden;
             }
 
             .list {
@@ -389,7 +411,7 @@
             }
 
             .list.expanded {
-                max-height: calc(100vh - 49px - 50%);
+                max-height: 50%;
                 /* Take up to 50% of remaining space */
                 flex: 1;
                 min-height: 0;
@@ -406,8 +428,7 @@
                 overflow-y: auto;
                 flex: 1;
                 min-height: 0;
-                max-height: calc(100vh - 49px - 50px - 50px);
-                /* Account for topbar, header, and some margin */
+                -webkit-overflow-scrolling: touch;
             }
 
             .list:not(.expanded) .note-list-container {
@@ -423,6 +444,7 @@
                 position: relative;
                 height: calc(100% - 50px);
                 /* Subtract list header height */
+                transition: height 0.3s ease;
             }
 
             .list.expanded + .editor-container {
@@ -437,6 +459,9 @@
                 overflow-y: auto;
                 min-height: 0;
                 height: 100%;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 20px;
+                /* Extra padding for keyboard */
             }
 
             .hint {
@@ -447,6 +472,8 @@
             /* When virtual keyboard is active */
             .keyboard-active .editor {
                 padding-top: 8px;
+                padding-bottom: 40px;
+                /* More padding when keyboard is active */
             }
 
             .keyboard-active .hint {
@@ -455,8 +482,16 @@
             
             /* Adjust for iOS Safari bottom bar */
             @supports (-webkit-touch-callout: none) {
+                body {
+                    height: -webkit-fill-available;
+                }
+                
                 .app {
                     height: -webkit-fill-available;
+                }
+                
+                .editor {
+                    padding-bottom: env(safe-area-inset-bottom, 20px);
                 }
             }
         }
@@ -544,6 +579,16 @@
         .modal-btn.delete:hover {
             opacity: 0.9;
         }
+        
+        /* Cursor tracking styles */
+        .cursor-highlight {
+            position: absolute;
+            background: rgba(255, 238, 140, 0.3);
+            border-radius: 2px;
+            pointer-events: none;
+            z-index: 1;
+            transition: top 0.1s ease;
+        }
     </style>
 </head>
 
@@ -568,7 +613,7 @@
             <!-- Desktop: list on left, editor on right -->
             <div class="list" id="noteList">
                 <div class="list-header" id="listHeader">
-                    <button class="expand-btn" id="expandBtn">▼</button>
+                    <button class="expand-btn" id="expandBtn">🗻</button>
                     <div class="current-note-title" id="currentNoteTitle">Notes</div>
                 </div>
                 <div class="note-list-container" id="noteListContainer">
@@ -611,11 +656,75 @@
         let theme = localStorage.getItem('theme') || 'light';
         let searchTimeout = null;
         let noteToDelete = null; // For confirmation modal
-        let originalScrollTop = 0;
         let isMobile = window.innerWidth <= 768;
         let keyboardActive = false;
         let windowHeight = window.innerHeight;
         let listCollapsed = true; // Start collapsed on mobile
+        let cursorScrollInterval = null;
+        let lastCursorPosition = null;
+        let cursorHighlight = null;
+
+        /* ---------- create cursor highlight ---------- */
+        function createCursorHighlight() {
+            if (!cursorHighlight) {
+                cursorHighlight = document.createElement('div');
+                cursorHighlight.className = 'cursor-highlight';
+                document.body.appendChild(cursorHighlight);
+            }
+            return cursorHighlight;
+        }
+
+        /* ---------- update cursor highlight position ---------- */
+        function updateCursorHighlight() {
+            if (!keyboardActive || !isMobile) return;
+            
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            
+            const range = selection.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            
+            if (rect.height > 0) {
+                cursorHighlight.style.display = 'block';
+                cursorHighlight.style.left = rect.left + 'px';
+                cursorHighlight.style.top = (rect.top + window.scrollY) + 'px';
+                cursorHighlight.style.width = rect.width + 'px';
+                cursorHighlight.style.height = rect.height + 'px';
+                lastCursorPosition = rect.top;
+                
+                // Scroll to keep cursor visible
+                scrollCursorIntoView(rect.top);
+            }
+        }
+
+        /* ---------- scroll cursor into view ---------- */
+        function scrollCursorIntoView(cursorTop) {
+            if (!keyboardActive || !isMobile) return;
+            
+            const editor = $('.editor');
+            const editorRect = editor.getBoundingClientRect();
+            const editorScrollTop = editor.scrollTop;
+            
+            // Calculate visible area
+            const visibleTop = editorRect.top;
+            const visibleBottom = editorRect.bottom;
+            const cursorBottom = cursorTop + 30; // Add some buffer
+            
+            // Check if cursor is near bottom (where keyboard might cover it)
+            const viewportHeight = window.innerHeight;
+            const keyboardArea = viewportHeight * 0.4; // Assume keyboard takes ~40% of screen
+            
+            // If cursor is in the keyboard area, scroll up
+            if (cursorBottom > (viewportHeight - keyboardArea)) {
+                const scrollAmount = cursorBottom - (viewportHeight - keyboardArea) + 20;
+                editor.scrollTop += scrollAmount;
+            }
+            // If cursor is near top, make sure it's visible
+            else if (cursorTop < (visibleTop + 50)) {
+                const scrollAmount = cursorTop - visibleTop - 50;
+                editor.scrollTop += scrollAmount;
+            }
+        }
 
         /* ---------- keyboard detection ---------- */
         function checkKeyboard() {
@@ -625,33 +734,84 @@
             const heightDiff = windowHeight - newHeight;
             
             // If viewport height decreased significantly, keyboard is likely open
-            if (heightDiff > 100 && !keyboardActive) {
+            if (heightDiff > 150 && !keyboardActive) {
                 keyboardActive = true;
                 document.body.classList.add('keyboard-active');
                 
-                // Save current scroll position
-                originalScrollTop = window.scrollY;
+                // Start tracking cursor position
+                startCursorTracking();
                 
-                // Scroll editor into view
-                const editor = $('#editor');
-                if (editor) {
-                    setTimeout(() => {
-                        editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
-                }
+                // Scroll editor to show cursor after a delay
+                setTimeout(() => {
+                    updateCursorHighlight();
+                    const selection = window.getSelection();
+                    if (selection.rangeCount) {
+                        const range = selection.getRangeAt(0);
+                        const rect = range.getBoundingClientRect();
+                        if (rect.height > 0) {
+                            scrollCursorIntoView(rect.top);
+                        }
+                    }
+                }, 300);
             } 
             // If viewport height increased, keyboard is likely closed
             else if (heightDiff < -50 && keyboardActive) {
                 keyboardActive = false;
                 document.body.classList.remove('keyboard-active');
                 
-                // Restore original scroll position
+                // Stop cursor tracking
+                stopCursorTracking();
+                
+                // Hide cursor highlight
+                if (cursorHighlight) {
+                    cursorHighlight.style.display = 'none';
+                }
+                
+                // Reset scroll position
                 setTimeout(() => {
-                    window.scrollTo({ top: originalScrollTop, behavior: 'smooth' });
+                    const editor = $('.editor');
+                    editor.scrollTop = 0;
                 }, 100);
             }
             
             windowHeight = newHeight;
+        }
+
+        /* ---------- start cursor tracking ---------- */
+        function startCursorTracking() {
+            if (!isMobile) return;
+            
+            // Create highlight element
+            createCursorHighlight();
+            
+            // Clear any existing interval
+            if (cursorScrollInterval) {
+                clearInterval(cursorScrollInterval);
+            }
+            
+            // Track cursor position periodically
+            cursorScrollInterval = setInterval(updateCursorHighlight, 100);
+            
+            // Also track on input events
+            $('#editor').addEventListener('input', updateCursorHighlight);
+            $('#editor').addEventListener('click', updateCursorHighlight);
+            $('#editor').addEventListener('touchstart', updateCursorHighlight);
+        }
+
+        /* ---------- stop cursor tracking ---------- */
+        function stopCursorTracking() {
+            if (cursorScrollInterval) {
+                clearInterval(cursorScrollInterval);
+                cursorScrollInterval = null;
+            }
+            
+            $('#editor').removeEventListener('input', updateCursorHighlight);
+            $('#editor').removeEventListener('click', updateCursorHighlight);
+            $('#editor').removeEventListener('touchstart', updateCursorHighlight);
+            
+            if (cursorHighlight) {
+                cursorHighlight.style.display = 'none';
+            }
         }
 
         // Track window resize for keyboard detection
@@ -662,9 +822,6 @@
             if (isMobile) {
                 setTimeout(() => {
                     checkKeyboard();
-                    // Ensure editor is visible
-                    const editor = $('#editor');
-                    editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 300);
                 
                 // Auto-collapse list when editor is focused
@@ -693,6 +850,11 @@
             }
         });
 
+        // Track cursor movement within editor
+        $('#editor').addEventListener('keyup', updateCursorHighlight);
+        $('#editor').addEventListener('mouseup', updateCursorHighlight);
+        $('#editor').addEventListener('touchend', updateCursorHighlight);
+
         // Update isMobile on window resize
         window.addEventListener('resize', handleResize);
 
@@ -711,11 +873,17 @@
                     list.classList.remove('expanded');
                     expandBtn.classList.remove('rotated');
                     listCollapsed = false;
+                    
+                    // Stop cursor tracking on desktop
+                    stopCursorTracking();
                 } else {
                     // On mobile, start with list collapsed
                     list.classList.remove('expanded');
                     expandBtn.classList.add('rotated');
                     listCollapsed = true;
+                    
+                    // Create cursor highlight for mobile
+                    createCursorHighlight();
                 }
                 
                 updateCurrentNoteTitle();
@@ -827,11 +995,10 @@
             s.removeAllRanges();
             s.addRange(r);
             
-            // On mobile, ensure editor is visible
+            // On mobile, update cursor position after focusing
             if (isMobile) {
                 setTimeout(() => {
-                    // Just focus, don't scroll since app is fixed
-                    el.focus();
+                    updateCursorHighlight();
                 }, 100);
             }
         }
@@ -1010,9 +1177,9 @@
             save();
             setTimeout(() => {
                 caretEnd($('#editor'));
-                // On mobile, just focus without scrolling
+                // Update cursor position after selection
                 if (isMobile) {
-                    $('#editor').focus();
+                    setTimeout(updateCursorHighlight, 200);
                 }
             }, 0);
             
@@ -1029,9 +1196,9 @@
             save();
             setTimeout(() => {
                 caretEnd($('#editor'));
-                // On mobile, just focus without scrolling
+                // Update cursor position after creation
                 if (isMobile) {
-                    $('#editor').focus();
+                    setTimeout(updateCursorHighlight, 200);
                 }
             }, 0);
             
@@ -1111,6 +1278,11 @@
             render($('.search').value);
             save();
             updateCurrentNoteTitle(); // Update title when note content changes
+            
+            // Update cursor position on input
+            if (isMobile && keyboardActive) {
+                setTimeout(updateCursorHighlight, 50);
+            }
         });
 
         /* ---------- search ---------- */
@@ -1164,6 +1336,9 @@
                 expandBtn.classList.add('rotated');
                 listCollapsed = true;
                 updateCurrentNoteTitle();
+                
+                // Create cursor highlight for mobile
+                createCursorHighlight();
             }
         }
         init();
