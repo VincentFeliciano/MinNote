@@ -44,6 +44,8 @@
             background: #888;
             height: 100vh;
             color: var(--text);
+            /* Prevent pull-to-refresh on mobile */
+            overscroll-behavior-y: none;
         }
 
         .app {
@@ -53,6 +55,7 @@
             background: var(--bg);
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .topbar {
@@ -61,6 +64,7 @@
             gap: 8px;
             padding: 8px 12px;
             border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
         }
 
         .logo-btn {
@@ -103,12 +107,15 @@
             background: var(--input-bg);
             color: var(--text);
             cursor: pointer;
+            flex-shrink: 0;
         }
 
         .main {
             display: flex;
             flex: 1;
             min-height: 0;
+            position: relative;
+            overflow: hidden;
         }
 
         .list {
@@ -126,11 +133,15 @@
             border-radius: 6px;
             margin-bottom: 2px;
             overflow: hidden;
+            background: transparent;
         }
 
         .note .swipe-bg {
             position: absolute;
-            inset: 0;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: var(--delete-red);
             display: flex;
             align-items: center;
@@ -139,10 +150,19 @@
             color: #fff;
             font-weight: bold;
             z-index: 0;
-            border-radius: 6px;
+            /* Remove border-radius from swipe background */
+            border-radius: 0;
+            /* Make it extend slightly beyond the note bounds to cover corners */
+            transform: translateX(100%);
+            transition: transform 0.2s ease-out;
         }
 
-        .note>div:nth-child(2) {
+        /* When swiping, show the background */
+        .note.swiping .swipe-bg {
+            transform: translateX(0);
+        }
+
+        .note-content {
             position: relative;
             z-index: 1;
             display: flex;
@@ -154,14 +174,17 @@
             cursor: pointer;
             border-radius: 6px;
             transition: background .2s, transform .2s;
+            transform: translateX(0);
+            /* Ensure content clips to its own border-radius */
+            overflow: hidden;
         }
 
-        .note.active>div:nth-child(2) {
+        .note.active .note-content {
             background: var(--bg-active);
             font-weight: 500;
         }
 
-        .note:hover>div:nth-child(2) {
+        .note:hover .note-content {
             background: var(--bg-hover);
         }
 
@@ -209,11 +232,21 @@
             font-size: 14px;
         }
 
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            position: relative;
+        }
+
         .editor {
             flex: 1;
             padding: 16px 20px;
             display: flex;
             flex-direction: column;
+            min-height: 0;
+            overflow-y: auto;
         }
 
         #editor {
@@ -224,6 +257,7 @@
             white-space: pre-wrap;
             color: var(--text);
             font-family: inherit;
+            min-height: 0;
         }
 
         #editor>div:first-child {
@@ -242,6 +276,8 @@
             font-size: 13px;
             color: var(--text-muted);
             margin-top: 6px;
+            flex-shrink: 0;
+            padding: 0 20px 16px;
         }
 
         /* Desktop: show all notes, scroll when needed */
@@ -271,6 +307,7 @@
                 /* Minimum height for empty state */
                 overflow-y: auto;
                 /* Scroll when exceeds max-height */
+                flex-shrink: 0;
             }
 
             /* When we have notes, use dynamic height */
@@ -279,6 +316,25 @@
                 height: auto;
                 max-height: calc(5 * 40px + 12px);
                 /* Cap at 5 notes height */
+            }
+
+            .editor {
+                padding: 12px 16px;
+                flex: 1;
+                overflow-y: auto;
+            }
+
+            .hint {
+                padding: 0 16px 12px;
+            }
+
+            /* When virtual keyboard is active */
+            .keyboard-active .editor {
+                padding-top: 8px;
+            }
+
+            .keyboard-active .hint {
+                display: none;
             }
         }
 
@@ -387,8 +443,10 @@
         </div>
         <div class="main">
             <div class="list" id="noteList"></div>
-            <div class="editor">
-                <div id="editor" contenteditable="true" spellcheck="false" data-placeholder="Start typing…"></div>
+            <div class="editor-container">
+                <div class="editor">
+                    <div id="editor" contenteditable="true" spellcheck="false" data-placeholder="Start typing…"></div>
+                </div>
                 <div class="hint">Everything saves automatically • Esc: Clear search</div>
             </div>
         </div>
@@ -421,6 +479,76 @@
         let theme = localStorage.getItem('theme') || 'light';
         let searchTimeout = null;
         let noteToDelete = null; // For confirmation modal
+        let originalScrollTop = 0;
+        let isMobile = window.innerWidth <= 768;
+        let keyboardActive = false;
+        let windowHeight = window.innerHeight;
+
+        /* ---------- keyboard detection ---------- */
+        function checkKeyboard() {
+            if (!isMobile) return;
+            
+            const newHeight = window.innerHeight;
+            const heightDiff = windowHeight - newHeight;
+            
+            // If viewport height decreased significantly, keyboard is likely open
+            if (heightDiff > 100 && !keyboardActive) {
+                keyboardActive = true;
+                document.body.classList.add('keyboard-active');
+                
+                // Save current scroll position
+                originalScrollTop = window.scrollY;
+                
+                // Scroll editor into view
+                const editor = $('#editor');
+                if (editor) {
+                    setTimeout(() => {
+                        editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                }
+            } 
+            // If viewport height increased, keyboard is likely closed
+            else if (heightDiff < -50 && keyboardActive) {
+                keyboardActive = false;
+                document.body.classList.remove('keyboard-active');
+                
+                // Restore original scroll position
+                setTimeout(() => {
+                    window.scrollTo({ top: originalScrollTop, behavior: 'smooth' });
+                }, 100);
+            }
+            
+            windowHeight = newHeight;
+        }
+
+        // Track window resize for keyboard detection
+        window.addEventListener('resize', checkKeyboard);
+
+        // Also check on focus/blur of editor
+        $('#editor').addEventListener('focus', () => {
+            if (isMobile) {
+                setTimeout(() => {
+                    checkKeyboard();
+                    // Ensure editor is visible
+                    const editor = $('#editor');
+                    editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 300);
+            }
+        });
+
+        $('#editor').addEventListener('blur', () => {
+            if (isMobile && keyboardActive) {
+                setTimeout(() => {
+                    checkKeyboard();
+                }, 300);
+            }
+        });
+
+        // Update isMobile on window resize
+        window.addEventListener('resize', () => {
+            isMobile = window.innerWidth <= 768;
+            windowHeight = window.innerHeight;
+        });
 
         /* ---------- update logo based on theme ---------- */
         function updateLogo() {
@@ -443,7 +571,7 @@
         /* ---------- theme ---------- */
         function applyTheme() {
             document.body.classList.toggle('dark', theme === 'dark');
-            $('#toggleTheme').textContent = theme === 'dark' ? '😀' : '💀';
+            $('#toggleTheme').textContent = theme === 'dark' ? '😃' : '👻';
             localStorage.setItem('theme', theme);
             updateLogo(); // Update logo when theme changes
         }
@@ -465,6 +593,13 @@
             const s = window.getSelection();
             s.removeAllRanges();
             s.addRange(r);
+            
+            // On mobile, ensure editor is visible
+            if (isMobile) {
+                setTimeout(() => {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
         }
 
         /* ---------- render ---------- */
@@ -494,6 +629,7 @@
                 wrap.appendChild(bg);
 
                 const content = document.createElement('div');
+                content.className = 'note-content';
                 let preview = (n.text.split('\n')[0] || 'Untitled').substring(0, 100);
                 if (f) {
                     const idx = n.text.toLowerCase().indexOf(f);
@@ -517,7 +653,6 @@
 
                 const del = document.createElement('button');
                 del.className = 'delete-btn';
-                // SVG trash icon with currentColor for theme support
                 del.innerHTML = `
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M3 6h18"></path>
@@ -546,35 +681,70 @@
         /* ---------- swipe ---------- */
         function addSwipe(el, id) {
             let sx = 0, cx = 0, swiping = false;
-            const content = el.querySelector('div:nth-child(2)');
+            const content = el.querySelector('.note-content');
+            const swipeBg = el.querySelector('.swipe-bg');
+            const threshold = 0.75; // 75% threshold for deletion
 
             el.addEventListener('touchstart', e => {
                 sx = e.touches[0].clientX;
                 cx = sx;
                 swiping = true;
+                el.classList.add('swiping');
             }, { passive: true });
 
             el.addEventListener('touchmove', e => {
                 if (!swiping) return;
                 cx = e.touches[0].clientX;
                 const dx = cx - sx;
-                if (dx < 0) content.style.transform = `translateX(${dx}px)`;
+                if (dx < 0) {
+                    content.style.transform = `translateX(${dx}px)`;
+                    // Also slide in the background based on swipe distance
+                    const bgTransform = Math.min(100, -dx * 100 / el.offsetWidth);
+                    swipeBg.style.transform = `translateX(${100 - bgTransform}%)`;
+                }
             }, { passive: true });
 
             el.addEventListener('touchend', () => {
                 swiping = false;
+                el.classList.remove('swiping');
                 const dx = cx - sx;
-                if (dx < -100) {
+                const swipePercentage = -dx / el.offsetWidth;
+                
+                // Check if swipe exceeds 75% threshold
+                if (swipePercentage > threshold) {
                     deleteNote(id); // Direct delete on mobile swipe
                 } else {
+                    // Animate back to original position
+                    content.style.transition = 'transform 0.3s ease-out';
+                    swipeBg.style.transition = 'transform 0.3s ease-out';
                     content.style.transform = 'translateX(0)';
-                    selectNote(id);
+                    swipeBg.style.transform = 'translateX(100%)';
+                    
+                    // Remove transition after animation completes
+                    setTimeout(() => {
+                        content.style.transition = '';
+                        swipeBg.style.transition = '';
+                    }, 300);
+                    
+                    // Only select the note if it wasn't a significant swipe
+                    if (swipePercentage < 0.3) {
+                        selectNote(id);
+                    }
                 }
             });
 
             el.addEventListener('touchcancel', () => {
                 swiping = false;
+                el.classList.remove('swiping');
+                content.style.transition = 'transform 0.3s ease-out';
+                swipeBg.style.transition = 'transform 0.3s ease-out';
                 content.style.transform = 'translateX(0)';
+                swipeBg.style.transform = 'translateX(100%)';
+                
+                setTimeout(() => {
+                    content.style.transition = '';
+                    swipeBg.style.transition = '';
+                }, 300);
             });
         }
 
@@ -586,7 +756,13 @@
             $('#editor').innerHTML = note.text.split('\n').map(l => `<div>${escapeHTML(l) || '<br>'}</div>`).join('');
             render($('.search').value);
             save();
-            setTimeout(() => caretEnd($('#editor')), 0);
+            setTimeout(() => {
+                caretEnd($('#editor'));
+                // On mobile without keyboard, stay at top
+                if (isMobile && !keyboardActive) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }, 0);
         }
 
         function createNote() {
@@ -596,7 +772,13 @@
             $('#editor').innerHTML = '<div><br></div>';
             render($('.search').value);
             save();
-            setTimeout(() => caretEnd($('#editor')), 0);
+            setTimeout(() => {
+                caretEnd($('#editor'));
+                // On mobile without keyboard, stay at top
+                if (isMobile && !keyboardActive) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }, 0);
         }
 
         /* ---------- Delete with confirmation (desktop) ---------- */
@@ -698,6 +880,10 @@
                 const exists = notes.find(n => n.id === activeId);
                 selectNote(exists ? activeId : notes[0].id);
             }
+            
+            // Initial check
+            windowHeight = window.innerHeight;
+            isMobile = window.innerWidth <= 768;
         }
         init();
     </script>
