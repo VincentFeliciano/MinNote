@@ -9,12 +9,13 @@
         :root {
             --bg: #ffffff;
             --bg-secondary: #fbfbfc;
-            --bg-hover: #FFEE8C;
-            --bg-active: #FFEE8C;
+            --bg-hover: #FFDD44;
+            --bg-active: #FFDD44;
             --border: #e5e5e7;
             --text: #1c1c1e;
             --text-muted: #8e8e93;
             --input-bg: #f9f9fa;
+            --input-Nbg: #FFDD44;
             --delete-red: #ff3b30;
             --delete-dark: #ff453a;
             --modal-overlay: rgba(0, 0, 0, 0.4);
@@ -23,12 +24,13 @@
         body.dark {
             --bg: #1c1c1e;
             --bg-secondary: #2c2c2e;
-            --bg-hover: #3a3a3c;
-            --bg-active: #48484a;
+            --bg-hover: #101585;
+            --bg-active: #101585;
             --border: #3a3a3c;
             --text: #f2f2f7;
             --text-muted: #a1a1a6;
             --input-bg: #2c2c2e;
+            --input-Nbg: #101585;
             --delete-red: #ff453a;
             --modal-overlay: rgba(0, 0, 0, 0.6);
         }
@@ -111,6 +113,17 @@
             border-radius: 6px;
             border: 1px solid var(--border);
             background: var(--input-bg);
+            color: var(--text);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .NNbtn {
+            padding: 6px 10px;
+            font-size: 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--input-Nbg);
             color: var(--text);
             cursor: pointer;
             flex-shrink: 0;
@@ -607,7 +620,7 @@
 
             <input class="search" placeholder="Search…" />
             <button class="btn" id="toggleTheme">🌙</button>
-            <button class="btn" id="newNote">＋</button>
+            <button class="NNbtn" id="newNote">＋</button>
         </div>
         <div class="main">
             <!-- Desktop: list on left, editor on right -->
@@ -972,7 +985,7 @@
         /* ---------- theme ---------- */
         function applyTheme() {
             document.body.classList.toggle('dark', theme === 'dark');
-            $('#toggleTheme').textContent = theme === 'dark' ? '😃' : '👻';
+            $('#toggleTheme').textContent = theme === 'dark' ? '☀️' : '🌑';
             localStorage.setItem('theme', theme);
             updateLogo(); // Update logo when theme changes
         }
@@ -1287,8 +1300,47 @@
 
         /* ---------- search ---------- */
         $('.search').addEventListener('input', () => {
+            const searchValue = $('.search').value.trim();
+            
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => render($('.search').value), 200);
+            searchTimeout = setTimeout(() => {
+                render(searchValue);
+                
+                // AUTO-EXPAND LIST ON MOBILE WHEN SEARCHING
+                if (isMobile && searchValue.length > 0 && listCollapsed) {
+                    expandList();
+                }
+                
+                // Auto-collapse when search is cleared
+                if (isMobile && searchValue.length === 0 && !listCollapsed) {
+                    setTimeout(() => {
+                        collapseList();
+                    }, 500); // Give user time to see results before collapsing
+                }
+            }, 200);
+        });
+
+        // Clear search handler
+        $('.search').addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                $('.search').value = '';
+                render('');
+                $('#editor').focus();
+                
+                // Auto-collapse on mobile when search is cleared with Escape
+                if (isMobile && !listCollapsed) {
+                    setTimeout(() => {
+                        collapseList();
+                    }, 100);
+                }
+            }
+        });
+
+        // Focus handler for search - expand if there's text
+        $('.search').addEventListener('focus', () => {
+            if (isMobile && $('.search').value.trim().length > 0 && listCollapsed) {
+                expandList();
+            }
         });
 
         /* ---------- buttons ---------- */
