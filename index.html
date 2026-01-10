@@ -20,6 +20,7 @@
             --delete-dark: #ff453a;
             --modal-overlay: rgba(0, 0, 0, 0.4);
             --panel-width: 280px;
+            --placeholder-color: #8e8e93;
         }
 
         body.dark {
@@ -34,6 +35,7 @@
             --input-Nbg: #101585;
             --delete-red: #ff453a;
             --modal-overlay: rgba(0, 0, 0, 0.6);
+            --placeholder-color: #a1a1a6;
         }
 
         * {
@@ -269,38 +271,9 @@
             touch-action: pan-y;
         }
 
-        /* Edge pull handle */
+        /* Edge pull handle - REMOVED */
         .edge-pull-handle {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 20px;
-            height: 100vh;
-            z-index: 80;
-            cursor: grab;
             display: none;
-            touch-action: none;
-        }
-
-        .edge-pull-handle.active {
-            cursor: grabbing;
-        }
-
-        .edge-pull-indicator {
-            position: absolute;
-            top: 50%;
-            left: 4px;
-            transform: translateY(-50%);
-            width: 4px;
-            height: 40px;
-            background: var(--text-muted);
-            border-radius: 2px;
-            opacity: 0.5;
-            transition: opacity 0.3s;
-        }
-
-        .edge-pull-handle:hover .edge-pull-indicator {
-            opacity: 1;
         }
 
         /* Panel overlay */
@@ -355,6 +328,7 @@
             min-height: 0;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            position: relative;
         }
 
         #editor {
@@ -369,18 +343,36 @@
             cursor: text;
             -webkit-user-select: text;
             user-select: text;
+            position: relative;
         }
 
-        #editor>div:first-child {
+        /* Ghost placeholder for empty editor */
+        .editor-placeholder {
+            position: absolute;
+            top: 16px;
+            left: 20px;
+            right: 20px;
+            color: var(--placeholder-color);
+            pointer-events: none;
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.3;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            z-index: 1;
+        }
+
+        .editor-placeholder.hidden {
+            display: none;
+        }
+
+        /* First line styling - REMOVED THE ::before CONTENT */
+        #editor > div:first-child {
             font-size: 20px;
             font-weight: 600;
             line-height: 1.3;
             margin-bottom: 8px;
-        }
-
-        #editor:empty:before {
-            content: attr(data-placeholder);
-            color: var(--text-muted);
+            min-height: 1.3em; /* Ensure it has height even when empty */
         }
 
         .hint {
@@ -556,9 +548,9 @@
                 display: none;
             }
 
-            /* Show edge pull handle */
+            /* Hide edge pull handle */
             .edge-pull-handle {
-                display: block;
+                display: none;
             }
 
             .editor-container {
@@ -579,6 +571,21 @@
                 height: 100%;
                 -webkit-overflow-scrolling: touch;
                 padding-bottom: 20px;
+            }
+
+            .editor-placeholder {
+                top: 12px;
+                left: 16px;
+                right: 16px;
+            }
+
+            /* First line styling for mobile */
+            #editor > div:first-child {
+                font-size: 20px;
+                font-weight: 600;
+                line-height: 1.3;
+                margin-bottom: 8px;
+                min-height: 1.3em;
             }
 
             .hint {
@@ -720,10 +727,7 @@
             <button class="NNbtn" id="newNote">＋</button>
         </div>
         
-        <!-- Edge pull handle for mobile -->
-        <div class="edge-pull-handle" id="edgePullHandle">
-            <div class="edge-pull-indicator"></div>
-        </div>
+        <!-- Edge pull handle for mobile - REMOVED -->
         
         <!-- Panel overlay -->
         <div class="panel-overlay" id="panelOverlay"></div>
@@ -760,7 +764,9 @@
             
             <div class="editor-container">
                 <div class="editor">
-                    <div id="editor" contenteditable="true" spellcheck="false" data-placeholder="Start typing…"></div>
+                    <div id="editor" contenteditable="true" spellcheck="false"></div>
+                    <!-- Ghost placeholder -->
+                    <div class="editor-placeholder" id="editorPlaceholder">Start typing…</div>
                 </div>
                 <div class="hint">Everything saves automatically</div>
             </div>
@@ -798,24 +804,13 @@
         let keyboardActive = false;
         let windowHeight = window.innerHeight;
         let currentPanel = null; // 'notes', 'search', or null
-        let swipeData = {
-            startX: 0,
-            currentX: 0,
-            panelElement: null,
-            panelType: null,
-            isSwiping: false,
-            startTransform: 0
-        };
-        const SWIPE_THRESHOLD = 50;
-        const PANEL_WIDTH = 280;
-        const CLOSE_THRESHOLD = 0.3; // Close if swiped less than 30% of panel width
 
         /* ---------- update logo based on theme ---------- */
         function updateLogo() {
             const logoBtn = $('#logoBtn');
             if (theme === 'dark') {
                 logoBtn.innerHTML = `
-      <svg width="35" height="19" viewBox="0 0 35 19" fill="none" xmlns="http://www.w3.org2000/svg">
+      <svg width="35" height="19" viewBox="0 0 35 19" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M4.09943 0.99716L8.31818 14.2585H8.48011L12.7074 0.99716H16.7983L10.7813 18.4517H6.02557L7.30157e-07 0.99716H4.09943ZM17.151 18.4517V5.3608H20.7816V18.4517H17.151ZM18.9748 3.6733C18.4351 3.6733 17.972 3.49432 17.5856 3.13636C17.2049 2.77273 17.0146 2.33807 17.0146 1.83239C17.0146 1.33239 17.2049 0.90341 17.5856 0.545456C17.972 0.181819 18.4351 4.76837e-07 18.9748 4.76837e-07C19.5146 4.76837e-07 19.9748 0.181819 20.3555 0.545456C20.7419 0.90341 20.9351 1.33239 20.9351 1.83239C20.9351 2.33807 20.7419 2.77273 20.3555 3.13636C19.9748 3.49432 19.5146 3.6733 18.9748 3.6733ZM25.6407 10.8835V18.4517H22.01V5.3608H25.4703V7.67046H25.6237C25.9134 6.90909 26.3992 6.30682 27.0811 5.86364C27.7629 5.41477 28.5896 5.19034 29.5612 5.19034C30.4703 5.19034 31.2629 5.38921 31.939 5.78693C32.6151 6.18466 33.1407 6.75284 33.5157 7.49148C33.8907 8.22443 34.0782 9.09943 34.0782 10.1165V18.4517H30.4475V10.7642C30.4532 9.96307 30.2487 9.33807 29.8339 8.88921C29.4191 8.43466 28.8481 8.20739 28.1208 8.20739C27.6322 8.20739 27.2004 8.3125 26.8254 8.52273C26.4561 8.73296 26.1663 9.03977 25.9561 9.44318C25.7515 9.84091 25.6464 10.321 25.6407 10.8835Z" fill="white"/>
       </svg>
     `;
@@ -875,200 +870,6 @@
             }
         }
 
-        /* ---------- swipe functions ---------- */
-        function startSwipe(e, panelElement, panelType) {
-            if (!isMobile) return;
-            
-            swipeData = {
-                startX: e.touches[0].clientX,
-                currentX: e.touches[0].clientX,
-                panelElement: panelElement,
-                panelType: panelType,
-                isSwiping: true,
-                startTransform: currentPanel === panelType ? 0 : -100
-            };
-            
-            // Disable transitions during swipe
-            panelElement.style.transition = 'none';
-            
-            // If panel is open, we're swiping to close
-            // If panel is closed, we're swiping to open from edge
-            if (currentPanel === panelType) {
-                // Swipe to close - panel is currently open
-                panelElement.style.transform = 'translateX(0)';
-            } else {
-                // Swipe to open - panel is currently closed
-                panelElement.style.transform = 'translateX(-100%)';
-            }
-        }
-
-        function updateSwipe(e) {
-            if (!swipeData.isSwiping) return;
-            
-            swipeData.currentX = e.touches[0].clientX;
-            const deltaX = swipeData.currentX - swipeData.startX;
-            
-            // Calculate new position
-            let newTransform;
-            if (currentPanel === swipeData.panelType) {
-                // Swiping to close: start at 0, move left (negative)
-                newTransform = Math.min(0, Math.max(-100, (deltaX / PANEL_WIDTH) * 100));
-            } else {
-                // Swiping to open: start at -100, move right (positive)
-                newTransform = Math.min(0, Math.max(-100, -100 + (deltaX / PANEL_WIDTH) * 100));
-            }
-            
-            swipeData.panelElement.style.transform = `translateX(${newTransform}%)`;
-        }
-
-        function endSwipe() {
-            if (!swipeData.isSwiping || !swipeData.panelElement) return;
-            
-            const deltaX = swipeData.currentX - swipeData.startX;
-            const deltaPercent = Math.abs(deltaX / PANEL_WIDTH);
-            
-            // Re-enable transitions
-            swipeData.panelElement.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-            
-            if (currentPanel === swipeData.panelType) {
-                // Swiping to close
-                if (deltaPercent > CLOSE_THRESHOLD && deltaX < 0) {
-                    // Swiped enough to close
-                    closePanel();
-                } else {
-                    // Not enough swipe, stay open
-                    swipeData.panelElement.style.transform = 'translateX(0)';
-                }
-            } else {
-                // Swiping to open
-                if (deltaPercent > CLOSE_THRESHOLD && deltaX > 0) {
-                    // Swiped enough to open
-                    openPanel(swipeData.panelType);
-                } else {
-                    // Not enough swipe, stay closed
-                    swipeData.panelElement.style.transform = 'translateX(-100%)';
-                }
-            }
-            
-            swipeData.isSwiping = false;
-        }
-
-        function setupSwipe() {
-            if (!isMobile) return;
-            
-            const edgeHandle = $('#edgePullHandle');
-            const sidePanel = $('#sidePanel');
-            const searchPanel = $('#searchPreviewPanel');
-            const panelOverlay = $('#panelOverlay');
-            
-            // Edge swipe to open
-            edgeHandle.addEventListener('touchstart', (e) => {
-                const searchValue = $('.search').value.trim();
-                const panelToOpen = searchValue.length > 0 ? searchPanel : sidePanel;
-                const panelType = searchValue.length > 0 ? 'search' : 'notes';
-                
-                startSwipe(e, panelToOpen, panelType);
-                edgeHandle.classList.add('active');
-                e.preventDefault();
-            }, { passive: false });
-            
-            edgeHandle.addEventListener('touchmove', (e) => {
-                updateSwipe(e);
-                e.preventDefault();
-            }, { passive: false });
-            
-            edgeHandle.addEventListener('touchend', () => {
-                endSwipe();
-                edgeHandle.classList.remove('active');
-            });
-            
-            edgeHandle.addEventListener('touchcancel', () => {
-                if (swipeData.isSwiping && swipeData.panelElement) {
-                    swipeData.panelElement.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-                    swipeData.panelElement.style.transform = currentPanel === swipeData.panelType ? 'translateX(0)' : 'translateX(-100%)';
-                }
-                swipeData.isSwiping = false;
-                edgeHandle.classList.remove('active');
-            });
-            
-            // Swipe to close on open panels
-            sidePanel.addEventListener('touchstart', (e) => {
-                if (currentPanel === 'notes') {
-                    startSwipe(e, sidePanel, 'notes');
-                    e.preventDefault();
-                }
-            }, { passive: false });
-            
-            sidePanel.addEventListener('touchmove', (e) => {
-                if (currentPanel === 'notes' && swipeData.isSwiping) {
-                    updateSwipe(e);
-                    e.preventDefault();
-                }
-            }, { passive: false });
-            
-            sidePanel.addEventListener('touchend', () => {
-                if (currentPanel === 'notes' && swipeData.isSwiping) {
-                    endSwipe();
-                }
-            });
-            
-            searchPanel.addEventListener('touchstart', (e) => {
-                if (currentPanel === 'search') {
-                    startSwipe(e, searchPanel, 'search');
-                    e.preventDefault();
-                }
-            }, { passive: false });
-            
-            searchPanel.addEventListener('touchmove', (e) => {
-                if (currentPanel === 'search' && swipeData.isSwiping) {
-                    updateSwipe(e);
-                    e.preventDefault();
-                }
-            }, { passive: false });
-            
-            searchPanel.addEventListener('touchend', () => {
-                if (currentPanel === 'search' && swipeData.isSwiping) {
-                    endSwipe();
-                }
-            });
-            
-            // Also allow swipe from very edge of screen
-            document.addEventListener('touchstart', (e) => {
-                if ((currentPanel) || e.touches[0].clientX > 30) return;
-                
-                const searchValue = $('.search').value.trim();
-                const panelToOpen = searchValue.length > 0 ? searchPanel : sidePanel;
-                const panelType = searchValue.length > 0 ? 'search' : 'notes';
-                
-                startSwipe(e, panelToOpen, panelType);
-                edgeHandle.classList.add('active');
-            }, { passive: true });
-            
-            document.addEventListener('touchmove', (e) => {
-                if (swipeData.isSwiping && !currentPanel) {
-                    updateSwipe(e);
-                }
-            }, { passive: true });
-            
-            document.addEventListener('touchend', () => {
-                if (swipeData.isSwiping && !currentPanel) {
-                    endSwipe();
-                    edgeHandle.classList.remove('active');
-                }
-            });
-            
-            // Cancel swipe on overlay
-            panelOverlay.addEventListener('touchstart', () => {
-                if (swipeData.isSwiping) {
-                    swipeData.isSwiping = false;
-                    if (swipeData.panelElement) {
-                        swipeData.panelElement.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-                        swipeData.panelElement.style.transform = currentPanel === swipeData.panelType ? 'translateX(0)' : 'translateX(-100%)';
-                    }
-                }
-            });
-        }
-
         /* ---------- theme ---------- */
         function applyTheme() {
             document.body.classList.toggle('dark', theme === 'dark');
@@ -1094,6 +895,22 @@
             const s = window.getSelection();
             s.removeAllRanges();
             s.addRange(r);
+        }
+
+        /* ---------- editor placeholder ---------- */
+        function updatePlaceholder() {
+            const editor = $('#editor');
+            const placeholder = $('#editorPlaceholder');
+            
+            // Check if editor has any content
+            const hasContent = editor.textContent.trim().length > 0;
+            
+            // Show/hide placeholder based on content
+            if (hasContent) {
+                placeholder.classList.add('hidden');
+            } else {
+                placeholder.classList.remove('hidden');
+            }
         }
 
         /* ---------- render ---------- */
@@ -1130,8 +947,26 @@
 
                     const content = document.createElement('div');
                     content.className = 'note-content';
-                    let preview = (n.text.split('\n')[0] || 'Untitled').substring(0, 100);
-                    preview = escapeHTML(preview);
+                    
+                    // Get the first line as the title, or show "Untitled" if empty
+                    const lines = n.text.split('\n');
+                    let preview = lines[0] || 'Untitled';
+                    
+                    // If first line is empty but there's content on other lines, 
+                    // find the first non-empty line
+                    if (preview === '' && lines.length > 1) {
+                        for (let i = 1; i < lines.length; i++) {
+                            if (lines[i].trim() !== '') {
+                                preview = lines[i];
+                                break;
+                            }
+                        }
+                        if (preview === '') {
+                            preview = 'Untitled';
+                        }
+                    }
+                    
+                    preview = escapeHTML(preview.substring(0, 100));
 
                     const title = document.createElement('span');
                     title.innerHTML = preview;
@@ -1159,13 +994,19 @@
                     content.appendChild(del);
                     wrap.appendChild(content);
 
-                    wrap.onclick = () => {
+                    wrap.onclick = (e) => {
+                        // Check if this is coming from a child delete button
+                        if (e.target.closest('.delete-btn')) {
+                            return; // Let the delete button handler handle it
+                        }
+                        
                         selectNote(n.id);
                         if (isMobile) {
                             closeAllPanels();
                         }
                     };
                     
+                    // Keep swipe-left to delete functionality on individual notes
                     addSwipe(wrap, n.id);
                     container.appendChild(wrap);
                 });
@@ -1205,7 +1046,25 @@
                             '<mark>$1</mark>'
                         );
                     } else {
-                        preview = escapeHTML((n.text.split('\n')[0] || 'Untitled').substring(0, 100));
+                        // Get the first line as the title, or show "Untitled" if empty
+                        const lines = n.text.split('\n');
+                        let titlePreview = lines[0] || 'Untitled';
+                        
+                        // If first line is empty but there's content on other lines, 
+                        // find the first non-empty line
+                        if (titlePreview === '' && lines.length > 1) {
+                            for (let i = 1; i < lines.length; i++) {
+                                if (lines[i].trim() !== '') {
+                                    titlePreview = lines[i];
+                                    break;
+                                }
+                            }
+                            if (titlePreview === '') {
+                                titlePreview = 'Untitled';
+                            }
+                        }
+                        
+                        preview = escapeHTML(titlePreview.substring(0, 100));
                     }
 
                     const title = document.createElement('span');
@@ -1227,6 +1086,9 @@
                     searchResultsContainer.appendChild(wrap);
                 });
             }
+            
+            // Update placeholder after rendering
+            updatePlaceholder();
         }
 
         /* ---------- swipe ---------- */
@@ -1241,6 +1103,8 @@
                 cx = sx;
                 swiping = true;
                 el.classList.add('swiping');
+                // Prevent any other touch handlers from interfering
+                e.stopPropagation();
             }, { passive: true });
 
             el.addEventListener('touchmove', e => {
@@ -1253,15 +1117,20 @@
                 }
             }, { passive: true });
 
-            el.addEventListener('touchend', () => {
+            el.addEventListener('touchend', (e) => {
+                if (!swiping) return;
                 swiping = false;
                 el.classList.remove('swiping');
                 const dx = cx - sx;
                 const swipePercentage = -dx / el.offsetWidth;
                 
                 if (swipePercentage > threshold) {
+                    // Swiped enough to delete - delete the note
                     deleteNote(id);
+                    e.stopPropagation(); // Prevent panel from closing
+                    e.preventDefault(); // Prevent default behavior
                 } else {
+                    // Not enough swipe - animate back
                     content.style.transition = 'transform 0.3s ease-out';
                     swipeBg.style.transition = 'transform 0.3s ease-out';
                     content.style.transform = 'translateX(0)';
@@ -1272,14 +1141,18 @@
                         swipeBg.style.transition = '';
                     }, 300);
                     
-                    if (swipePercentage < 0.3) {
+                    // Only select the note if it was a very short swipe (tap)
+                    if (swipePercentage < 0.1 && Math.abs(dx) < 10) {
+                        // This was a tap, not a swipe
                         selectNote(id);
                         if (isMobile) {
                             closeAllPanels();
                         }
                     }
+                    // For swipes that didn't reach threshold but weren't taps,
+                    // don't do anything (panel stays open)
                 }
-            });
+            }, { passive: true });
 
             el.addEventListener('touchcancel', () => {
                 swiping = false;
@@ -1294,6 +1167,15 @@
                     swipeBg.style.transition = '';
                 }, 300);
             });
+
+            // Prevent the click handler from being called for swipe gestures
+            el.addEventListener('click', (e) => {
+                // If we just processed a swipe, prevent the click
+                if (swiping) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                }
+            }, { capture: true });
         }
 
         /* ---------- crud ---------- */
@@ -1301,11 +1183,30 @@
             const note = notes.find(n => n.id === id);
             if (!note) return createNote();
             activeId = id;
-            $('#editor').innerHTML = note.text.split('\n').map(l => `<div>${escapeHTML(l) || '<br>'}</div>`).join('');
+            
+            // Clear editor and add content
+            const editor = $('#editor');
+            editor.innerHTML = '';
+            
+            const lines = note.text.split('\n');
+            lines.forEach((line, index) => {
+                const div = document.createElement('div');
+                div.textContent = line || (index === 0 ? '' : '');
+                editor.appendChild(div);
+            });
+            
+            // If note is empty, add an empty div
+            if (lines.length === 0 || (lines.length === 1 && lines[0] === '')) {
+                const div = document.createElement('div');
+                editor.appendChild(div);
+            }
+            
             render($('.search').value);
             save();
+            
             setTimeout(() => {
                 caretEnd($('#editor'));
+                updatePlaceholder();
             }, 0);
         }
 
@@ -1313,11 +1214,17 @@
             const note = { id: Date.now().toString(), text: '' };
             notes.unshift(note);
             activeId = note.id;
-            $('#editor').innerHTML = '<div><br></div>';
+            
+            // Clear editor and add empty div
+            const editor = $('#editor');
+            editor.innerHTML = '<div></div>';
+            
             render($('.search').value);
             save();
+            
             setTimeout(() => {
                 caretEnd($('#editor'));
+                updatePlaceholder();
             }, 0);
             
             if (isMobile) {
@@ -1370,9 +1277,44 @@
         $('#editor').addEventListener('input', () => {
             const note = notes.find(n => n.id === activeId);
             if (!note) return;
-            note.text = Array.from($('#editor').querySelectorAll('div')).map(d => d.innerText).join('\n');
+            
+            // Get all divs from editor
+            const divs = $('#editor').querySelectorAll('div');
+            note.text = Array.from(divs).map(d => d.innerText).join('\n');
+            
             render($('.search').value);
             save();
+            updatePlaceholder();
+        });
+
+        // Update placeholder on focus and any key press
+        $('#editor').addEventListener('focus', updatePlaceholder);
+        $('#editor').addEventListener('blur', updatePlaceholder);
+        
+        // Hide placeholder immediately when typing starts
+        $('#editor').addEventListener('keydown', (e) => {
+            // Hide placeholder immediately on any key press except modifiers
+            if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.length === 1) {
+                $('#editorPlaceholder').classList.add('hidden');
+            }
+            
+            // Show placeholder if backspace removes all content
+            if (e.key === 'Backspace') {
+                // Check after a short delay if editor is empty
+                setTimeout(() => {
+                    const editor = $('#editor');
+                    if (editor.textContent.trim().length === 0) {
+                        $('#editorPlaceholder').classList.remove('hidden');
+                    }
+                }, 10);
+            }
+        });
+
+        // Also hide placeholder on paste
+        $('#editor').addEventListener('paste', () => {
+            setTimeout(() => {
+                $('#editorPlaceholder').classList.add('hidden');
+            }, 10);
         });
 
         /* ---------- search ---------- */
@@ -1481,11 +1423,9 @@
             windowHeight = window.innerHeight;
             isMobile = window.innerWidth <= 768;
             
-            if (isMobile) {
-                setupSwipe();
-            }
-            
+            // No setupSwipe() call anymore
             render();
+            updatePlaceholder();
         }
         init();
     </script>
