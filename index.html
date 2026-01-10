@@ -19,6 +19,7 @@
             --delete-red: #ff3b30;
             --delete-dark: #ff453a;
             --modal-overlay: rgba(0, 0, 0, 0.4);
+            --panel-width: 280px;
         }
 
         body.dark {
@@ -47,11 +48,11 @@
             color: var(--text);
             height: 100vh;
             overflow: hidden;
-            /* Prevent body scrolling */
             position: fixed;
             width: 100%;
             top: 0;
             left: 0;
+            touch-action: none;
         }
 
         .app {
@@ -62,6 +63,7 @@
             display: flex;
             flex-direction: column;
             position: relative;
+            overflow: hidden;
         }
 
         .topbar {
@@ -71,15 +73,14 @@
             padding: 8px 12px;
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
-            z-index: 10;
+            z-index: 100;
             background: var(--bg);
         }
 
         .logo-btn {
             background: transparent;
             border: none;
-            cursor: default;
-            /* Make it non-clickable */
+            cursor: pointer;
             padding: 0;
             margin: 0;
             display: flex;
@@ -104,7 +105,6 @@
             background: var(--input-bg);
             color: var(--text);
             margin-left: 0;
-            /* Reset any left margin */
         }
 
         .btn {
@@ -137,7 +137,195 @@
             overflow: hidden;
         }
 
-        .list {
+        /* Side panel for mobile */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--panel-width);
+            height: 100vh;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            z-index: 90;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
+            touch-action: pan-y;
+        }
+
+        .side-panel.open {
+            transform: translateX(0);
+        }
+
+        .side-panel-header {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+            flex-shrink: 0;
+            touch-action: none;
+        }
+
+        .side-panel-title {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .close-panel-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .close-panel-btn:hover {
+            background: var(--bg-hover);
+        }
+
+        .note-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+        }
+
+        /* Search preview panel */
+        .search-preview-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--panel-width);
+            height: 100vh;
+            background: var(--bg);
+            border-right: 1px solid var(--border);
+            z-index: 95;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
+            touch-action: pan-y;
+        }
+
+        .search-preview-panel.open {
+            transform: translateX(0);
+        }
+
+        .search-preview-header {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            flex-shrink: 0;
+            touch-action: none;
+        }
+
+        .search-preview-title {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .close-search-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .close-search-btn:hover {
+            background: var(--bg-hover);
+        }
+
+        .search-results-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+        }
+
+        /* Edge pull handle */
+        .edge-pull-handle {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 100vh;
+            z-index: 80;
+            cursor: grab;
+            display: none;
+            touch-action: none;
+        }
+
+        .edge-pull-handle.active {
+            cursor: grabbing;
+        }
+
+        .edge-pull-indicator {
+            position: absolute;
+            top: 50%;
+            left: 4px;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 40px;
+            background: var(--text-muted);
+            border-radius: 2px;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+
+        .edge-pull-handle:hover .edge-pull-indicator {
+            opacity: 1;
+        }
+
+        /* Panel overlay */
+        .panel-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 85;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            backdrop-filter: blur(2px);
+            touch-action: none;
+        }
+
+        .panel-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Desktop list - REMOVED THE HEADER */
+        .desktop-list {
             width: 28%;
             border-right: 1px solid var(--border);
             background: var(--bg-secondary);
@@ -146,63 +334,68 @@
             min-height: 0;
         }
 
-        .list-header {
+        /* Remove desktop list header */
+        .desktop-list-header {
             display: none;
-            align-items: center;
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg-secondary);
-            cursor: pointer;
-            user-select: none;
-            flex-shrink: 0;
-            z-index: 5;
         }
 
-        .expand-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 12px;
-            cursor: pointer;
-            padding: 4px;
-            margin-right: 8px;
-            width: 24px;
-            height: 24px;
+        .editor-container {
+            flex: 1;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.3s ease;
-            border-radius: 4px;
+            flex-direction: column;
+            min-height: 0;
+            position: relative;
         }
 
-        .expand-btn:hover {
-            background: var(--bg-hover);
-        }
-
-        .expand-btn.rotated {
-            transform: rotate(180deg);
-        }
-
-        .current-note-title {
+        .editor {
             flex: 1;
-            font-size: 14px;
-            font-weight: 500;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            color: var(--text);
-        }
-
-        .note-list-container {
-            flex: 1;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
             overflow-y: auto;
-            padding: 6px;
+            -webkit-overflow-scrolling: touch;
         }
 
+        #editor {
+            flex: 1;
+            outline: none;
+            font-size: 16px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: var(--text);
+            font-family: inherit;
+            min-height: 0;
+            cursor: text;
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        #editor>div:first-child {
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: 8px;
+        }
+
+        #editor:empty:before {
+            content: attr(data-placeholder);
+            color: var(--text-muted);
+        }
+
+        .hint {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            flex-shrink: 0;
+            padding: 0 20px 16px;
+        }
+
+        /* Note styles */
         .note {
             position: relative;
             border-radius: 6px;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
             overflow: hidden;
             background: transparent;
         }
@@ -221,14 +414,11 @@
             color: #fff;
             font-weight: bold;
             z-index: 0;
-            /* Remove border-radius from swipe background */
             border-radius: 0;
-            /* Make it extend slightly beyond the note bounds to cover corners */
             transform: translateX(100%);
             transition: transform 0.2s ease-out;
         }
 
-        /* When swiping, show the background */
         .note.swiping .swipe-bg {
             transform: translateX(0);
         }
@@ -240,13 +430,12 @@
             justify-content: space-between;
             align-items: center;
             background: var(--bg-secondary);
-            padding: 8px 10px;
+            padding: 10px 12px;
             font-size: 14px;
             cursor: pointer;
             border-radius: 6px;
             transition: background .2s, transform .2s;
             transform: translateX(0);
-            /* Ensure content clips to its own border-radius */
             overflow: hidden;
         }
 
@@ -303,58 +492,6 @@
             font-size: 14px;
         }
 
-        .editor-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-            position: relative;
-        }
-
-        .editor {
-            flex: 1;
-            padding: 16px 20px;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        #editor {
-            flex: 1;
-            outline: none;
-            font-size: 16px;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            color: var(--text);
-            font-family: inherit;
-            min-height: 0;
-            cursor: text;
-            -webkit-user-select: text;
-            user-select: text;
-        }
-
-        #editor>div:first-child {
-            font-size: 20px;
-            font-weight: 600;
-            line-height: 1.3;
-            margin-bottom: 8px;
-        }
-
-        #editor:empty:before {
-            content: attr(data-placeholder);
-            color: var(--text-muted);
-        }
-
-        .hint {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-top: 6px;
-            flex-shrink: 0;
-            padding: 0 20px 16px;
-        }
-
         /* Desktop: show all notes, scroll when needed */
         @media (min-width: 769px) {
             body {
@@ -367,27 +504,31 @@
                 min-height: 100vh;
             }
             
-            .list {
+            .desktop-list {
                 height: auto;
-                /* Let content determine height */
                 overflow-y: hidden;
-                /* Scroll is handled by note-list-container */
             }
             
             .note-list-container {
                 overflow-y: auto;
-                /* Scroll when content exceeds available space */
+            }
+            
+            /* Hide mobile elements on desktop */
+            .side-panel,
+            .search-preview-panel,
+            .edge-pull-handle,
+            .panel-overlay {
+                display: none !important;
             }
         }
 
-        /* Mobile: editor on top, collapsible list below */
+        /* Mobile: slide-out panel from left */
         @media (max-width: 768px) {
             body {
                 position: fixed;
                 width: 100%;
                 height: 100%;
                 overflow: hidden;
-                touch-action: none;
             }
             
             .app {
@@ -405,47 +546,19 @@
             .main {
                 flex-direction: column;
                 height: calc(100% - 49px);
-                /* Subtract topbar height */
                 flex: 1;
                 min-height: 0;
                 overflow: hidden;
             }
 
-            .list {
-                width: 100%;
-                border-right: none;
-                border-top: 1px solid var(--border);
-                max-height: 50px;
-                /* Only show header when collapsed */
-                transition: max-height 0.3s ease;
-                flex-shrink: 0;
-                position: relative;
-                z-index: 5;
-            }
-
-            .list.expanded {
-                max-height: 50%;
-                /* Take up to 50% of remaining space */
-                flex: 1;
-                min-height: 0;
-            }
-
-            .list-header {
-                display: flex;
-                position: sticky;
-                top: 0;
-                z-index: 2;
-            }
-
-            .note-list-container {
-                overflow-y: auto;
-                flex: 1;
-                min-height: 0;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .list:not(.expanded) .note-list-container {
+            /* Hide desktop list on mobile */
+            .desktop-list {
                 display: none;
+            }
+
+            /* Show edge pull handle */
+            .edge-pull-handle {
+                display: block;
             }
 
             .editor-container {
@@ -455,15 +568,7 @@
                 flex-direction: column;
                 overflow: hidden;
                 position: relative;
-                height: calc(100% - 50px);
-                /* Subtract list header height */
-                transition: height 0.3s ease;
-            }
-
-            .list.expanded + .editor-container {
-                height: 50%;
-                /* When list is expanded, editor takes 50% height */
-                min-height: 0;
+                width: 100%;
             }
 
             .editor {
@@ -474,7 +579,6 @@
                 height: 100%;
                 -webkit-overflow-scrolling: touch;
                 padding-bottom: 20px;
-                /* Extra padding for keyboard */
             }
 
             .hint {
@@ -486,7 +590,6 @@
             .keyboard-active .editor {
                 padding-top: 8px;
                 padding-bottom: 40px;
-                /* More padding when keyboard is active */
             }
 
             .keyboard-active .hint {
@@ -505,6 +608,12 @@
                 
                 .editor {
                     padding-bottom: env(safe-area-inset-bottom, 20px);
+                }
+                
+                .side-panel,
+                .search-preview-panel {
+                    padding-top: env(safe-area-inset-top, 0);
+                    height: calc(100vh - env(safe-area-inset-top, 0));
                 }
             }
         }
@@ -592,25 +701,13 @@
         .modal-btn.delete:hover {
             opacity: 0.9;
         }
-        
-        /* Cursor tracking styles */
-        .cursor-highlight {
-            position: absolute;
-            background: rgba(255, 238, 140, 0.3);
-            border-radius: 2px;
-            pointer-events: none;
-            z-index: 1;
-            transition: top 0.1s ease;
-        }
     </style>
 </head>
 
 <body>
     <div class="app">
         <div class="topbar">
-            <!-- Logo button (inactive) -->
             <button class="logo-btn" id="logoBtn">
-                <!-- Light mode logo (black) by default -->
                 <svg width="35" height="19" viewBox="0 0 35 19" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
                         d="M4.09943 0.997175L8.31818 14.2585H8.48011L12.7074 0.997175H16.7983L10.7813 18.4517H6.02557L7.30157e-07 0.997175H4.09943ZM17.151 18.4517V5.36081H20.7816V18.4517H17.151ZM18.9748 3.67331C18.4351 3.67331 17.972 3.49433 17.5856 3.13638C17.2049 2.77274 17.0146 2.33808 17.0146 1.8324C17.0146 1.3324 17.2049 0.903425 17.5856 0.545471C17.972 0.181834 18.4351 1.57356e-05 18.9748 1.57356e-05C19.5146 1.57356e-05 19.9748 0.181834 20.3555 0.545471C20.7419 0.903425 20.9351 1.3324 20.9351 1.8324C20.9351 2.33808 20.7419 2.77274 20.3555 3.13638C19.9748 3.49433 19.5146 3.67331 18.9748 3.67331ZM25.6407 10.8835V18.4517H22.01V5.36081H25.4703V7.67047H25.6237C25.9134 6.90911 26.3992 6.30683 27.0811 5.86365C27.7629 5.41479 28.5896 5.19036 29.5612 5.19036C30.4703 5.19036 31.2629 5.38922 31.939 5.78695C32.6151 6.18468 33.1407 6.75286 33.5157 7.49149C33.8907 8.22445 34.0782 9.09945 34.0782 10.1165V18.4517H30.4475V10.7642C30.4532 9.96308 30.2487 9.33808 29.8339 8.88922C29.4191 8.43468 28.8481 8.2074 28.1208 8.2074C27.6322 8.2074 27.2004 8.31252 26.8254 8.52274C26.4561 8.73297 26.1663 9.03979 25.9561 9.4432C25.7515 9.84093 25.6464 10.321 25.6407 10.8835Z"
@@ -622,22 +719,50 @@
             <button class="btn" id="toggleTheme">🌙</button>
             <button class="NNbtn" id="newNote">＋</button>
         </div>
+        
+        <!-- Edge pull handle for mobile -->
+        <div class="edge-pull-handle" id="edgePullHandle">
+            <div class="edge-pull-indicator"></div>
+        </div>
+        
+        <!-- Panel overlay -->
+        <div class="panel-overlay" id="panelOverlay"></div>
+        
+        <!-- Mobile side panel (for notes list) -->
+        <div class="side-panel" id="sidePanel">
+            <div class="side-panel-header">
+                <div class="side-panel-title">Notes</div>
+                <button class="close-panel-btn" id="closePanelBtn">×</button>
+            </div>
+            <div class="note-list-container" id="noteListContainer">
+                <!-- Notes will be rendered here -->
+            </div>
+        </div>
+        
+        <!-- Search preview panel -->
+        <div class="search-preview-panel" id="searchPreviewPanel">
+            <div class="search-preview-header">
+                <div class="search-preview-title">Search Results</div>
+                <button class="close-search-btn" id="closeSearchBtn">×</button>
+            </div>
+            <div class="search-results-container" id="searchResultsContainer">
+                <!-- Search results will be rendered here -->
+            </div>
+        </div>
+        
         <div class="main">
-            <!-- Desktop: list on left, editor on right -->
-            <div class="list" id="noteList">
-                <div class="list-header" id="listHeader">
-                    <button class="expand-btn" id="expandBtn">🗻</button>
-                    <div class="current-note-title" id="currentNoteTitle">Notes</div>
-                </div>
-                <div class="note-list-container" id="noteListContainer">
-                    <!-- Notes will be rendered here -->
+            <!-- Desktop list - NO HEADER -->
+            <div class="desktop-list" id="desktopList">
+                <div class="note-list-container" id="desktopNoteListContainer">
+                    <!-- Desktop notes will be rendered here -->
                 </div>
             </div>
+            
             <div class="editor-container">
                 <div class="editor">
                     <div id="editor" contenteditable="true" spellcheck="false" data-placeholder="Start typing…"></div>
                 </div>
-                <div class="hint">Everything saves automatically • Esc: Clear search</div>
+                <div class="hint">Everything saves automatically</div>
             </div>
         </div>
     </div>
@@ -668,247 +793,29 @@
         let activeId = localStorage.getItem('activeId');
         let theme = localStorage.getItem('theme') || 'light';
         let searchTimeout = null;
-        let noteToDelete = null; // For confirmation modal
+        let noteToDelete = null;
         let isMobile = window.innerWidth <= 768;
         let keyboardActive = false;
         let windowHeight = window.innerHeight;
-        let listCollapsed = true; // Start collapsed on mobile
-        let cursorScrollInterval = null;
-        let lastCursorPosition = null;
-        let cursorHighlight = null;
-
-        /* ---------- create cursor highlight ---------- */
-        function createCursorHighlight() {
-            if (!cursorHighlight) {
-                cursorHighlight = document.createElement('div');
-                cursorHighlight.className = 'cursor-highlight';
-                document.body.appendChild(cursorHighlight);
-            }
-            return cursorHighlight;
-        }
-
-        /* ---------- update cursor highlight position ---------- */
-        function updateCursorHighlight() {
-            if (!keyboardActive || !isMobile) return;
-            
-            const selection = window.getSelection();
-            if (!selection.rangeCount) return;
-            
-            const range = selection.getRangeAt(0);
-            const rect = range.getBoundingClientRect();
-            
-            if (rect.height > 0) {
-                cursorHighlight.style.display = 'block';
-                cursorHighlight.style.left = rect.left + 'px';
-                cursorHighlight.style.top = (rect.top + window.scrollY) + 'px';
-                cursorHighlight.style.width = rect.width + 'px';
-                cursorHighlight.style.height = rect.height + 'px';
-                lastCursorPosition = rect.top;
-                
-                // Scroll to keep cursor visible
-                scrollCursorIntoView(rect.top);
-            }
-        }
-
-        /* ---------- scroll cursor into view ---------- */
-        function scrollCursorIntoView(cursorTop) {
-            if (!keyboardActive || !isMobile) return;
-            
-            const editor = $('.editor');
-            const editorRect = editor.getBoundingClientRect();
-            const editorScrollTop = editor.scrollTop;
-            
-            // Calculate visible area
-            const visibleTop = editorRect.top;
-            const visibleBottom = editorRect.bottom;
-            const cursorBottom = cursorTop + 30; // Add some buffer
-            
-            // Check if cursor is near bottom (where keyboard might cover it)
-            const viewportHeight = window.innerHeight;
-            const keyboardArea = viewportHeight * 0.4; // Assume keyboard takes ~40% of screen
-            
-            // If cursor is in the keyboard area, scroll up
-            if (cursorBottom > (viewportHeight - keyboardArea)) {
-                const scrollAmount = cursorBottom - (viewportHeight - keyboardArea) + 20;
-                editor.scrollTop += scrollAmount;
-            }
-            // If cursor is near top, make sure it's visible
-            else if (cursorTop < (visibleTop + 50)) {
-                const scrollAmount = cursorTop - visibleTop - 50;
-                editor.scrollTop += scrollAmount;
-            }
-        }
-
-        /* ---------- keyboard detection ---------- */
-        function checkKeyboard() {
-            if (!isMobile) return;
-            
-            const newHeight = window.innerHeight;
-            const heightDiff = windowHeight - newHeight;
-            
-            // If viewport height decreased significantly, keyboard is likely open
-            if (heightDiff > 150 && !keyboardActive) {
-                keyboardActive = true;
-                document.body.classList.add('keyboard-active');
-                
-                // Start tracking cursor position
-                startCursorTracking();
-                
-                // Scroll editor to show cursor after a delay
-                setTimeout(() => {
-                    updateCursorHighlight();
-                    const selection = window.getSelection();
-                    if (selection.rangeCount) {
-                        const range = selection.getRangeAt(0);
-                        const rect = range.getBoundingClientRect();
-                        if (rect.height > 0) {
-                            scrollCursorIntoView(rect.top);
-                        }
-                    }
-                }, 300);
-            } 
-            // If viewport height increased, keyboard is likely closed
-            else if (heightDiff < -50 && keyboardActive) {
-                keyboardActive = false;
-                document.body.classList.remove('keyboard-active');
-                
-                // Stop cursor tracking
-                stopCursorTracking();
-                
-                // Hide cursor highlight
-                if (cursorHighlight) {
-                    cursorHighlight.style.display = 'none';
-                }
-                
-                // Reset scroll position
-                setTimeout(() => {
-                    const editor = $('.editor');
-                    editor.scrollTop = 0;
-                }, 100);
-            }
-            
-            windowHeight = newHeight;
-        }
-
-        /* ---------- start cursor tracking ---------- */
-        function startCursorTracking() {
-            if (!isMobile) return;
-            
-            // Create highlight element
-            createCursorHighlight();
-            
-            // Clear any existing interval
-            if (cursorScrollInterval) {
-                clearInterval(cursorScrollInterval);
-            }
-            
-            // Track cursor position periodically
-            cursorScrollInterval = setInterval(updateCursorHighlight, 100);
-            
-            // Also track on input events
-            $('#editor').addEventListener('input', updateCursorHighlight);
-            $('#editor').addEventListener('click', updateCursorHighlight);
-            $('#editor').addEventListener('touchstart', updateCursorHighlight);
-        }
-
-        /* ---------- stop cursor tracking ---------- */
-        function stopCursorTracking() {
-            if (cursorScrollInterval) {
-                clearInterval(cursorScrollInterval);
-                cursorScrollInterval = null;
-            }
-            
-            $('#editor').removeEventListener('input', updateCursorHighlight);
-            $('#editor').removeEventListener('click', updateCursorHighlight);
-            $('#editor').removeEventListener('touchstart', updateCursorHighlight);
-            
-            if (cursorHighlight) {
-                cursorHighlight.style.display = 'none';
-            }
-        }
-
-        // Track window resize for keyboard detection
-        window.addEventListener('resize', checkKeyboard);
-
-        // Also check on focus/blur of editor
-        $('#editor').addEventListener('focus', () => {
-            if (isMobile) {
-                setTimeout(() => {
-                    checkKeyboard();
-                }, 300);
-                
-                // Auto-collapse list when editor is focused
-                if (isMobile && !listCollapsed) {
-                    setTimeout(() => {
-                        collapseList();
-                    }, 100);
-                }
-            }
-        });
-
-        $('#editor').addEventListener('blur', () => {
-            if (isMobile && keyboardActive) {
-                setTimeout(() => {
-                    checkKeyboard();
-                }, 300);
-            }
-        });
-
-        // Auto-collapse when clicking on editor content
-        $('#editor').addEventListener('click', () => {
-            if (isMobile && !listCollapsed) {
-                setTimeout(() => {
-                    collapseList();
-                }, 100);
-            }
-        });
-
-        // Track cursor movement within editor
-        $('#editor').addEventListener('keyup', updateCursorHighlight);
-        $('#editor').addEventListener('mouseup', updateCursorHighlight);
-        $('#editor').addEventListener('touchend', updateCursorHighlight);
-
-        // Update isMobile on window resize
-        window.addEventListener('resize', handleResize);
-
-        function handleResize() {
-            const wasMobile = isMobile;
-            isMobile = window.innerWidth <= 768;
-            windowHeight = window.innerHeight;
-            
-            // Reset list state when switching between mobile and desktop
-            if (wasMobile !== isMobile) {
-                const list = $('#noteList');
-                const expandBtn = $('#expandBtn');
-                
-                if (!isMobile) {
-                    // On desktop, always show full list
-                    list.classList.remove('expanded');
-                    expandBtn.classList.remove('rotated');
-                    listCollapsed = false;
-                    
-                    // Stop cursor tracking on desktop
-                    stopCursorTracking();
-                } else {
-                    // On mobile, start with list collapsed
-                    list.classList.remove('expanded');
-                    expandBtn.classList.add('rotated');
-                    listCollapsed = true;
-                    
-                    // Create cursor highlight for mobile
-                    createCursorHighlight();
-                }
-                
-                updateCurrentNoteTitle();
-            }
-        }
+        let currentPanel = null; // 'notes', 'search', or null
+        let swipeData = {
+            startX: 0,
+            currentX: 0,
+            panelElement: null,
+            panelType: null,
+            isSwiping: false,
+            startTransform: 0
+        };
+        const SWIPE_THRESHOLD = 50;
+        const PANEL_WIDTH = 280;
+        const CLOSE_THRESHOLD = 0.3; // Close if swiped less than 30% of panel width
 
         /* ---------- update logo based on theme ---------- */
         function updateLogo() {
             const logoBtn = $('#logoBtn');
             if (theme === 'dark') {
                 logoBtn.innerHTML = `
-      <svg width="35" height="19" viewBox="0 0 35 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="35" height="19" viewBox="0 0 35 19" fill="none" xmlns="http://www.w3.org2000/svg">
         <path d="M4.09943 0.99716L8.31818 14.2585H8.48011L12.7074 0.99716H16.7983L10.7813 18.4517H6.02557L7.30157e-07 0.99716H4.09943ZM17.151 18.4517V5.3608H20.7816V18.4517H17.151ZM18.9748 3.6733C18.4351 3.6733 17.972 3.49432 17.5856 3.13636C17.2049 2.77273 17.0146 2.33807 17.0146 1.83239C17.0146 1.33239 17.2049 0.90341 17.5856 0.545456C17.972 0.181819 18.4351 4.76837e-07 18.9748 4.76837e-07C19.5146 4.76837e-07 19.9748 0.181819 20.3555 0.545456C20.7419 0.90341 20.9351 1.33239 20.9351 1.83239C20.9351 2.33807 20.7419 2.77273 20.3555 3.13636C19.9748 3.49432 19.5146 3.6733 18.9748 3.6733ZM25.6407 10.8835V18.4517H22.01V5.3608H25.4703V7.67046H25.6237C25.9134 6.90909 26.3992 6.30682 27.0811 5.86364C27.7629 5.41477 28.5896 5.19034 29.5612 5.19034C30.4703 5.19034 31.2629 5.38921 31.939 5.78693C32.6151 6.18466 33.1407 6.75284 33.5157 7.49148C33.8907 8.22443 34.0782 9.09943 34.0782 10.1165V18.4517H30.4475V10.7642C30.4532 9.96307 30.2487 9.33807 29.8339 8.88921C29.4191 8.43466 28.8481 8.20739 28.1208 8.20739C27.6322 8.20739 27.2004 8.3125 26.8254 8.52273C26.4561 8.73296 26.1663 9.03977 25.9561 9.44318C25.7515 9.84091 25.6464 10.321 25.6407 10.8835Z" fill="white"/>
       </svg>
     `;
@@ -921,65 +828,245 @@
             }
         }
 
-        /* ---------- update current note title ---------- */
-        function updateCurrentNoteTitle() {
+        /* ---------- panel functions ---------- */
+        function openPanel(type) {
             if (!isMobile) return;
             
-            const currentNoteTitle = $('#currentNoteTitle');
-            if (activeId) {
-                const note = notes.find(n => n.id === activeId);
-                if (note) {
-                    const title = (note.text.split('\n')[0] || 'Untitled').substring(0, 50);
-                    currentNoteTitle.textContent = title || 'Empty Note';
+            // Close any existing panel first
+            if (currentPanel) {
+                closePanel();
+            }
+            
+            currentPanel = type;
+            
+            if (type === 'notes') {
+                $('#sidePanel').classList.add('open');
+            } else if (type === 'search') {
+                $('#searchPreviewPanel').classList.add('open');
+            }
+            
+            $('#panelOverlay').classList.add('visible');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePanel() {
+            if (!isMobile || !currentPanel) return;
+            
+            if (currentPanel === 'notes') {
+                $('#sidePanel').classList.remove('open');
+            } else if (currentPanel === 'search') {
+                $('#searchPreviewPanel').classList.remove('open');
+            }
+            
+            currentPanel = null;
+            $('#panelOverlay').classList.remove('visible');
+            document.body.style.overflow = '';
+        }
+
+        function closeAllPanels() {
+            closePanel();
+        }
+
+        function togglePanel() {
+            if (currentPanel === 'notes') {
+                closePanel();
+            } else {
+                openPanel('notes');
+            }
+        }
+
+        /* ---------- swipe functions ---------- */
+        function startSwipe(e, panelElement, panelType) {
+            if (!isMobile) return;
+            
+            swipeData = {
+                startX: e.touches[0].clientX,
+                currentX: e.touches[0].clientX,
+                panelElement: panelElement,
+                panelType: panelType,
+                isSwiping: true,
+                startTransform: currentPanel === panelType ? 0 : -100
+            };
+            
+            // Disable transitions during swipe
+            panelElement.style.transition = 'none';
+            
+            // If panel is open, we're swiping to close
+            // If panel is closed, we're swiping to open from edge
+            if (currentPanel === panelType) {
+                // Swipe to close - panel is currently open
+                panelElement.style.transform = 'translateX(0)';
+            } else {
+                // Swipe to open - panel is currently closed
+                panelElement.style.transform = 'translateX(-100%)';
+            }
+        }
+
+        function updateSwipe(e) {
+            if (!swipeData.isSwiping) return;
+            
+            swipeData.currentX = e.touches[0].clientX;
+            const deltaX = swipeData.currentX - swipeData.startX;
+            
+            // Calculate new position
+            let newTransform;
+            if (currentPanel === swipeData.panelType) {
+                // Swiping to close: start at 0, move left (negative)
+                newTransform = Math.min(0, Math.max(-100, (deltaX / PANEL_WIDTH) * 100));
+            } else {
+                // Swiping to open: start at -100, move right (positive)
+                newTransform = Math.min(0, Math.max(-100, -100 + (deltaX / PANEL_WIDTH) * 100));
+            }
+            
+            swipeData.panelElement.style.transform = `translateX(${newTransform}%)`;
+        }
+
+        function endSwipe() {
+            if (!swipeData.isSwiping || !swipeData.panelElement) return;
+            
+            const deltaX = swipeData.currentX - swipeData.startX;
+            const deltaPercent = Math.abs(deltaX / PANEL_WIDTH);
+            
+            // Re-enable transitions
+            swipeData.panelElement.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            
+            if (currentPanel === swipeData.panelType) {
+                // Swiping to close
+                if (deltaPercent > CLOSE_THRESHOLD && deltaX < 0) {
+                    // Swiped enough to close
+                    closePanel();
                 } else {
-                    currentNoteTitle.textContent = 'Notes';
+                    // Not enough swipe, stay open
+                    swipeData.panelElement.style.transform = 'translateX(0)';
                 }
             } else {
-                currentNoteTitle.textContent = 'Notes';
+                // Swiping to open
+                if (deltaPercent > CLOSE_THRESHOLD && deltaX > 0) {
+                    // Swiped enough to open
+                    openPanel(swipeData.panelType);
+                } else {
+                    // Not enough swipe, stay closed
+                    swipeData.panelElement.style.transform = 'translateX(-100%)';
+                }
             }
+            
+            swipeData.isSwiping = false;
         }
 
-        /* ---------- collapse list helper ---------- */
-        function collapseList() {
-            if (!isMobile || listCollapsed) return;
-            
-            listCollapsed = true;
-            const list = $('#noteList');
-            const expandBtn = $('#expandBtn');
-            
-            list.classList.remove('expanded');
-            expandBtn.classList.add('rotated');
-            
-            // Restore editor to full height
-            const editorContainer = $('.editor-container');
-            editorContainer.style.height = 'calc(100% - 50px)';
-        }
-
-        /* ---------- expand list helper ---------- */
-        function expandList() {
-            if (!isMobile || !listCollapsed) return;
-            
-            listCollapsed = false;
-            const list = $('#noteList');
-            const expandBtn = $('#expandBtn');
-            
-            list.classList.add('expanded');
-            expandBtn.classList.remove('rotated');
-            
-            // Adjust editor height when list is expanded
-            const editorContainer = $('.editor-container');
-            editorContainer.style.height = '50%';
-        }
-
-        /* ---------- toggle list ---------- */
-        function toggleList() {
+        function setupSwipe() {
             if (!isMobile) return;
             
-            if (listCollapsed) {
-                expandList();
-            } else {
-                collapseList();
-            }
+            const edgeHandle = $('#edgePullHandle');
+            const sidePanel = $('#sidePanel');
+            const searchPanel = $('#searchPreviewPanel');
+            const panelOverlay = $('#panelOverlay');
+            
+            // Edge swipe to open
+            edgeHandle.addEventListener('touchstart', (e) => {
+                const searchValue = $('.search').value.trim();
+                const panelToOpen = searchValue.length > 0 ? searchPanel : sidePanel;
+                const panelType = searchValue.length > 0 ? 'search' : 'notes';
+                
+                startSwipe(e, panelToOpen, panelType);
+                edgeHandle.classList.add('active');
+                e.preventDefault();
+            }, { passive: false });
+            
+            edgeHandle.addEventListener('touchmove', (e) => {
+                updateSwipe(e);
+                e.preventDefault();
+            }, { passive: false });
+            
+            edgeHandle.addEventListener('touchend', () => {
+                endSwipe();
+                edgeHandle.classList.remove('active');
+            });
+            
+            edgeHandle.addEventListener('touchcancel', () => {
+                if (swipeData.isSwiping && swipeData.panelElement) {
+                    swipeData.panelElement.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                    swipeData.panelElement.style.transform = currentPanel === swipeData.panelType ? 'translateX(0)' : 'translateX(-100%)';
+                }
+                swipeData.isSwiping = false;
+                edgeHandle.classList.remove('active');
+            });
+            
+            // Swipe to close on open panels
+            sidePanel.addEventListener('touchstart', (e) => {
+                if (currentPanel === 'notes') {
+                    startSwipe(e, sidePanel, 'notes');
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            sidePanel.addEventListener('touchmove', (e) => {
+                if (currentPanel === 'notes' && swipeData.isSwiping) {
+                    updateSwipe(e);
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            sidePanel.addEventListener('touchend', () => {
+                if (currentPanel === 'notes' && swipeData.isSwiping) {
+                    endSwipe();
+                }
+            });
+            
+            searchPanel.addEventListener('touchstart', (e) => {
+                if (currentPanel === 'search') {
+                    startSwipe(e, searchPanel, 'search');
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            searchPanel.addEventListener('touchmove', (e) => {
+                if (currentPanel === 'search' && swipeData.isSwiping) {
+                    updateSwipe(e);
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            searchPanel.addEventListener('touchend', () => {
+                if (currentPanel === 'search' && swipeData.isSwiping) {
+                    endSwipe();
+                }
+            });
+            
+            // Also allow swipe from very edge of screen
+            document.addEventListener('touchstart', (e) => {
+                if ((currentPanel) || e.touches[0].clientX > 30) return;
+                
+                const searchValue = $('.search').value.trim();
+                const panelToOpen = searchValue.length > 0 ? searchPanel : sidePanel;
+                const panelType = searchValue.length > 0 ? 'search' : 'notes';
+                
+                startSwipe(e, panelToOpen, panelType);
+                edgeHandle.classList.add('active');
+            }, { passive: true });
+            
+            document.addEventListener('touchmove', (e) => {
+                if (swipeData.isSwiping && !currentPanel) {
+                    updateSwipe(e);
+                }
+            }, { passive: true });
+            
+            document.addEventListener('touchend', () => {
+                if (swipeData.isSwiping && !currentPanel) {
+                    endSwipe();
+                    edgeHandle.classList.remove('active');
+                }
+            });
+            
+            // Cancel swipe on overlay
+            panelOverlay.addEventListener('touchstart', () => {
+                if (swipeData.isSwiping) {
+                    swipeData.isSwiping = false;
+                    if (swipeData.panelElement) {
+                        swipeData.panelElement.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                        swipeData.panelElement.style.transform = currentPanel === swipeData.panelType ? 'translateX(0)' : 'translateX(-100%)';
+                    }
+                }
+            });
         }
 
         /* ---------- theme ---------- */
@@ -987,7 +1074,7 @@
             document.body.classList.toggle('dark', theme === 'dark');
             $('#toggleTheme').textContent = theme === 'dark' ? '☀️' : '🌑';
             localStorage.setItem('theme', theme);
-            updateLogo(); // Update logo when theme changes
+            updateLogo();
         }
         $('#toggleTheme').onclick = () => { theme = theme === 'dark' ? 'light' : 'dark'; applyTheme(); };
         applyTheme();
@@ -1007,46 +1094,106 @@
             const s = window.getSelection();
             s.removeAllRanges();
             s.addRange(r);
-            
-            // On mobile, update cursor position after focusing
-            if (isMobile) {
-                setTimeout(() => {
-                    updateCursorHighlight();
-                }, 100);
-            }
         }
 
         /* ---------- render ---------- */
         function render(filter = '') {
-            const listContainer = $('#noteListContainer');
-            listContainer.innerHTML = '';
+            const mobileContainer = $('#noteListContainer');
+            const desktopContainer = $('#desktopNoteListContainer');
+            const searchResultsContainer = $('#searchResultsContainer');
+            
             const f = filter.toLowerCase();
             const filtered = notes.filter(n => !f || n.text.toLowerCase().includes(f));
 
-            if (!filtered.length) {
-                const e = document.createElement('div');
-                e.className = 'empty-state';
-                e.textContent = f ? 'No notes match your search' : 'No notes yet';
-                listContainer.appendChild(e);
-                return;
-            }
+            // Render notes list (all notes)
+            const containers = isMobile ? [mobileContainer] : [desktopContainer];
+            containers.forEach(container => {
+                container.innerHTML = '';
+                
+                if (!notes.length) {
+                    const e = document.createElement('div');
+                    e.className = 'empty-state';
+                    e.textContent = 'No notes yet';
+                    container.appendChild(e);
+                    return;
+                }
 
-            const toShow = filtered;
-            toShow.forEach(n => {
-                const wrap = document.createElement('div');
-                wrap.className = 'note' + (n.id === activeId ? ' active' : '');
-                wrap.dataset.noteId = n.id;
+                notes.forEach(n => {
+                    const wrap = document.createElement('div');
+                    wrap.className = 'note' + (n.id === activeId ? ' active' : '');
+                    wrap.dataset.noteId = n.id;
 
-                const bg = document.createElement('div');
-                bg.className = 'swipe-bg';
-                bg.textContent = 'Delete';
-                wrap.appendChild(bg);
+                    const bg = document.createElement('div');
+                    bg.className = 'swipe-bg';
+                    bg.textContent = 'Delete';
+                    wrap.appendChild(bg);
 
-                const content = document.createElement('div');
-                content.className = 'note-content';
-                let preview = (n.text.split('\n')[0] || 'Untitled').substring(0, 100);
-                if (f) {
+                    const content = document.createElement('div');
+                    content.className = 'note-content';
+                    let preview = (n.text.split('\n')[0] || 'Untitled').substring(0, 100);
+                    preview = escapeHTML(preview);
+
+                    const title = document.createElement('span');
+                    title.innerHTML = preview;
+                    title.style.cssText =
+                        'flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+
+                    const del = document.createElement('button');
+                    del.className = 'delete-btn';
+                    del.innerHTML = `
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                      </svg>
+                    `;
+                    del.setAttribute('aria-label', 'Delete note');
+                    del.onclick = e => {
+                        e.stopPropagation();
+                        requestDeleteNote(n.id);
+                    };
+
+                    content.appendChild(title);
+                    content.appendChild(del);
+                    wrap.appendChild(content);
+
+                    wrap.onclick = () => {
+                        selectNote(n.id);
+                        if (isMobile) {
+                            closeAllPanels();
+                        }
+                    };
+                    
+                    addSwipe(wrap, n.id);
+                    container.appendChild(wrap);
+                });
+            });
+
+            // Render search results in separate panel
+            if (searchResultsContainer) {
+                searchResultsContainer.innerHTML = '';
+                
+                if (!filtered.length) {
+                    const e = document.createElement('div');
+                    e.className = 'empty-state';
+                    e.textContent = f ? 'No notes match your search' : 'Type to search...';
+                    searchResultsContainer.appendChild(e);
+                    return;
+                }
+
+                filtered.forEach(n => {
+                    const wrap = document.createElement('div');
+                    wrap.className = 'note' + (n.id === activeId ? ' active' : '');
+                    wrap.dataset.noteId = n.id;
+
+                    const content = document.createElement('div');
+                    content.className = 'note-content';
+                    
+                    // Create highlighted search preview
                     const idx = n.text.toLowerCase().indexOf(f);
+                    let preview = '';
                     if (idx !== -1) {
                         const start = Math.max(0, idx - 20);
                         const end = Math.min(n.text.length, idx + f.length + 30);
@@ -1057,51 +1204,29 @@
                             new RegExp(`(${escapeHTML(filter)})`, 'gi'),
                             '<mark>$1</mark>'
                         );
+                    } else {
+                        preview = escapeHTML((n.text.split('\n')[0] || 'Untitled').substring(0, 100));
                     }
-                } else preview = escapeHTML(preview);
 
-                const title = document.createElement('span');
-                title.innerHTML = preview;
-                title.style.cssText =
-                    'flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                    const title = document.createElement('span');
+                    title.innerHTML = preview;
+                    title.style.cssText =
+                        'flex:1;font-size:14px;line-height:1.4;white-space:normal;';
 
-                const del = document.createElement('button');
-                del.className = 'delete-btn';
-                del.innerHTML = `
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 6h18"></path>
-                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                    <line x1="14" y1="11" x2="14" y2="17"></line>
-                  </svg>
-                `;
-                del.setAttribute('aria-label', 'Delete note');
-                del.onclick = e => {
-                    e.stopPropagation();
-                    requestDeleteNote(n.id);
-                };
+                    content.appendChild(title);
+                    wrap.appendChild(content);
 
-                content.appendChild(title);
-                content.appendChild(del);
-                wrap.appendChild(content);
-
-                wrap.onclick = () => {
-                    selectNote(n.id);
-                    // Auto-collapse on mobile after selecting a note
-                    if (isMobile && !listCollapsed) {
-                        setTimeout(() => {
-                            collapseList();
-                        }, 100);
-                    }
-                };
-                
-                addSwipe(wrap, n.id);
-                listContainer.appendChild(wrap);
-            });
-            
-            // Update current note title
-            updateCurrentNoteTitle();
+                    wrap.onclick = () => {
+                        selectNote(n.id);
+                        if (isMobile) {
+                            closeAllPanels();
+                            $('.search').value = '';
+                        }
+                    };
+                    
+                    searchResultsContainer.appendChild(wrap);
+                });
+            }
         }
 
         /* ---------- swipe ---------- */
@@ -1109,7 +1234,7 @@
             let sx = 0, cx = 0, swiping = false;
             const content = el.querySelector('.note-content');
             const swipeBg = el.querySelector('.swipe-bg');
-            const threshold = 0.75; // 75% threshold for deletion
+            const threshold = 0.55;
 
             el.addEventListener('touchstart', e => {
                 sx = e.touches[0].clientX;
@@ -1124,9 +1249,7 @@
                 const dx = cx - sx;
                 if (dx < 0) {
                     content.style.transform = `translateX(${dx}px)`;
-                    // Also slide in the background based on swipe distance
-                    const bgTransform = Math.min(100, -dx * 100 / el.offsetWidth);
-                    swipeBg.style.transform = `translateX(${100 - bgTransform}%)`;
+                    swipeBg.style.transform = 'translateX(0)';
                 }
             }, { passive: true });
 
@@ -1136,30 +1259,23 @@
                 const dx = cx - sx;
                 const swipePercentage = -dx / el.offsetWidth;
                 
-                // Check if swipe exceeds 75% threshold
                 if (swipePercentage > threshold) {
-                    deleteNote(id); // Direct delete on mobile swipe
+                    deleteNote(id);
                 } else {
-                    // Animate back to original position
                     content.style.transition = 'transform 0.3s ease-out';
                     swipeBg.style.transition = 'transform 0.3s ease-out';
                     content.style.transform = 'translateX(0)';
                     swipeBg.style.transform = 'translateX(100%)';
                     
-                    // Remove transition after animation completes
                     setTimeout(() => {
                         content.style.transition = '';
                         swipeBg.style.transition = '';
                     }, 300);
                     
-                    // Only select the note if it wasn't a significant swipe
                     if (swipePercentage < 0.3) {
                         selectNote(id);
-                        // Auto-collapse on mobile after selecting a note
-                        if (isMobile && !listCollapsed) {
-                            setTimeout(() => {
-                                collapseList();
-                            }, 100);
+                        if (isMobile) {
+                            closeAllPanels();
                         }
                     }
                 }
@@ -1190,14 +1306,7 @@
             save();
             setTimeout(() => {
                 caretEnd($('#editor'));
-                // Update cursor position after selection
-                if (isMobile) {
-                    setTimeout(updateCursorHighlight, 200);
-                }
             }, 0);
-            
-            // Update title after selection
-            updateCurrentNoteTitle();
         }
 
         function createNote() {
@@ -1209,31 +1318,19 @@
             save();
             setTimeout(() => {
                 caretEnd($('#editor'));
-                // Update cursor position after creation
-                if (isMobile) {
-                    setTimeout(updateCursorHighlight, 200);
-                }
             }, 0);
             
-            // Update title after creation
-            updateCurrentNoteTitle();
-            
-            // Auto-collapse on mobile when creating new note
-            if (isMobile && !listCollapsed) {
-                setTimeout(() => {
-                    collapseList();
-                }, 100);
+            if (isMobile) {
+                closeAllPanels();
             }
         }
 
         /* ---------- Delete with confirmation (desktop) ---------- */
         function requestDeleteNote(id) {
-            // Check if we're on desktop (screen width > 768px)
             if (window.innerWidth > 768) {
                 noteToDelete = id;
                 showModal();
             } else {
-                // Mobile: delete directly
                 deleteNote(id);
             }
         }
@@ -1267,10 +1364,100 @@
             
             if (activeId === id) notes.length ? selectNote(notes[0].id) : createNote();
             else { render($('.search').value); save(); }
-            
-            // Update title after deletion
-            updateCurrentNoteTitle();
         }
+
+        /* ---------- editor ---------- */
+        $('#editor').addEventListener('input', () => {
+            const note = notes.find(n => n.id === activeId);
+            if (!note) return;
+            note.text = Array.from($('#editor').querySelectorAll('div')).map(d => d.innerText).join('\n');
+            render($('.search').value);
+            save();
+        });
+
+        /* ---------- search ---------- */
+        $('.search').addEventListener('input', () => {
+            const searchValue = $('.search').value.trim();
+            
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                render(searchValue);
+                
+                if (isMobile && searchValue.length > 0 && currentPanel !== 'search') {
+                    if (currentPanel === 'notes') {
+                        closePanel();
+                    }
+                    openPanel('search');
+                } else if (isMobile && searchValue.length === 0 && currentPanel === 'search') {
+                    closePanel();
+                }
+            }, 200);
+        });
+
+        // Clear search handler
+        $('.search').addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                $('.search').value = '';
+                render('');
+                $('#editor').focus();
+                if (isMobile && currentPanel === 'search') {
+                    closePanel();
+                }
+            }
+        });
+
+        // Focus handler for search
+        $('.search').addEventListener('focus', () => {
+            if (isMobile && $('.search').value.trim().length > 0 && currentPanel !== 'search') {
+                if (currentPanel === 'notes') {
+                    closePanel();
+                }
+                openPanel('search');
+            }
+        });
+
+        /* ---------- buttons ---------- */
+        $('#newNote').onclick = createNote;
+        $('#logoBtn').onclick = () => {
+            if (isMobile) {
+                togglePanel();
+            }
+        };
+        $('#closePanelBtn').onclick = closeAllPanels;
+        $('#closeSearchBtn').onclick = closeAllPanels;
+        $('#panelOverlay').onclick = closeAllPanels;
+
+        // Update isMobile on window resize
+        window.addEventListener('resize', handleResize);
+
+        function handleResize() {
+            const wasMobile = isMobile;
+            isMobile = window.innerWidth <= 768;
+            windowHeight = window.innerHeight;
+            
+            if (wasMobile !== isMobile) {
+                if (!isMobile) {
+                    closeAllPanels();
+                }
+                render($('.search').value);
+            }
+        }
+
+        /* ---------- keyboard ---------- */
+        addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); createNote(); }
+            if (e.key === 'Escape' && document.activeElement === $('.search')) {
+                $('.search').value = '';
+                render('');
+                $('#editor').focus();
+                if (isMobile && currentPanel === 'search') {
+                    closePanel();
+                }
+            }
+            if (e.key === 'Escape' && noteToDelete) {
+                cancelDelete();
+            }
+        });
 
         // Modal button handlers
         $('#modalDelete').onclick = confirmDelete;
@@ -1283,91 +1470,6 @@
             }
         };
 
-        /* ---------- editor ---------- */
-        $('#editor').addEventListener('input', () => {
-            const note = notes.find(n => n.id === activeId);
-            if (!note) return;
-            note.text = Array.from($('#editor').querySelectorAll('div')).map(d => d.innerText).join('\n');
-            render($('.search').value);
-            save();
-            updateCurrentNoteTitle(); // Update title when note content changes
-            
-            // Update cursor position on input
-            if (isMobile && keyboardActive) {
-                setTimeout(updateCursorHighlight, 50);
-            }
-        });
-
-        /* ---------- search ---------- */
-        $('.search').addEventListener('input', () => {
-            const searchValue = $('.search').value.trim();
-            
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                render(searchValue);
-                
-                // AUTO-EXPAND LIST ON MOBILE WHEN SEARCHING
-                if (isMobile && searchValue.length > 0 && listCollapsed) {
-                    expandList();
-                }
-                
-                // Auto-collapse when search is cleared
-                if (isMobile && searchValue.length === 0 && !listCollapsed) {
-                    setTimeout(() => {
-                        collapseList();
-                    }, 500); // Give user time to see results before collapsing
-                }
-            }, 200);
-        });
-
-        // Clear search handler
-        $('.search').addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                $('.search').value = '';
-                render('');
-                $('#editor').focus();
-                
-                // Auto-collapse on mobile when search is cleared with Escape
-                if (isMobile && !listCollapsed) {
-                    setTimeout(() => {
-                        collapseList();
-                    }, 100);
-                }
-            }
-        });
-
-        // Focus handler for search - expand if there's text
-        $('.search').addEventListener('focus', () => {
-            if (isMobile && $('.search').value.trim().length > 0 && listCollapsed) {
-                expandList();
-            }
-        });
-
-        /* ---------- buttons ---------- */
-        $('#newNote').onclick = createNote;
-        $('#expandBtn').onclick = toggleList;
-        $('#listHeader').onclick = toggleList;
-
-        // Make logo button inactive (non-clickable)
-        $('#logoBtn').onclick = (e) => {
-            e.preventDefault();
-            return false;
-        };
-
-        /* ---------- keyboard ---------- */
-        addEventListener('keydown', e => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); createNote(); }
-            if (e.key === 'Escape' && document.activeElement === $('.search')) {
-                $('.search').value = '';
-                render('');
-                $('#editor').focus();
-            }
-            // Escape also closes modal
-            if (e.key === 'Escape' && noteToDelete) {
-                cancelDelete();
-            }
-        });
-
         /* ---------- init ---------- */
         function init() {
             if (!notes.length) createNote();
@@ -1376,22 +1478,14 @@
                 selectNote(exists ? activeId : notes[0].id);
             }
             
-            // Initial check
             windowHeight = window.innerHeight;
             isMobile = window.innerWidth <= 768;
             
-            // Set initial mobile state
             if (isMobile) {
-                const list = $('#noteList');
-                const expandBtn = $('#expandBtn');
-                list.classList.remove('expanded');
-                expandBtn.classList.add('rotated');
-                listCollapsed = true;
-                updateCurrentNoteTitle();
-                
-                // Create cursor highlight for mobile
-                createCursorHighlight();
+                setupSwipe();
             }
+            
+            render();
         }
         init();
     </script>
