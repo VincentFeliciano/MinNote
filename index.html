@@ -814,14 +814,6 @@
 <path d="M33 31.154V10C33 5.28595 33 2.92893 31.5355 1.46447C30.0711 0 27.714 0 23 0H10C5.28595 0 2.92893 0 1.46446 1.46447C0 2.92893 0 5.28596 0 10V31.1261C0 35.6589 0 37.9253 0.945379 39.2354C1.78535 40.3995 3.08511 41.1464 4.51377 41.286C6.12173 41.4431 8.07986 40.3019 11.9961 38.0196C13.4909 37.1484 14.2383 36.7128 15.032 36.5469C15.7468 36.3974 16.4856 36.4063 17.1965 36.5729C17.9859 36.758 18.7357 37.2195 20.2352 38.1426L20.2353 38.1426C24.6995 40.8906 26.9316 42.2646 28.735 41.9965C29.9417 41.8172 31.0411 41.2029 31.8264 40.2694C33 38.8741 33 36.3007 33 31.154Z" fill="#BB86FC"/>
 <path d="M27.6704 5.06818V31.25H22.8892L11.4986 14.7713H11.3068V31.25H5.7713V5.06818H10.6293L21.9304 21.5341H22.1605V5.06818H27.6704Z" fill="white"/>
 </svg>
-
-
-
-
-
-
-
-
     `;
             } else {
                 logoBtn.innerHTML = `
@@ -829,12 +821,6 @@
 <path d="M33 31.154V10C33 5.28595 33 2.92893 31.5355 1.46447C30.0711 0 27.714 0 23 0H10C5.28595 0 2.92893 0 1.46446 1.46447C0 2.92893 0 5.28596 0 10V31.1261C0 35.6589 0 37.9253 0.945379 39.2354C1.78535 40.3995 3.08511 41.1464 4.51377 41.286C6.12173 41.4431 8.07986 40.3019 11.9961 38.0196C13.4909 37.1484 14.2383 36.7128 15.032 36.5469C15.7468 36.3974 16.4856 36.4063 17.1965 36.5729C17.9859 36.758 18.7357 37.2195 20.2352 38.1426L20.2353 38.1426C24.6995 40.8906 26.9316 42.2646 28.735 41.9965C29.9417 41.8172 31.0411 41.2029 31.8264 40.2694C33 38.8741 33 36.3007 33 31.154Z" fill="#FFE100"/>
 <path d="M27.7063 5.06818V31.25H22.9251L11.5345 14.7713H11.3427V31.25H5.80718V5.06818H10.6651L21.9663 21.5341H22.1964V5.06818H27.7063Z" fill="white"/>
 </svg>
-
-
-
-
-
-
     `;
             }
         }
@@ -929,6 +915,31 @@
             }
         }
 
+        /* ---------- format timestamp ---------- */
+        function formatTimestamp(timestamp) {
+            const createdDate = new Date(timestamp);
+            const now = new Date();
+            const diffTime = now - createdDate;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) {
+                // Today - show time
+                return createdDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } else if (diffDays === 1) {
+                // Yesterday
+                return 'Yesterday';
+            } else if (diffDays < 7) {
+                // Within a week - show day name
+                return createdDate.toLocaleDateString([], {weekday: 'short'});
+            } else if (createdDate.getFullYear() === now.getFullYear()) {
+                // Same year - show month and day
+                return createdDate.toLocaleDateString([], {month: 'short', day: 'numeric'});
+            } else {
+                // Different year - show full date
+                return createdDate.toLocaleDateString([], {year: 'numeric', month: 'short', day: 'numeric'});
+            }
+        }
+
         /* ---------- render ---------- */
         function render(filter = '') {
             const mobileContainer = $('#noteListContainer');
@@ -984,11 +995,23 @@
                     
                     preview = escapeHTML(preview.substring(0, 100));
 
-                    const title = document.createElement('span');
-                    title.innerHTML = preview;
-                    title.style.cssText =
-                        'flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                    const title = document.createElement('div');
+                    title.style.cssText = 'flex:1;min-width:0;';
 
+                    const titleText = document.createElement('div');
+                    titleText.innerHTML = preview;
+                    titleText.style.cssText = 'font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px;';
+
+                    const timestamp = document.createElement('div');
+                    timestamp.style.cssText = 'font-size:11px;color:var(--text-muted);opacity:0.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+
+                    // Format the date nicely
+                    const createdTimestamp = n.created || parseInt(n.id) || Date.now();
+                    timestamp.textContent = formatTimestamp(createdTimestamp);
+
+                    title.appendChild(titleText);
+                    title.appendChild(timestamp);
+                    
                     const del = document.createElement('button');
                     del.className = 'delete-btn';
                     del.innerHTML = `
@@ -1083,10 +1106,22 @@
                         preview = escapeHTML(titlePreview.substring(0, 100));
                     }
 
-                    const title = document.createElement('span');
-                    title.innerHTML = preview;
-                    title.style.cssText =
-                        'flex:1;font-size:14px;line-height:1.4;white-space:normal;';
+                    const title = document.createElement('div');
+                    title.style.cssText = 'flex:1;min-width:0;';
+
+                    const titleText = document.createElement('div');
+                    titleText.innerHTML = preview;
+                    titleText.style.cssText = 'font-size:14px;line-height:1.4;white-space:normal;margin-bottom:2px;';
+
+                    const timestamp = document.createElement('div');
+                    timestamp.style.cssText = 'font-size:11px;color:var(--text-muted);opacity:0.7;margin-top:2px;';
+
+                    // Format the date nicely
+                    const createdTimestamp = n.created || parseInt(n.id) || Date.now();
+                    timestamp.textContent = formatTimestamp(createdTimestamp);
+
+                    title.appendChild(titleText);
+                    title.appendChild(timestamp);
 
                     content.appendChild(title);
                     wrap.appendChild(content);
@@ -1227,7 +1262,11 @@
         }
 
         function createNote() {
-            const note = { id: Date.now().toString(), text: '' };
+            const note = { 
+                id: Date.now().toString(), 
+                text: '',
+                created: Date.now()  // Store creation timestamp
+            };
             notes.unshift(note);
             activeId = note.id;
             
@@ -1430,6 +1469,13 @@
 
         /* ---------- init ---------- */
         function init() {
+            // Ensure all existing notes have a created timestamp
+            notes.forEach(note => {
+                if (!note.created) {
+                    note.created = parseInt(note.id) || Date.now();
+                }
+            });
+            
             if (!notes.length) createNote();
             else {
                 const exists = notes.find(n => n.id === activeId);
