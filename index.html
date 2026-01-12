@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>Minimal Notes – Fixed</title>
+    <title>Minimal Notes – Enhanced</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
         :root {
@@ -21,6 +21,12 @@
             --modal-overlay: rgba(0, 0, 0, 0.4);
             --panel-width: 280px;
             --placeholder-color: #8e8e93;
+            --checkbox-color: #4cd964;
+            --checkbox-unchecked: #c7c7cc;
+            --drawing-bg: #f9f9f9;
+            --toolbar-height: 44px;
+            --pin-color: #ff9500;
+            --pin-color-dark: #ff9f0a;
         }
 
         body.dark {
@@ -36,6 +42,11 @@
             --delete-red: #ff453a;
             --modal-overlay: rgba(0, 0, 0, 0.6);
             --placeholder-color: #a1a1a6;
+            --checkbox-color: #32d74b;
+            --checkbox-unchecked: #48484a;
+            --drawing-bg: #2c2c2e;
+            --pin-color: #ff9f0a;
+            --pin-color-dark: #ff9f0a;
         }
 
         * {
@@ -271,11 +282,6 @@
             touch-action: pan-y;
         }
 
-        /* Edge pull handle - REMOVED */
-        .edge-pull-handle {
-            display: none;
-        }
-
         /* Panel overlay */
         .panel-overlay {
             position: fixed;
@@ -297,7 +303,7 @@
             visibility: visible;
         }
 
-        /* Desktop list - REMOVED THE HEADER */
+        /* Desktop list */
         .desktop-list {
             width: 28%;
             border-right: 1px solid var(--border);
@@ -307,17 +313,91 @@
             min-height: 0;
         }
 
-        /* Remove desktop list header */
-        .desktop-list-header {
-            display: none;
-        }
-
         .editor-container {
             flex: 1;
             display: flex;
             flex-direction: column;
             min-height: 0;
             position: relative;
+        }
+
+        /* Editor Toolbar */
+        .editor-toolbar {
+            display: flex;
+            padding: 8px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            flex-wrap: wrap;
+            gap: 8px;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 4px;
+        }
+
+        .toolbar-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 14px;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.2s;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--bg-hover);
+        }
+
+        .toolbar-btn.active {
+            background: var(--bg-active);
+        }
+
+        .pin-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: color 0.2s, transform 0.2s;
+            font-size: 16px;
+        }
+
+        .pin-btn:hover {
+            color: var(--pin-color);
+        }
+
+        .pin-btn.pinned {
+            color: var(--pin-color);
+        }
+
+        .pin-btn.pinned:hover {
+            color: var(--text-muted);
+        }
+
+        .media-upload-btn {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .media-upload-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
         }
 
         .editor {
@@ -366,13 +446,13 @@
             display: none;
         }
 
-        /* First line styling - REMOVED THE ::before CONTENT */
+        /* First line styling */
         #editor > div:first-child {
             font-size: 20px;
             font-weight: 600;
             line-height: 1.3;
             margin-bottom: 8px;
-            min-height: 1.3em; /* Ensure it has height even when empty */
+            min-height: 1.3em;
         }
 
         .hint {
@@ -440,6 +520,10 @@
             background: var(--bg-hover);
         }
 
+        .note.pinned {
+            border-left: 3px solid var(--pin-color);
+        }
+
         .note mark {
             background: #ffd600;
             color: inherit;
@@ -448,6 +532,12 @@
         body.dark .note mark {
             background: #ffd60a;
             color: #000;
+        }
+
+        .note-actions {
+            display: flex;
+            gap: 4px;
+            align-items: center;
         }
 
         .delete-btn {
@@ -469,7 +559,8 @@
             stroke: currentColor;
         }
 
-        .note:hover .delete-btn {
+        .note:hover .delete-btn,
+        .note:hover .pin-btn {
             opacity: 1;
         }
 
@@ -482,6 +573,196 @@
             padding: 24px 12px;
             color: var(--text-muted);
             font-size: 14px;
+        }
+
+        /* Section headers for pinned/unpinned notes */
+        .section-header {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 12px 4px;
+            background: var(--bg-secondary);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        /* Checklist Styles */
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 4px 0;
+            margin: 4px 0;
+            min-height: 24px;
+        }
+
+        .checklist-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--checkbox-unchecked);
+            border-radius: 4px;
+            background: transparent;
+            flex-shrink: 0;
+            margin-top: 2px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .checklist-checkbox.checked {
+            background: var(--checkbox-color);
+            border-color: var(--checkbox-color);
+        }
+
+        .checklist-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .checklist-text {
+            flex: 1;
+            outline: none;
+            font-size: 16px;
+            line-height: 1.4;
+            color: var(--text);
+            background: transparent;
+            border: none;
+            font-family: inherit;
+            min-height: 1.4em;
+        }
+
+        .checklist-text.completed {
+            text-decoration: line-through;
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+
+        /* Media Styles */
+        .media-container {
+            margin: 12px 0;
+            position: relative;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            object-fit: contain;
+            background: var(--drawing-bg);
+            cursor: pointer;
+        }
+
+        .audio-preview {
+            width: 100%;
+            margin: 8px 0;
+        }
+
+        .file-attachment {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+
+        .file-icon {
+            font-size: 20px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-size: 14px;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .file-remove {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            flex-shrink: 0;
+        }
+
+        .file-remove:hover {
+            color: var(--delete-red);
+        }
+
+        /* Drawing Container */
+        .drawing-container {
+            margin: 12px 0;
+            position: relative;
+            display: none;
+        }
+
+        .drawing-canvas {
+            background: var(--drawing-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: crosshair;
+            touch-action: none;
+            display: block;
+            width: 100%;
+            height: 400px;
+        }
+
+        .drawing-tools {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .drawing-tool-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 10px;
+            font-size: 12px;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .drawing-tool-btn.active {
+            background: var(--bg-active);
+        }
+
+        .color-picker {
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            padding: 0;
+            cursor: pointer;
         }
 
         /* Desktop: show all notes, scroll when needed */
@@ -508,7 +789,6 @@
             /* Hide mobile elements on desktop */
             .side-panel,
             .search-preview-panel,
-            .edge-pull-handle,
             .panel-overlay {
                 display: none !important;
             }
@@ -548,11 +828,6 @@
                 display: none;
             }
 
-            /* Hide edge pull handle */
-            .edge-pull-handle {
-                display: none;
-            }
-
             .editor-container {
                 flex: 1;
                 min-height: 0;
@@ -561,6 +836,11 @@
                 overflow: hidden;
                 position: relative;
                 width: 100%;
+            }
+
+            .editor-toolbar {
+                padding: 8px 12px;
+                overflow-x: auto;
             }
 
             .editor {
@@ -579,7 +859,6 @@
                 right: 16px;
             }
 
-            /* First line styling for mobile */
             #editor > div:first-child {
                 font-size: 20px;
                 font-weight: 600;
@@ -591,6 +870,10 @@
             .hint {
                 padding: 0 16px 12px;
                 flex-shrink: 0;
+            }
+
+            .drawing-canvas {
+                height: 300px;
             }
 
             /* When virtual keyboard is active */
@@ -621,6 +904,10 @@
                 .search-preview-panel {
                     padding-top: env(safe-area-inset-top, 0);
                     height: calc(100vh - env(safe-area-inset-top, 0));
+                }
+                
+                .editor-toolbar {
+                    padding-top: calc(8px + env(safe-area-inset-top, 0));
                 }
             }
         }
@@ -708,6 +995,48 @@
         .modal-btn.delete:hover {
             opacity: 0.9;
         }
+
+        /* Media Preview Modal */
+        .media-modal {
+            max-width: 90%;
+            max-height: 90%;
+            width: auto;
+        }
+
+        .modal-content {
+            max-height: 70vh;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+
+        .modal-image {
+            max-width: 100%;
+            max-height: 60vh;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        /* Note Preview Icons */
+        .note-preview-icons {
+            display: flex;
+            gap: 4px;
+            margin-top: 2px;
+            flex-wrap: wrap;
+        }
+
+        .preview-icon {
+            font-size: 10px;
+            opacity: 0.7;
+        }
+
+        /* Empty state for sections */
+        .section-empty {
+            text-align: center;
+            padding: 16px;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-style: italic;
+        }
     </style>
 </head>
 
@@ -716,9 +1045,7 @@
         <div class="topbar">
             <button class="logo-btn" id="logoBtn">
                 <svg width="35" height="19" viewBox="0 0 35 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M4.09943 0.997175L8.31818 14.2585H8.48011L12.7074 0.997175H16.7983L10.7813 18.4517H6.02557L7.30157e-07 0.997175H4.09943ZM17.151 18.4517V5.36081H20.7816V18.4517H17.151ZM18.9748 3.67331C18.4351 3.67331 17.972 3.49433 17.5856 3.13638C17.2049 2.77274 17.0146 2.33808 17.0146 1.8324C17.0146 1.3324 17.2049 0.903425 17.5856 0.545471C17.972 0.181834 18.4351 1.57356e-05 18.9748 1.57356e-05C19.5146 1.57356e-05 19.9748 0.181834 20.3555 0.545471C20.7419 0.903425 20.9351 1.3324 20.9351 1.8324C20.9351 2.33808 20.7419 2.77274 20.3555 3.13638C19.9748 3.49433 19.5146 3.67331 18.9748 3.67331ZM25.6407 10.8835V18.4517H22.01V5.36081H25.4703V7.67047H25.6237C25.9134 6.90911 26.3992 6.30683 27.0811 5.86365C27.7629 5.41479 28.5896 5.19036 29.5612 5.19036C30.4703 5.19036 31.2629 5.38922 31.939 5.78695C32.6151 6.18468 33.1407 6.75286 33.5157 7.49149C33.8907 8.22445 34.0782 9.09945 34.0782 10.1165V18.4517H30.4475V10.7642C30.4532 9.96308 30.2487 9.33808 29.8339 8.88922C29.4191 8.43468 28.8481 8.2074 28.1208 8.2074C27.6322 8.2074 27.2004 8.31252 26.8254 8.52274C26.4561 8.73297 26.1663 9.03979 25.9561 9.4432C25.7515 9.84093 25.6464 10.321 25.6407 10.8835Z"
-                        fill="black" />
+                    <path d="M4.09943 0.997175L8.31818 14.2585H8.48011L12.7074 0.997175H16.7983L10.7813 18.4517H6.02557L7.30157e-07 0.997175H4.09943ZM17.151 18.4517V5.36081H20.7816V18.4517H17.151ZM18.9748 3.67331C18.4351 3.67331 17.972 3.49433 17.5856 3.13638C17.2049 2.77274 17.0146 2.33808 17.0146 1.8324C17.0146 1.3324 17.2049 0.903425 17.5856 0.545471C17.972 0.181834 18.4351 1.57356e-05 18.9748 1.57356e-05C19.5146 1.57356e-05 19.9748 0.181834 20.3555 0.545471C20.7419 0.903425 20.9351 1.3324 20.9351 1.8324C20.9351 2.33808 20.7419 2.77274 20.3555 3.13638C19.9748 3.49433 19.5146 3.67331 18.9748 3.67331ZM25.6407 10.8835V18.4517H22.01V5.36081H25.4703V7.67047H25.6237C25.9134 6.90911 26.3992 6.30683 27.0811 5.86365C27.7629 5.41479 28.5896 5.19036 29.5612 5.19036C30.4703 5.19036 31.2629 5.38922 31.939 5.78695C32.6151 6.18468 33.1407 6.75286 33.5157 7.49149C33.8907 8.22445 34.0782 9.09945 34.0782 10.1165V18.4517H30.4475V10.7642C30.4532 9.96308 30.2487 9.33808 29.8339 8.88922C29.4191 8.43468 28.8481 8.2074 28.1208 8.2074C27.6322 8.2074 27.2004 8.31252 26.8254 8.52274C26.4561 8.73297 26.1663 9.03979 25.9561 9.4432C25.7515 9.84093 25.6464 10.321 25.6407 10.8835Z" fill="currentColor"/>
                 </svg>
             </button>
 
@@ -727,20 +1054,16 @@
             <button class="NNbtn" id="newNote">＋</button>
         </div>
         
-        <!-- Edge pull handle for mobile - REMOVED -->
-        
         <!-- Panel overlay -->
         <div class="panel-overlay" id="panelOverlay"></div>
         
-        <!-- Mobile side panel (for notes list) -->
+        <!-- Mobile side panel -->
         <div class="side-panel" id="sidePanel">
             <div class="side-panel-header">
                 <div class="side-panel-title">Notes</div>
                 <button class="close-panel-btn" id="closePanelBtn">×</button>
             </div>
-            <div class="note-list-container" id="noteListContainer">
-                <!-- Notes will be rendered here -->
-            </div>
+            <div class="note-list-container" id="noteListContainer"></div>
         </div>
         
         <!-- Search preview panel -->
@@ -749,26 +1072,65 @@
                 <div class="search-preview-title">Search Results</div>
                 <button class="close-search-btn" id="closeSearchBtn">×</button>
             </div>
-            <div class="search-results-container" id="searchResultsContainer">
-                <!-- Search results will be rendered here -->
-            </div>
+            <div class="search-results-container" id="searchResultsContainer"></div>
         </div>
         
         <div class="main">
-            <!-- Desktop list - NO HEADER -->
+            <!-- Desktop list -->
             <div class="desktop-list" id="desktopList">
-                <div class="note-list-container" id="desktopNoteListContainer">
-                    <!-- Desktop notes will be rendered here -->
-                </div>
+                <div class="note-list-container" id="desktopNoteListContainer"></div>
             </div>
             
             <div class="editor-container">
+                <!-- Editor Toolbar with Pin button -->
+                <div class="editor-toolbar" id="editorToolbar">
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" id="toggleChecklist" title="Add Checklist">
+                            <span>✓</span>
+                        </button>
+                        <button class="toolbar-btn media-upload-btn" title="Add Image">
+                            <span>🖼️</span>
+                            <input type="file" class="media-upload-input" id="imageUpload" accept="image/*" multiple>
+                        </button>
+                        <button class="toolbar-btn media-upload-btn" title="Record/Upload Audio">
+                            <span>🎤</span>
+                            <input type="file" class="media-upload-input" id="audioUpload" accept="audio/*">
+                        </button>
+                        <button class="toolbar-btn media-upload-btn" title="Attach File">
+                            <span>📎</span>
+                            <input type="file" class="media-upload-input" id="fileUpload" multiple>
+                        </button>
+                        <button class="toolbar-btn" id="startDrawing" title="Start Drawing">
+                            <span>✏️</span>
+                        </button>
+                    </div>
+                    <div class="toolbar-group" style="margin-left: auto;">
+                        <button class="pin-btn" id="togglePin" title="Pin/Unpin Note">
+                            📌
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="editor">
                     <div id="editor" contenteditable="true" spellcheck="false"></div>
+                    
+                    <!-- Drawing Canvas (hidden by default) -->
+                    <div class="drawing-container" id="drawingContainer">
+                        <canvas id="drawingCanvas" class="drawing-canvas"></canvas>
+                        <div class="drawing-tools">
+                            <button class="drawing-tool-btn" data-tool="pen" title="Pen">✏️ Pen</button>
+                            <button class="drawing-tool-btn" data-tool="eraser" title="Eraser">🧽 Eraser</button>
+                            <input type="color" class="color-picker" id="drawingColor" value="#000000" title="Color">
+                            <button class="drawing-tool-btn" id="clearDrawing" title="Clear">🗑️ Clear</button>
+                            <button class="drawing-tool-btn" id="saveDrawing" title="Save Drawing">💾 Save</button>
+                            <button class="drawing-tool-btn" id="cancelDrawing" title="Cancel">✖️ Cancel</button>
+                        </div>
+                    </div>
+                    
                     <!-- Ghost placeholder -->
                     <div class="editor-placeholder" id="editorPlaceholder">Start typing…</div>
                 </div>
-                <div class="hint">Everything saves automatically</div>
+                <div class="hint">Everything saves automatically • Use toolbar for checklists, media, drawings, and pinning</div>
             </div>
         </div>
     </div>
@@ -781,6 +1143,17 @@
             <div class="modal-buttons">
                 <button class="modal-btn cancel" id="modalCancel">Cancel</button>
                 <button class="modal-btn delete" id="modalDelete">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Media Preview Modal -->
+    <div class="modal-overlay" id="mediaModalOverlay" style="display: none;">
+        <div class="modal media-modal">
+            <div class="modal-title" id="mediaModalTitle">Media Preview</div>
+            <div class="modal-content" id="mediaModalContent"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" id="closeMediaModal">Close</button>
             </div>
         </div>
     </div>
@@ -803,36 +1176,56 @@
         let isMobile = window.innerWidth <= 768;
         let keyboardActive = false;
         let windowHeight = window.innerHeight;
-        let currentPanel = null; // 'notes', 'search', or null
+        let currentPanel = null;
+
+        // Drawing state
+        let isDrawing = false;
+        let drawingContext = null;
+        let currentTool = 'pen';
+        let currentColor = '#000000';
+        let lastX = 0;
+        let lastY = 0;
+
+        /* ---------- initialize note structure ---------- */
+        function initializeNoteStructure() {
+            notes = notes.map(note => {
+                // Migrate old notes to new structure
+                if (!note.content) {
+                    note.content = {
+                        text: note.text || '',
+                        checklists: [],
+                        media: [],
+                        drawings: []
+                    };
+                    delete note.text;
+                }
+                // Ensure all properties exist
+                if (!note.content.checklists) note.content.checklists = [];
+                if (!note.content.media) note.content.media = [];
+                if (!note.content.drawings) note.content.drawings = [];
+                if (!note.created) note.created = parseInt(note.id) || Date.now();
+                // Add pinned property if it doesn't exist
+                if (note.pinned === undefined) note.pinned = false;
+                
+                return note;
+            });
+            save();
+        }
 
         /* ---------- update logo based on theme ---------- */
         function updateLogo() {
             const logoBtn = $('#logoBtn');
-            if (theme === 'dark') {
-                logoBtn.innerHTML = `
-<svg width="33" height="43" viewBox="0 0 33 43" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M33 31.154V10C33 5.28595 33 2.92893 31.5355 1.46447C30.0711 0 27.714 0 23 0H10C5.28595 0 2.92893 0 1.46446 1.46447C0 2.92893 0 5.28596 0 10V31.1261C0 35.6589 0 37.9253 0.945379 39.2354C1.78535 40.3995 3.08511 41.1464 4.51377 41.286C6.12173 41.4431 8.07986 40.3019 11.9961 38.0196C13.4909 37.1484 14.2383 36.7128 15.032 36.5469C15.7468 36.3974 16.4856 36.4063 17.1965 36.5729C17.9859 36.758 18.7357 37.2195 20.2352 38.1426L20.2353 38.1426C24.6995 40.8906 26.9316 42.2646 28.735 41.9965C29.9417 41.8172 31.0411 41.2029 31.8264 40.2694C33 38.8741 33 36.3007 33 31.154Z" fill="#BB86FC"/>
-<path d="M27.6704 5.06818V31.25H22.8892L11.4986 14.7713H11.3068V31.25H5.7713V5.06818H10.6293L21.9304 21.5341H22.1605V5.06818H27.6704Z" fill="white"/>
-</svg>
-    `;
-            } else {
-                logoBtn.innerHTML = `
-<svg width="33" height="43" viewBox="0 0 33 43" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M33 31.154V10C33 5.28595 33 2.92893 31.5355 1.46447C30.0711 0 27.714 0 23 0H10C5.28595 0 2.92893 0 1.46446 1.46447C0 2.92893 0 5.28596 0 10V31.1261C0 35.6589 0 37.9253 0.945379 39.2354C1.78535 40.3995 3.08511 41.1464 4.51377 41.286C6.12173 41.4431 8.07986 40.3019 11.9961 38.0196C13.4909 37.1484 14.2383 36.7128 15.032 36.5469C15.7468 36.3974 16.4856 36.4063 17.1965 36.5729C17.9859 36.758 18.7357 37.2195 20.2352 38.1426L20.2353 38.1426C24.6995 40.8906 26.9316 42.2646 28.735 41.9965C29.9417 41.8172 31.0411 41.2029 31.8264 40.2694C33 38.8741 33 36.3007 33 31.154Z" fill="#FFE100"/>
-<path d="M27.7063 5.06818V31.25H22.9251L11.5345 14.7713H11.3427V31.25H5.80718V5.06818H10.6651L21.9663 21.5341H22.1964V5.06818H27.7063Z" fill="white"/>
-</svg>
-    `;
-            }
+            logoBtn.innerHTML = `
+                <svg width="35" height="19" viewBox="0 0 35 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.09943 0.997175L8.31818 14.2585H8.48011L12.7074 0.997175H16.7983L10.7813 18.4517H6.02557L7.30157e-07 0.997175H4.09943ZM17.151 18.4517V5.36081H20.7816V18.4517H17.151ZM18.9748 3.67331C18.4351 3.67331 17.972 3.49433 17.5856 3.13638C17.2049 2.77274 17.0146 2.33808 17.0146 1.8324C17.0146 1.3324 17.2049 0.903425 17.5856 0.545471C17.972 0.181834 18.4351 1.57356e-05 18.9748 1.57356e-05C19.5146 1.57356e-05 19.9748 0.181834 20.3555 0.545471C20.7419 0.903425 20.9351 1.3324 20.9351 1.8324C20.9351 2.33808 20.7419 2.77274 20.3555 3.13638C19.9748 3.49433 19.5146 3.67331 18.9748 3.67331ZM25.6407 10.8835V18.4517H22.01V5.36081H25.4703V7.67047H25.6237C25.9134 6.90911 26.3992 6.30683 27.0811 5.86365C27.7629 5.41479 28.5896 5.19036 29.5612 5.19036C30.4703 5.19036 31.2629 5.38922 31.939 5.78695C32.6151 6.18468 33.1407 6.75286 33.5157 7.49149C33.8907 8.22445 34.0782 9.09945 34.0782 10.1165V18.4517H30.4475V10.7642C30.4532 9.96308 30.2487 9.33808 29.8339 8.88922C29.4191 8.43468 28.8481 8.2074 28.1208 8.2074C27.6322 8.2074 27.2004 8.31252 26.8254 8.52274C26.4561 8.73297 26.1663 9.03979 25.9561 9.4432C25.7515 9.84093 25.6464 10.321 25.6407 10.8835Z" fill="currentColor"/>
+                </svg>`;
         }
 
         /* ---------- panel functions ---------- */
         function openPanel(type) {
             if (!isMobile) return;
             
-            // Close any existing panel first
-            if (currentPanel) {
-                closePanel();
-            }
+            if (currentPanel) closePanel();
             
             currentPanel = type;
             
@@ -903,16 +1296,12 @@
         function updatePlaceholder() {
             const editor = $('#editor');
             const placeholder = $('#editorPlaceholder');
+            const hasContent = editor.children.length > 1 || 
+                              (editor.children.length === 1 && editor.children[0].textContent.trim().length > 0) ||
+                              editor.querySelector('.checklist-item') ||
+                              editor.querySelector('.media-container');
             
-            // Check if editor has any content
-            const hasContent = editor.textContent.trim().length > 0;
-            
-            // Show/hide placeholder based on content
-            if (hasContent) {
-                placeholder.classList.add('hidden');
-            } else {
-                placeholder.classList.remove('hidden');
-            }
+            placeholder.classList.toggle('hidden', hasContent);
         }
 
         /* ---------- format timestamp ---------- */
@@ -923,21 +1312,61 @@
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
             if (diffDays === 0) {
-                // Today - show time
                 return createdDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             } else if (diffDays === 1) {
-                // Yesterday
                 return 'Yesterday';
             } else if (diffDays < 7) {
-                // Within a week - show day name
                 return createdDate.toLocaleDateString([], {weekday: 'short'});
             } else if (createdDate.getFullYear() === now.getFullYear()) {
-                // Same year - show month and day
                 return createdDate.toLocaleDateString([], {month: 'short', day: 'numeric'});
             } else {
-                // Different year - show full date
                 return createdDate.toLocaleDateString([], {year: 'numeric', month: 'short', day: 'numeric'});
             }
+        }
+
+        /* ---------- format file size ---------- */
+        function formatFileSize(bytes) {
+            if (!bytes || bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        /* ---------- get note preview ---------- */
+        function getNotePreview(note) {
+            const content = note.content;
+            
+            // Check text content
+            if (content.text && content.text.trim()) {
+                const lines = content.text.split('\n');
+                return lines[0].substring(0, 100) || 'Untitled';
+            }
+            
+            // Check checklists
+            if (content.checklists && content.checklists.length > 0) {
+                const completed = content.checklists.filter(item => item.checked).length;
+                const total = content.checklists.length;
+                return `Checklist (${completed}/${total})`;
+            }
+            
+            // Check media
+            if (content.media && content.media.length > 0) {
+                const images = content.media.filter(m => m.type === 'image').length;
+                const audio = content.media.filter(m => m.type === 'audio').length;
+                const files = content.media.filter(m => m.type === 'file').length;
+                
+                if (images > 0) return `📷 ${images} image${images > 1 ? 's' : ''}`;
+                if (audio > 0) return `🎵 ${audio} audio${audio > 1 ? 's' : ''}`;
+                if (files > 0) return `📎 ${files} file${files > 1 ? 's' : ''}`;
+            }
+            
+            // Check drawings
+            if (content.drawings && content.drawings.length > 0) {
+                return `✏️ ${content.drawings.length} drawing${content.drawings.length > 1 ? 's' : ''}`;
+            }
+            
+            return 'Untitled';
         }
 
         /* ---------- render ---------- */
@@ -947,9 +1376,18 @@
             const searchResultsContainer = $('#searchResultsContainer');
             
             const f = filter.toLowerCase();
-            const filtered = notes.filter(n => !f || n.text.toLowerCase().includes(f));
+            const filtered = notes.filter(n => {
+                if (!f) return true;
+                
+                const content = n.content;
+                const textMatch = content.text && content.text.toLowerCase().includes(f);
+                const checklistMatch = content.checklists && 
+                    content.checklists.some(item => item.text && item.text.toLowerCase().includes(f));
+                
+                return textMatch || checklistMatch;
+            });
 
-            // Render notes list (all notes)
+            // Render notes list with sections
             const containers = isMobile ? [mobileContainer] : [desktopContainer];
             containers.forEach(container => {
                 container.innerHTML = '';
@@ -962,96 +1400,44 @@
                     return;
                 }
 
-                notes.forEach(n => {
-                    const wrap = document.createElement('div');
-                    wrap.className = 'note' + (n.id === activeId ? ' active' : '');
-                    wrap.dataset.noteId = n.id;
-
-                    const bg = document.createElement('div');
-                    bg.className = 'swipe-bg';
-                    bg.textContent = 'Delete';
-                    wrap.appendChild(bg);
-
-                    const content = document.createElement('div');
-                    content.className = 'note-content';
+                // Separate pinned and unpinned notes
+                const pinnedNotes = notes.filter(n => n.pinned);
+                const unpinnedNotes = notes.filter(n => !n.pinned);
+                
+                // Render pinned notes section
+                if (pinnedNotes.length > 0) {
+                    const pinnedHeader = document.createElement('div');
+                    pinnedHeader.className = 'section-header';
+                    pinnedHeader.textContent = 'Pinned';
+                    container.appendChild(pinnedHeader);
                     
-                    // Get the first line as the title, or show "Untitled" if empty
-                    const lines = n.text.split('\n');
-                    let preview = lines[0] || 'Untitled';
+                    pinnedNotes.forEach(n => {
+                        container.appendChild(createNoteElement(n));
+                    });
+                }
+                
+                // Render unpinned notes section
+                if (unpinnedNotes.length > 0) {
+                    const unpinnedHeader = document.createElement('div');
+                    unpinnedHeader.className = 'section-header';
+                    unpinnedHeader.textContent = pinnedNotes.length > 0 ? 'Others' : 'Notes';
+                    container.appendChild(unpinnedHeader);
                     
-                    // If first line is empty but there's content on other lines, 
-                    // find the first non-empty line
-                    if (preview === '' && lines.length > 1) {
-                        for (let i = 1; i < lines.length; i++) {
-                            if (lines[i].trim() !== '') {
-                                preview = lines[i];
-                                break;
-                            }
-                        }
-                        if (preview === '') {
-                            preview = 'Untitled';
-                        }
-                    }
-                    
-                    preview = escapeHTML(preview.substring(0, 100));
-
-                    const title = document.createElement('div');
-                    title.style.cssText = 'flex:1;min-width:0;';
-
-                    const titleText = document.createElement('div');
-                    titleText.innerHTML = preview;
-                    titleText.style.cssText = 'font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px;';
-
-                    const timestamp = document.createElement('div');
-                    timestamp.style.cssText = 'font-size:11px;color:var(--text-muted);opacity:0.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
-
-                    // Format the date nicely
-                    const createdTimestamp = n.created || parseInt(n.id) || Date.now();
-                    timestamp.textContent = formatTimestamp(createdTimestamp);
-
-                    title.appendChild(titleText);
-                    title.appendChild(timestamp);
-                    
-                    const del = document.createElement('button');
-                    del.className = 'delete-btn';
-                    del.innerHTML = `
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 6h18"></path>
-                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                        <line x1="10" y1="11" x2="10" y2="17"></line>
-                        <line x1="14" y1="11" x2="14" y2="17"></line>
-                      </svg>
-                    `;
-                    del.setAttribute('aria-label', 'Delete note');
-                    del.onclick = e => {
-                        e.stopPropagation();
-                        requestDeleteNote(n.id);
-                    };
-
-                    content.appendChild(title);
-                    content.appendChild(del);
-                    wrap.appendChild(content);
-
-                    wrap.onclick = (e) => {
-                        // Check if this is coming from a child delete button
-                        if (e.target.closest('.delete-btn')) {
-                            return; // Let the delete button handler handle it
-                        }
-                        
-                        selectNote(n.id);
-                        if (isMobile) {
-                            closeAllPanels();
-                        }
-                    };
-                    
-                    // Keep swipe-left to delete functionality on individual notes
-                    addSwipe(wrap, n.id);
-                    container.appendChild(wrap);
-                });
+                    unpinnedNotes.forEach(n => {
+                        container.appendChild(createNoteElement(n));
+                    });
+                }
+                
+                // Show empty state for sections if needed
+                if (pinnedNotes.length === 0 && unpinnedNotes.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'section-empty';
+                    empty.textContent = 'No notes';
+                    container.appendChild(empty);
+                }
             });
 
-            // Render search results in separate panel
+            // Render search results (no sections in search)
             if (searchResultsContainer) {
                 searchResultsContainer.innerHTML = '';
                 
@@ -1065,60 +1451,33 @@
 
                 filtered.forEach(n => {
                     const wrap = document.createElement('div');
-                    wrap.className = 'note' + (n.id === activeId ? ' active' : '');
+                    wrap.className = 'note' + (n.id === activeId ? ' active' : '') + (n.pinned ? ' pinned' : '');
                     wrap.dataset.noteId = n.id;
 
                     const content = document.createElement('div');
                     content.className = 'note-content';
                     
-                    // Create highlighted search preview
-                    const idx = n.text.toLowerCase().indexOf(f);
-                    let preview = '';
-                    if (idx !== -1) {
-                        const start = Math.max(0, idx - 20);
-                        const end = Math.min(n.text.length, idx + f.length + 30);
-                        let snippet = n.text.substring(start, end);
-                        if (start > 0) snippet = '…' + snippet;
-                        if (end < n.text.length) snippet += '…';
-                        preview = escapeHTML(snippet).replace(
+                    const preview = getNotePreview(n);
+                    let previewHTML = escapeHTML(preview);
+                    
+                    if (f) {
+                        previewHTML = previewHTML.replace(
                             new RegExp(`(${escapeHTML(filter)})`, 'gi'),
                             '<mark>$1</mark>'
                         );
-                    } else {
-                        // Get the first line as the title, or show "Untitled" if empty
-                        const lines = n.text.split('\n');
-                        let titlePreview = lines[0] || 'Untitled';
-                        
-                        // If first line is empty but there's content on other lines, 
-                        // find the first non-empty line
-                        if (titlePreview === '' && lines.length > 1) {
-                            for (let i = 1; i < lines.length; i++) {
-                                if (lines[i].trim() !== '') {
-                                    titlePreview = lines[i];
-                                    break;
-                                }
-                            }
-                            if (titlePreview === '') {
-                                titlePreview = 'Untitled';
-                            }
-                        }
-                        
-                        preview = escapeHTML(titlePreview.substring(0, 100));
                     }
 
                     const title = document.createElement('div');
                     title.style.cssText = 'flex:1;min-width:0;';
 
                     const titleText = document.createElement('div');
-                    titleText.innerHTML = preview;
+                    titleText.innerHTML = previewHTML;
                     titleText.style.cssText = 'font-size:14px;line-height:1.4;white-space:normal;margin-bottom:2px;';
 
                     const timestamp = document.createElement('div');
                     timestamp.style.cssText = 'font-size:11px;color:var(--text-muted);opacity:0.7;margin-top:2px;';
 
-                    // Format the date nicely
-                    const createdTimestamp = n.created || parseInt(n.id) || Date.now();
-                    timestamp.textContent = formatTimestamp(createdTimestamp);
+                    timestamp.textContent = formatTimestamp(n.created);
 
                     title.appendChild(titleText);
                     title.appendChild(timestamp);
@@ -1138,9 +1497,733 @@
                 });
             }
             
-            // Update placeholder after rendering
+            // Update pin button state
+            updatePinButton();
             updatePlaceholder();
         }
+
+        /* ---------- create note element ---------- */
+        function createNoteElement(note) {
+            const wrap = document.createElement('div');
+            wrap.className = 'note' + (note.id === activeId ? ' active' : '') + (note.pinned ? ' pinned' : '');
+            wrap.dataset.noteId = note.id;
+
+            const bg = document.createElement('div');
+            bg.className = 'swipe-bg';
+            bg.textContent = 'Delete';
+            wrap.appendChild(bg);
+
+            const content = document.createElement('div');
+            content.className = 'note-content';
+            
+            const preview = getNotePreview(note);
+            const previewText = escapeHTML(preview);
+
+            const title = document.createElement('div');
+            title.style.cssText = 'flex:1;min-width:0;';
+
+            const titleText = document.createElement('div');
+            titleText.innerHTML = previewText;
+            titleText.style.cssText = 'font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px;';
+
+            const timestamp = document.createElement('div');
+            timestamp.style.cssText = 'font-size:11px;color:var(--text-muted);opacity:0.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+
+            timestamp.textContent = formatTimestamp(note.created);
+
+            title.appendChild(titleText);
+            title.appendChild(timestamp);
+            
+            // Actions container
+            const actions = document.createElement('div');
+            actions.className = 'note-actions';
+            
+            // Pin button for note list
+            const pinBtn = document.createElement('button');
+            pinBtn.className = 'pin-btn' + (note.pinned ? ' pinned' : '');
+            pinBtn.innerHTML = note.pinned ? '📌' : '📍';
+            pinBtn.title = note.pinned ? 'Unpin note' : 'Pin note';
+            pinBtn.onclick = (e) => {
+                e.stopPropagation();
+                togglePin(note.id);
+            };
+            
+            const del = document.createElement('button');
+            del.className = 'delete-btn';
+            del.innerHTML = `
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+            `;
+            del.setAttribute('aria-label', 'Delete note');
+            del.onclick = e => {
+                e.stopPropagation();
+                requestDeleteNote(note.id);
+            };
+
+            actions.appendChild(pinBtn);
+            actions.appendChild(del);
+            content.appendChild(title);
+            content.appendChild(actions);
+            wrap.appendChild(content);
+
+            wrap.onclick = (e) => {
+                if (e.target.closest('.pin-btn') || e.target.closest('.delete-btn')) return;
+                selectNote(note.id);
+                if (isMobile) closeAllPanels();
+            };
+            
+            addSwipe(wrap, note.id);
+            return wrap;
+        }
+
+        /* ---------- toggle pin ---------- */
+        function togglePin(noteId) {
+            const note = notes.find(n => n.id === noteId);
+            if (!note) return;
+            
+            note.pinned = !note.pinned;
+            
+            // If pinning, move to top of its section
+            if (note.pinned) {
+                // Remove from current position
+                const index = notes.indexOf(note);
+                notes.splice(index, 1);
+                // Add to beginning
+                notes.unshift(note);
+            }
+            
+            save();
+            render($('.search').value);
+            
+            // Update pin button in toolbar if this is the active note
+            if (noteId === activeId) {
+                updatePinButton();
+            }
+        }
+
+        /* ---------- update pin button ---------- */
+        function updatePinButton() {
+            const note = notes.find(n => n.id === activeId);
+            const pinBtn = $('#togglePin');
+            
+            if (note) {
+                pinBtn.classList.toggle('pinned', note.pinned);
+                pinBtn.title = note.pinned ? 'Unpin note' : 'Pin note';
+                pinBtn.innerHTML = note.pinned ? '📌' : '📍';
+            } else {
+                pinBtn.classList.remove('pinned');
+                pinBtn.title = 'Pin note';
+                pinBtn.innerHTML = '📍';
+            }
+        }
+
+        /* ---------- pin button click handler ---------- */
+        $('#togglePin').onclick = () => {
+            const note = notes.find(n => n.id === activeId);
+            if (note) {
+                togglePin(note.id);
+            }
+        };
+
+        /* ---------- render editor content ---------- */
+        function renderEditorContent(note) {
+            const editor = $('#editor');
+            editor.innerHTML = '';
+            
+            const content = note.content;
+            
+            // Render text content
+            if (content.text) {
+                const lines = content.text.split('\n');
+                lines.forEach((line, index) => {
+                    const div = document.createElement('div');
+                    div.textContent = line || (index === 0 ? '' : '');
+                    editor.appendChild(div);
+                });
+            }
+            
+            // Render checklists
+            if (content.checklists && content.checklists.length > 0) {
+                content.checklists.forEach((item, index) => {
+                    const checklistItem = createChecklistElement(item, index);
+                    editor.appendChild(checklistItem);
+                });
+            }
+            
+            // Render media
+            if (content.media && content.media.length > 0) {
+                content.media.forEach((media, index) => {
+                    const mediaElement = createMediaElement(media, index);
+                    editor.appendChild(mediaElement);
+                });
+            }
+            
+            // Render drawings
+            if (content.drawings && content.drawings.length > 0) {
+                content.drawings.forEach((drawing, index) => {
+                    const drawingElement = createDrawingPreview(drawing.data, index);
+                    editor.appendChild(drawingElement);
+                });
+            }
+            
+            // Add empty div if editor is empty
+            if (editor.children.length === 0) {
+                const div = document.createElement('div');
+                editor.appendChild(div);
+            }
+            
+            updatePlaceholder();
+        }
+
+        /* ---------- create checklist element ---------- */
+        function createChecklistElement(item, index) {
+            const container = document.createElement('div');
+            container.className = 'checklist-item';
+            container.dataset.index = index;
+            
+            const checkbox = document.createElement('div');
+            checkbox.className = 'checklist-checkbox';
+            if (item.checked) checkbox.classList.add('checked');
+            
+            const text = document.createElement('div');
+            text.className = 'checklist-text';
+            text.contentEditable = true;
+            text.textContent = item.text || '';
+            if (item.checked) text.classList.add('completed');
+            
+            checkbox.onclick = () => {
+                const note = notes.find(n => n.id === activeId);
+                if (!note) return;
+                
+                const checked = !note.content.checklists[index].checked;
+                note.content.checklists[index].checked = checked;
+                
+                if (checked) {
+                    checkbox.classList.add('checked');
+                    text.classList.add('completed');
+                } else {
+                    checkbox.classList.remove('checked');
+                    text.classList.remove('completed');
+                }
+                
+                save();
+            };
+            
+            text.oninput = () => {
+                const note = notes.find(n => n.id === activeId);
+                if (!note) return;
+                
+                note.content.checklists[index].text = text.textContent;
+                save();
+            };
+            
+            text.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addChecklistItem(index + 1);
+                } else if (e.key === 'Backspace' && text.textContent === '' && note.content.checklists.length > 1) {
+                    e.preventDefault();
+                    removeChecklistItem(index);
+                }
+            };
+            
+            container.appendChild(checkbox);
+            container.appendChild(text);
+            
+            return container;
+        }
+
+        /* ---------- checklist functions ---------- */
+        function addChecklistItem(atIndex = -1) {
+            const note = notes.find(n => n.id === activeId);
+            if (!note) return;
+            
+            if (!note.content.checklists) note.content.checklists = [];
+            
+            const newItem = {
+                text: '',
+                checked: false
+            };
+            
+            if (atIndex === -1) {
+                note.content.checklists.push(newItem);
+            } else {
+                note.content.checklists.splice(atIndex, 0, newItem);
+            }
+            
+            renderEditorContent(note);
+            
+            // Focus the new item
+            setTimeout(() => {
+                const items = $('#editor').querySelectorAll('.checklist-text');
+                const itemIndex = atIndex === -1 ? items.length - 1 : atIndex;
+                if (items[itemIndex]) {
+                    const item = items[itemIndex];
+                    item.focus();
+                    const range = document.createRange();
+                    range.selectNodeContents(item);
+                    range.collapse(false);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+            }, 10);
+            
+            save();
+        }
+
+        function removeChecklistItem(index) {
+            const note = notes.find(n => n.id === activeId);
+            if (!note || !note.content.checklists) return;
+            
+            note.content.checklists.splice(index, 1);
+            renderEditorContent(note);
+            save();
+        }
+
+        /* ---------- toggle checklist ---------- */
+        $('#toggleChecklist').onclick = () => {
+            const note = notes.find(n => n.id === activeId);
+            if (!note) return;
+            
+            if (!note.content.checklists) {
+                note.content.checklists = [];
+            }
+            
+            addChecklistItem();
+        };
+
+        /* ---------- create media element ---------- */
+        function createMediaElement(media, index) {
+            const container = document.createElement('div');
+            container.className = 'media-container';
+            container.dataset.index = index;
+            
+            if (media.type === 'image') {
+                const img = document.createElement('img');
+                img.className = 'image-preview';
+                img.src = media.data;
+                img.alt = media.name || 'Image';
+                img.onclick = () => previewMedia(media);
+                container.appendChild(img);
+                
+                // Add remove button for images
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'file-remove';
+                removeBtn.style.position = 'absolute';
+                removeBtn.style.top = '8px';
+                removeBtn.style.right = '8px';
+                removeBtn.style.background = 'var(--bg)';
+                removeBtn.style.borderRadius = '50%';
+                removeBtn.style.width = '24px';
+                removeBtn.style.height = '24px';
+                removeBtn.style.display = 'flex';
+                removeBtn.style.alignItems = 'center';
+                removeBtn.style.justifyContent = 'center';
+                removeBtn.innerHTML = '✕';
+                removeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    removeMedia(index);
+                };
+                container.appendChild(removeBtn);
+                
+            } else if (media.type === 'audio') {
+                const audio = document.createElement('audio');
+                audio.className = 'audio-preview';
+                audio.controls = true;
+                audio.src = media.data;
+                container.appendChild(audio);
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'file-remove';
+                removeBtn.innerHTML = '✕';
+                removeBtn.style.marginLeft = '8px';
+                removeBtn.onclick = () => removeMedia(index);
+                container.appendChild(removeBtn);
+                
+            } else if (media.type === 'file') {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'file-attachment';
+                
+                const icon = document.createElement('div');
+                icon.className = 'file-icon';
+                icon.textContent = '📎';
+                
+                const info = document.createElement('div');
+                info.className = 'file-info';
+                
+                const name = document.createElement('div');
+                name.className = 'file-name';
+                name.textContent = media.name || 'File';
+                
+                const size = document.createElement('div');
+                size.className = 'file-size';
+                size.textContent = formatFileSize(media.size);
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'file-remove';
+                removeBtn.innerHTML = '✕';
+                removeBtn.onclick = () => removeMedia(index);
+                
+                info.appendChild(name);
+                info.appendChild(size);
+                fileDiv.appendChild(icon);
+                fileDiv.appendChild(info);
+                fileDiv.appendChild(removeBtn);
+                container.appendChild(fileDiv);
+            }
+            
+            return container;
+        }
+
+        /* ---------- media upload ---------- */
+        async function handleMediaUpload(file, type) {
+            const note = notes.find(n => n.id === activeId);
+            if (!note) return;
+            
+            if (!note.content.media) note.content.media = [];
+            
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    const media = {
+                        type: type,
+                        name: file.name,
+                        size: file.size,
+                        data: e.target.result,
+                        timestamp: Date.now()
+                    };
+                    
+                    note.content.media.push(media);
+                    renderEditorContent(note);
+                    save();
+                    resolve();
+                };
+                
+                reader.onerror = reject;
+                
+                if (type === 'image' && file.size > 1024 * 1024) { // 1MB
+                    compressImage(file).then(compressedFile => {
+                        reader.readAsDataURL(compressedFile);
+                    }).catch(() => {
+                        reader.readAsDataURL(file);
+                    });
+                } else {
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        /* ---------- image compression ---------- */
+        function compressImage(file, maxWidth = 1024, quality = 0.8) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    img.src = e.target.result;
+                    
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        canvas.toBlob(
+                            (blob) => {
+                                if (!blob) {
+                                    reject(new Error('Canvas to Blob conversion failed'));
+                                    return;
+                                }
+                                resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+                            },
+                            'image/jpeg',
+                            quality
+                        );
+                    };
+                    
+                    img.onerror = reject;
+                };
+                
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        /* ---------- remove media ---------- */
+        function removeMedia(index) {
+            const note = notes.find(n => n.id === activeId);
+            if (!note || !note.content.media) return;
+            
+            note.content.media.splice(index, 1);
+            renderEditorContent(note);
+            save();
+        }
+
+        /* ---------- preview media ---------- */
+        function previewMedia(media) {
+            const modal = $('#mediaModalOverlay');
+            const title = $('#mediaModalTitle');
+            const content = $('#mediaModalContent');
+            
+            title.textContent = media.name || 'Media Preview';
+            content.innerHTML = '';
+            
+            if (media.type === 'image') {
+                const img = document.createElement('img');
+                img.className = 'modal-image';
+                img.src = media.data;
+                content.appendChild(img);
+            } else if (media.type === 'audio') {
+                const audio = document.createElement('audio');
+                audio.controls = true;
+                audio.src = media.data;
+                audio.style.width = '100%';
+                content.appendChild(audio);
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        /* ---------- drawing functions ---------- */
+        function initDrawing() {
+            const canvas = $('#drawingCanvas');
+            const container = $('#drawingContainer');
+            
+            // Set canvas size
+            canvas.width = container.clientWidth - 40; // Account for padding
+            canvas.height = 400;
+            
+            drawingContext = canvas.getContext('2d');
+            
+            // Set initial drawing style
+            drawingContext.lineWidth = 2;
+            drawingContext.lineCap = 'round';
+            drawingContext.lineJoin = 'round';
+            drawingContext.strokeStyle = currentColor;
+            
+            // Clear canvas with background color
+            drawingContext.fillStyle = theme === 'dark' ? '#2c2c2e' : '#f9f9f9';
+            drawingContext.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const canvas = $('#drawingCanvas');
+            const rect = canvas.getBoundingClientRect();
+            
+            lastX = (e.clientX || e.touches[0].clientX) - rect.left;
+            lastY = (e.clientY || e.touches[0].clientY) - rect.top;
+            
+            if (currentTool === 'eraser') {
+                drawingContext.globalCompositeOperation = 'destination-out';
+                drawingContext.lineWidth = 20;
+            } else {
+                drawingContext.globalCompositeOperation = 'source-over';
+                drawingContext.lineWidth = 2;
+                drawingContext.strokeStyle = currentColor;
+            }
+            
+            drawingContext.beginPath();
+            drawingContext.moveTo(lastX, lastY);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            e.preventDefault();
+            const canvas = $('#drawingCanvas');
+            const rect = canvas.getBoundingClientRect();
+            
+            let x, y;
+            if (e.touches) {
+                x = e.touches[0].clientX - rect.left;
+                y = e.touches[0].clientY - rect.top;
+            } else {
+                x = e.clientX - rect.left;
+                y = e.clientY - rect.top;
+            }
+            
+            drawingContext.lineTo(x, y);
+            drawingContext.stroke();
+            
+            lastX = x;
+            lastY = y;
+        }
+
+        function stopDrawing() {
+            if (!isDrawing) return;
+            isDrawing = false;
+            drawingContext.beginPath();
+        }
+
+        function saveDrawing() {
+            const canvas = $('#drawingCanvas');
+            const dataURL = canvas.toDataURL('image/png');
+            
+            const note = notes.find(n => n.id === activeId);
+            if (!note) return;
+            
+            if (!note.content.drawings) note.content.drawings = [];
+            
+            note.content.drawings.push({
+                data: dataURL,
+                timestamp: Date.now()
+            });
+            
+            // Hide drawing canvas and show editor
+            $('#drawingContainer').style.display = 'none';
+            $('#editor').style.display = 'block';
+            
+            // Add drawing preview to editor
+            const drawingElement = createDrawingPreview(dataURL, note.content.drawings.length - 1);
+            $('#editor').appendChild(drawingElement);
+            
+            save();
+            updatePlaceholder();
+        }
+
+        function createDrawingPreview(dataURL, index) {
+            const container = document.createElement('div');
+            container.className = 'media-container';
+            
+            const img = document.createElement('img');
+            img.className = 'image-preview';
+            img.src = dataURL;
+            img.alt = 'Drawing';
+            img.onclick = () => {
+                previewMedia({ type: 'image', data: dataURL, name: 'Drawing' });
+            };
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'file-remove';
+            removeBtn.style.position = 'absolute';
+            removeBtn.style.top = '8px';
+            removeBtn.style.right = '8px';
+            removeBtn.style.background = 'var(--bg)';
+            removeBtn.style.borderRadius = '50%';
+            removeBtn.style.width = '24px';
+            removeBtn.style.height = '24px';
+            removeBtn.style.display = 'flex';
+            removeBtn.style.alignItems = 'center';
+            removeBtn.style.justifyContent = 'center';
+            removeBtn.innerHTML = '✕';
+            removeBtn.onclick = (e) => {
+                e.stopPropagation();
+                const note = notes.find(n => n.id === activeId);
+                if (note && note.content.drawings) {
+                    note.content.drawings.splice(index, 1);
+                    container.remove();
+                    save();
+                }
+            };
+            
+            container.appendChild(img);
+            container.appendChild(removeBtn);
+            return container;
+        }
+
+        /* ---------- initialize drawing ---------- */
+        $('#startDrawing').onclick = () => {
+            $('#drawingContainer').style.display = 'block';
+            $('#editor').style.display = 'none';
+            initDrawing();
+        };
+
+        $('#cancelDrawing').onclick = () => {
+            $('#drawingContainer').style.display = 'none';
+            $('#editor').style.display = 'block';
+        };
+
+        $('#saveDrawing').onclick = saveDrawing;
+
+        $('#clearDrawing').onclick = () => {
+            const canvas = $('#drawingCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = theme === 'dark' ? '#2c2c2e' : '#f9f9f9';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        };
+
+        // Drawing tool selection
+        document.querySelectorAll('.drawing-tool-btn[data-tool]').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.drawing-tool-btn[data-tool]').forEach(b => {
+                    b.classList.remove('active');
+                });
+                btn.classList.add('active');
+                currentTool = btn.dataset.tool;
+            };
+        });
+
+        // Color picker
+        $('#drawingColor').onchange = (e) => {
+            currentColor = e.target.value;
+        };
+
+        /* ---------- event listeners for drawing ---------- */
+        const canvas = $('#drawingCanvas');
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch support for mobile
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startDrawing(e);
+        });
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            draw(e);
+        });
+        canvas.addEventListener('touchend', stopDrawing);
+        canvas.addEventListener('touchcancel', stopDrawing);
+
+        /* ---------- media upload event listeners ---------- */
+        $('#imageUpload').addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            files.forEach(file => handleMediaUpload(file, 'image'));
+            e.target.value = '';
+        });
+
+        $('#audioUpload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleMediaUpload(file, 'audio');
+            e.target.value = '';
+        });
+
+        $('#fileUpload').addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            files.forEach(file => handleMediaUpload(file, 'file'));
+            e.target.value = '';
+        });
+
+        /* ---------- modal close ---------- */
+        $('#closeMediaModal').onclick = () => {
+            $('#mediaModalOverlay').style.display = 'none';
+        };
+
+        $('#mediaModalOverlay').onclick = (e) => {
+            if (e.target === $('#mediaModalOverlay')) {
+                $('#mediaModalOverlay').style.display = 'none';
+            }
+        };
 
         /* ---------- swipe ---------- */
         function addSwipe(el, id) {
@@ -1154,7 +2237,6 @@
                 cx = sx;
                 swiping = true;
                 el.classList.add('swiping');
-                // Prevent any other touch handlers from interfering
                 e.stopPropagation();
             }, { passive: true });
 
@@ -1176,12 +2258,10 @@
                 const swipePercentage = -dx / el.offsetWidth;
                 
                 if (swipePercentage > threshold) {
-                    // Swiped enough to delete - delete the note
                     deleteNote(id);
-                    e.stopPropagation(); // Prevent panel from closing
-                    e.preventDefault(); // Prevent default behavior
+                    e.stopPropagation();
+                    e.preventDefault();
                 } else {
-                    // Not enough swipe - animate back
                     content.style.transition = 'transform 0.3s ease-out';
                     swipeBg.style.transition = 'transform 0.3s ease-out';
                     content.style.transform = 'translateX(0)';
@@ -1192,16 +2272,10 @@
                         swipeBg.style.transition = '';
                     }, 300);
                     
-                    // Only select the note if it was a very short swipe (tap)
                     if (swipePercentage < 0.1 && Math.abs(dx) < 10) {
-                        // This was a tap, not a swipe
                         selectNote(id);
-                        if (isMobile) {
-                            closeAllPanels();
-                        }
+                        if (isMobile) closeAllPanels();
                     }
-                    // For swipes that didn't reach threshold but weren't taps,
-                    // don't do anything (panel stays open)
                 }
             }, { passive: true });
 
@@ -1219,9 +2293,7 @@
                 }, 300);
             });
 
-            // Prevent the click handler from being called for swipe gestures
             el.addEventListener('click', (e) => {
-                // If we just processed a swipe, prevent the click
                 if (swiping) {
                     e.stopPropagation();
                     e.preventDefault();
@@ -1231,49 +2303,57 @@
 
         /* ---------- crud ---------- */
         function selectNote(id) {
+            // Save current note's content first
+            saveCurrentNoteContent();
+            
             const note = notes.find(n => n.id === id);
             if (!note) return createNote();
+            
             activeId = id;
-            
-            // Clear editor and add content
-            const editor = $('#editor');
-            editor.innerHTML = '';
-            
-            const lines = note.text.split('\n');
-            lines.forEach((line, index) => {
-                const div = document.createElement('div');
-                div.textContent = line || (index === 0 ? '' : '');
-                editor.appendChild(div);
-            });
-            
-            // If note is empty, add an empty div
-            if (lines.length === 0 || (lines.length === 1 && lines[0] === '')) {
-                const div = document.createElement('div');
-                editor.appendChild(div);
-            }
-            
+            renderEditorContent(note);
             render($('.search').value);
             save();
             
+            // Hide drawing canvas if visible
+            $('#drawingContainer').style.display = 'none';
+            $('#editor').style.display = 'block';
+            
             setTimeout(() => {
-                caretEnd($('#editor'));
                 updatePlaceholder();
             }, 0);
+        }
+
+        function saveCurrentNoteContent() {
+            const note = notes.find(n => n.id === activeId);
+            if (!note) return;
+            
+            // Save text content from regular editor divs
+            const editor = $('#editor');
+            const textDivs = Array.from(editor.children).filter(child => 
+                !child.classList.contains('checklist-item') && 
+                !child.classList.contains('media-container')
+            );
+            
+            note.content.text = textDivs.map(div => div.textContent).join('\n');
+            save();
         }
 
         function createNote() {
             const note = { 
                 id: Date.now().toString(), 
-                text: '',
-                created: Date.now()  // Store creation timestamp
+                created: Date.now(),
+                pinned: false,
+                content: {
+                    text: '',
+                    checklists: [],
+                    media: [],
+                    drawings: []
+                }
             };
             notes.unshift(note);
             activeId = note.id;
             
-            // Clear editor and add empty div
-            const editor = $('#editor');
-            editor.innerHTML = '<div></div>';
-            
+            $('#editor').innerHTML = '<div></div>';
             render($('.search').value);
             save();
             
@@ -1282,12 +2362,10 @@
                 updatePlaceholder();
             }, 0);
             
-            if (isMobile) {
-                closeAllPanels();
-            }
+            if (isMobile) closeAllPanels();
         }
 
-        /* ---------- Delete with confirmation (desktop) ---------- */
+        /* ---------- delete with confirmation ---------- */
         function requestDeleteNote(id) {
             if (window.innerWidth > 768) {
                 noteToDelete = id;
@@ -1298,13 +2376,11 @@
         }
 
         function showModal() {
-            const modalOverlay = $('#modalOverlay');
-            modalOverlay.style.display = 'flex';
+            $('#modalOverlay').style.display = 'flex';
         }
 
         function hideModal() {
-            const modalOverlay = $('#modalOverlay');
-            modalOverlay.style.display = 'none';
+            $('#modalOverlay').style.display = 'none';
             noteToDelete = null;
         }
 
@@ -1324,43 +2400,40 @@
             if (idx === -1) return;
             notes.splice(idx, 1);
             
-            if (activeId === id) notes.length ? selectNote(notes[0].id) : createNote();
-            else { render($('.search').value); save(); }
+            if (activeId === id) {
+                notes.length ? selectNote(notes[0].id) : createNote();
+            } else {
+                render($('.search').value);
+                save();
+            }
         }
 
-        /* ---------- editor ---------- */
-        $('#editor').addEventListener('input', () => {
-            const note = notes.find(n => n.id === activeId);
-            if (!note) return;
+        /* ---------- editor input ---------- */
+        $('#editor').addEventListener('input', (e) => {
+            // Only handle text input, not checklist or media changes
+            if (e.target.classList.contains('checklist-text') || 
+                e.target.closest('.media-container')) {
+                return;
+            }
             
-            // Get all divs from editor
-            const divs = $('#editor').querySelectorAll('div');
-            note.text = Array.from(divs).map(d => d.innerText).join('\n');
-            
+            saveCurrentNoteContent();
             render($('.search').value);
-            save();
             updatePlaceholder();
         });
 
-        // Update placeholder on focus and any key press
+        // Update placeholder on focus and blur
         $('#editor').addEventListener('focus', updatePlaceholder);
         $('#editor').addEventListener('blur', updatePlaceholder);
         
         // Hide placeholder immediately when typing starts
         $('#editor').addEventListener('keydown', (e) => {
-            // Hide placeholder immediately on any key press except modifiers
             if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.length === 1) {
                 $('#editorPlaceholder').classList.add('hidden');
             }
             
-            // Show placeholder if backspace removes all content
             if (e.key === 'Backspace') {
-                // Check after a short delay if editor is empty
                 setTimeout(() => {
-                    const editor = $('#editor');
-                    if (editor.textContent.trim().length === 0) {
-                        $('#editorPlaceholder').classList.remove('hidden');
-                    }
+                    updatePlaceholder();
                 }, 10);
             }
         });
@@ -1381,9 +2454,7 @@
                 render(searchValue);
                 
                 if (isMobile && searchValue.length > 0 && currentPanel !== 'search') {
-                    if (currentPanel === 'notes') {
-                        closePanel();
-                    }
+                    if (currentPanel === 'notes') closePanel();
                     openPanel('search');
                 } else if (isMobile && searchValue.length === 0 && currentPanel === 'search') {
                     closePanel();
@@ -1397,18 +2468,14 @@
                 $('.search').value = '';
                 render('');
                 $('#editor').focus();
-                if (isMobile && currentPanel === 'search') {
-                    closePanel();
-                }
+                if (isMobile && currentPanel === 'search') closePanel();
             }
         });
 
         // Focus handler for search
         $('.search').addEventListener('focus', () => {
             if (isMobile && $('.search').value.trim().length > 0 && currentPanel !== 'search') {
-                if (currentPanel === 'notes') {
-                    closePanel();
-                }
+                if (currentPanel === 'notes') closePanel();
                 openPanel('search');
             }
         });
@@ -1416,15 +2483,22 @@
         /* ---------- buttons ---------- */
         $('#newNote').onclick = createNote;
         $('#logoBtn').onclick = () => {
-            if (isMobile) {
-                togglePanel();
-            }
+            if (isMobile) togglePanel();
         };
         $('#closePanelBtn').onclick = closeAllPanels;
         $('#closeSearchBtn').onclick = closeAllPanels;
         $('#panelOverlay').onclick = closeAllPanels;
 
-        // Update isMobile on window resize
+        // Modal button handlers
+        $('#modalDelete').onclick = confirmDelete;
+        $('#modalCancel').onclick = cancelDelete;
+
+        // Close modal when clicking on overlay
+        $('#modalOverlay').onclick = (e) => {
+            if (e.target === $('#modalOverlay')) cancelDelete();
+        };
+
+        /* ---------- resize handling ---------- */
         window.addEventListener('resize', handleResize);
 
         function handleResize() {
@@ -1433,51 +2507,39 @@
             windowHeight = window.innerHeight;
             
             if (wasMobile !== isMobile) {
-                if (!isMobile) {
-                    closeAllPanels();
-                }
+                if (!isMobile) closeAllPanels();
                 render($('.search').value);
             }
         }
 
-        /* ---------- keyboard ---------- */
+        /* ---------- keyboard shortcuts ---------- */
         addEventListener('keydown', e => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); createNote(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                createNote();
+            }
             if (e.key === 'Escape' && document.activeElement === $('.search')) {
                 $('.search').value = '';
                 render('');
                 $('#editor').focus();
-                if (isMobile && currentPanel === 'search') {
-                    closePanel();
-                }
+                if (isMobile && currentPanel === 'search') closePanel();
             }
-            if (e.key === 'Escape' && noteToDelete) {
-                cancelDelete();
+            if (e.key === 'Escape' && noteToDelete) cancelDelete();
+            // Pin shortcut: Ctrl/Cmd + P
+            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                e.preventDefault();
+                const note = notes.find(n => n.id === activeId);
+                if (note) togglePin(note.id);
             }
         });
 
-        // Modal button handlers
-        $('#modalDelete').onclick = confirmDelete;
-        $('#modalCancel').onclick = cancelDelete;
-
-        // Close modal when clicking on overlay
-        $('#modalOverlay').onclick = (e) => {
-            if (e.target === $('#modalOverlay')) {
-                cancelDelete();
-            }
-        };
-
         /* ---------- init ---------- */
         function init() {
-            // Ensure all existing notes have a created timestamp
-            notes.forEach(note => {
-                if (!note.created) {
-                    note.created = parseInt(note.id) || Date.now();
-                }
-            });
+            initializeNoteStructure();
             
-            if (!notes.length) createNote();
-            else {
+            if (!notes.length) {
+                createNote();
+            } else {
                 const exists = notes.find(n => n.id === activeId);
                 selectNote(exists ? activeId : notes[0].id);
             }
@@ -1485,10 +2547,14 @@
             windowHeight = window.innerHeight;
             isMobile = window.innerWidth <= 768;
             
-            // No setupSwipe() call anymore
+            // Initialize drawing tools
+            document.querySelector('.drawing-tool-btn[data-tool="pen"]').classList.add('active');
+            
             render();
             updatePlaceholder();
         }
+        
+        // Initialize the app
         init();
     </script>
 </body>
