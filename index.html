@@ -118,6 +118,25 @@
         overflow-y: auto;
         overflow-x: hidden;
       }
+
+      .canvas-container {
+        cursor: crosshair;
+        touch-action: none;
+      }
+
+      /* Audio player styling to match theme */
+      audio::-webkit-media-controls-panel {
+        background-color: #FFE600;
+      }
+
+      /* Hide horizontal scrollbar but keep functionality */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
     </style>
     <script type="importmap">
     {
@@ -150,7 +169,17 @@
         ListTodo,
         Type,
         X,
-        CheckCircle2
+        CheckCircle2,
+        Paperclip,
+        Image as ImageIcon,
+        Mic,
+        Pencil,
+        RotateCcw,
+        Download,
+        Play,
+        Square,
+        Music,
+        FileText
       } from 'lucide-react';
 
       // Custom Logo Component
@@ -177,6 +206,91 @@
         ])
       );
 
+      const DoodleCanvas = ({ initialData, onSave, theme }) => {
+        const canvasRef = useRef(null);
+        const [isDrawing, setIsDrawing] = useState(false);
+        const ctxRef = useRef(null);
+        const savedInitialData = useRef(initialData);
+
+        useEffect(() => {
+          const canvas = canvasRef.current;
+          canvas.width = canvas.offsetWidth;
+          canvas.height = canvas.offsetHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.lineCap = 'round';
+          ctx.lineWidth = 5;
+          ctx.strokeStyle = theme === 'dark' ? '#00FF41' : 'black';
+          ctxRef.current = ctx;
+
+          if (initialData) {
+            const img = new Image();
+            img.onload = () => ctx.drawImage(img, 0, 0);
+            img.src = initialData;
+          }
+        }, [theme]); // Re-init context on theme change
+
+        const startDrawing = (e) => {
+          const { offsetX, offsetY } = getCoordinates(e);
+          ctxRef.current.beginPath();
+          ctxRef.current.moveTo(offsetX, offsetY);
+          setIsDrawing(true);
+        };
+
+        const draw = (e) => {
+          if (!isDrawing) return;
+          const { offsetX, offsetY } = getCoordinates(e);
+          ctxRef.current.lineTo(offsetX, offsetY);
+          ctxRef.current.stroke();
+        };
+
+        const stopDrawing = () => {
+          if (!isDrawing) return;
+          ctxRef.current.closePath();
+          setIsDrawing(false);
+          onSave(canvasRef.current.toDataURL());
+        };
+
+        const getCoordinates = (e) => {
+          if (e.nativeEvent.offsetX !== undefined) {
+            return { offsetX: e.nativeEvent.offsetX, offsetY: e.nativeEvent.offsetY };
+          } else {
+            const rect = canvasRef.current.getBoundingClientRect();
+            const clientX = e.nativeEvent.touches ? e.nativeEvent.touches[0].clientX : e.clientX;
+            const clientY = e.nativeEvent.touches ? e.nativeEvent.touches[0].clientY : e.clientY;
+            return {
+              offsetX: clientX - rect.left,
+              offsetY: clientY - rect.top
+            };
+          }
+        };
+
+        const clear = () => {
+          ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          onSave(null);
+        };
+
+        return React.createElement('div', { className: "flex-1 flex flex-col gap-4" }, [
+          React.createElement('div', { className: "flex justify-end", key: "canvas-tools" }, 
+            React.createElement('button', { 
+              onClick: clear,
+              className: "p-2 brutal-border bg-red-500 text-white brutal-shadow brutal-btn flex items-center gap-2 font-black uppercase text-xs"
+            }, [React.createElement(RotateCcw, { className: "w-4 h-4" }), "Reset Canvas"])
+          ),
+          React.createElement('canvas', {
+            ref: canvasRef,
+            onMouseDown: startDrawing,
+            onMouseMove: draw,
+            onMouseUp: stopDrawing,
+            onMouseOut: stopDrawing,
+            onTouchStart: startDrawing,
+            onTouchMove: draw,
+            onTouchEnd: stopDrawing,
+            className: `flex-1 w-full brutal-border brutal-shadow canvas-container ${theme === 'dark' ? 'bg-zinc-900' : 'bg-white'}`,
+            key: "canvas"
+          })
+        ]);
+      };
+
       const App = () => {
         // State
         const [notes, setNotes] = useState(() => {
@@ -193,13 +307,17 @@
         });
         const [isSidebarOpen, setIsSidebarOpen] = useState(false);
         const [newItemText, setNewItemText] = useState('');
+        const [isRecording, setIsRecording] = useState(false);
         
-        // Modal State
+        const mediaRecorderRef = useRef(null);
+        const audioChunksRef = useRef([]);
         const [noteToDelete, setNoteToDelete] = useState(null);
 
-        // Refs for focus management
+        // Refs
         const contentRef = useRef(null);
         const addItemRef = useRef(null);
+        const fileInputRef = useRef(null);
+        const imageInputRef = useRef(null);
 
         // Derived state
         const activeNote = useMemo(() => notes.find(n => n.id === activeId) || null, [notes, activeId]);
@@ -207,12 +325,12 @@
         const wordCount = useMemo(() => {
           if (!activeNote) return 0;
           if (activeNote.mode === 'checklist') return activeNote.items?.length || 0;
-          const fullText = `${activeNote.title} ${activeNote.content}`.trim();
+          if (activeNote.mode === 'doodle') return 0;
+          const fullText = `${activeNote.title} ${activeNote.content || ''}`.trim();
           return fullText ? fullText.split(/\s+/).filter(Boolean).length : 0;
         }, [activeNote]);
 
         const filteredNotes = useMemo(() => {
-          // Sort logic: Pinned first, then by updatedAt
           const sorted = [...notes].sort((a, b) => {
             if (a.pinned && !b.pinned) return -1;
             if (!a.pinned && b.pinned) return 1;
@@ -222,8 +340,8 @@
           if (!searchQuery.trim()) return sorted;
           const query = searchQuery.toLowerCase();
           return sorted.filter(n => 
-            n.title.toLowerCase().includes(query) || 
-            (n.mode === 'checklist' ? n.items?.some(i => i.text.toLowerCase().includes(query)) : n.content.toLowerCase().includes(query))
+            (n.title || '').toLowerCase().includes(query) || 
+            (n.mode === 'checklist' ? (n.items || []).some(i => i.text.toLowerCase().includes(query)) : (n.content || '').toLowerCase().includes(query))
           );
         }, [notes, searchQuery]);
 
@@ -242,7 +360,7 @@
           localStorage.setItem('theme', theme);
         }, [theme]);
 
-        // Actions
+        // Handlers
         const createNewNote = useCallback(() => {
           const newNote = {
             id: Date.now().toString(),
@@ -251,7 +369,9 @@
             mode: 'text',
             items: [],
             pinned: false,
-            updatedAt: Date.now()
+            updatedAt: Date.now(),
+            attachments: [],
+            doodleData: null
           };
           setNotes(prev => [newNote, ...prev]);
           setActiveId(newNote.id);
@@ -265,13 +385,8 @@
 
         const confirmDelete = useCallback(() => {
           if (!noteToDelete) return;
-          setNotes(prev => {
-            const updated = prev.filter(n => n.id !== noteToDelete);
-            return updated;
-          });
-          if (activeId === noteToDelete) {
-            setActiveId(null);
-          }
+          setNotes(prev => prev.filter(n => n.id !== noteToDelete));
+          if (activeId === noteToDelete) setActiveId(null);
           setNoteToDelete(null);
         }, [noteToDelete, activeId]);
 
@@ -281,45 +396,96 @@
           ));
         }, []);
 
-        const addChecklistItem = useCallback(() => {
-          if (!newItemText.trim() || !activeId) return;
-          const newItem = {
-            id: Date.now().toString(),
-            text: newItemText.trim(),
-            completed: false
+        const handleFileUpload = useCallback(async (e, type) => {
+          const file = e.target.files[0];
+          if (!file || !activeId) return;
+
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const attachment = {
+              id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9),
+              type,
+              name: file.name,
+              mimeType: file.type,
+              data: event.target.result
+            };
+            setNotes(prev => prev.map(n => 
+              n.id === activeId ? { 
+                ...n, 
+                attachments: [...(n.attachments || []), attachment], 
+                updatedAt: Date.now() 
+              } : n
+            ));
+            // Reset input so it triggers again for the same file if needed
+            e.target.value = '';
           };
-          setNotes(prev => prev.map(n => 
-            n.id === activeId ? { ...n, items: [...(n.items || []), newItem], updatedAt: Date.now() } : n
-          ));
-          setNewItemText('');
-          addItemRef.current?.focus();
-        }, [newItemText, activeId]);
+          reader.onerror = () => alert("Failed to read file.");
+          reader.readAsDataURL(file);
+        }, [activeId]);
 
-        const toggleChecklistItem = useCallback((noteId, itemId) => {
+        const toggleVoiceRecording = async () => {
+          if (isRecording) {
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+              mediaRecorderRef.current.stop();
+            }
+            setIsRecording(false);
+          } else {
+            if (!activeId) return;
+            try {
+              const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+              const mediaRecorder = new MediaRecorder(stream);
+              mediaRecorderRef.current = mediaRecorder;
+              audioChunksRef.current = [];
+
+              mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) audioChunksRef.current.push(e.data);
+              };
+
+              mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                  const attachment = {
+                    id: Date.now().toString() + '-voice',
+                    type: 'voice',
+                    name: `Voice Clip ${new Date().toLocaleTimeString()}`,
+                    mimeType: 'audio/webm',
+                    data: e.target.result
+                  };
+                  setNotes(prev => prev.map(n => 
+                    n.id === activeId ? { 
+                      ...n, 
+                      attachments: [...(n.attachments || []), attachment], 
+                      updatedAt: Date.now() 
+                    } : n
+                  ));
+                };
+                reader.readAsDataURL(audioBlob);
+                stream.getTracks().forEach(track => track.stop());
+              };
+
+              mediaRecorder.start();
+              setIsRecording(true);
+            } catch (err) {
+              console.error("Mic access denied", err);
+              alert("Could not access microphone. Ensure you have given permission.");
+            }
+          }
+        };
+
+        const removeAttachment = (attachmentId) => {
           setNotes(prev => prev.map(n => 
-            n.id === noteId ? { 
+            n.id === activeId ? { 
               ...n, 
-              items: n.items.map(i => i.id === itemId ? { ...i, completed: !i.completed } : i),
-              updatedAt: Date.now()
+              attachments: (n.attachments || []).filter(a => a.id !== attachmentId), 
+              updatedAt: Date.now() 
             } : n
           ));
-        }, []);
-
-        const removeChecklistItem = useCallback((noteId, itemId) => {
-          setNotes(prev => prev.map(n => 
-            n.id === noteId ? { 
-              ...n, 
-              items: n.items.filter(i => i.id !== itemId),
-              updatedAt: Date.now()
-            } : n
-          ));
-        }, []);
+        };
 
         const togglePin = useCallback((id, e) => {
           if (e) e.stopPropagation();
-          setNotes(prev => prev.map(n => 
-            n.id === id ? { ...n, pinned: !n.pinned } : n
-          ));
+          setNotes(prev => prev.map(n => n.id === id ? { ...n, pinned: !n.pinned } : n));
         }, []);
 
         const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
@@ -327,30 +493,56 @@
         const primaryColor = theme === 'dark' ? 'bg-[#00FF41]' : 'bg-[#FFE600]';
         const secondaryColor = theme === 'dark' ? 'bg-[#FF00F5]' : 'bg-[#FF00F5]';
         const accentColor = theme === 'dark' ? 'bg-[#3300FF]' : 'bg-[#00D1FF]';
-        const textColor = 'text-black';
         const surfaceColor = theme === 'dark' ? 'bg-[#121212]' : 'bg-white';
 
         const handleTitleKeyDown = (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
-            if (activeNote.mode === 'checklist') {
-              addItemRef.current?.focus();
-            } else {
-              contentRef.current?.focus();
-            }
+            if (activeNote.mode === 'checklist') addItemRef.current?.focus();
+            else contentRef.current?.focus();
           }
         };
 
-        const getChecklistStats = (note) => {
-          if (note.mode !== 'checklist' || !note.items) return null;
-          const total = note.items.length;
-          const completed = note.items.filter(i => i.completed).length;
-          return { total, completed };
+        const addChecklistItem = useCallback(() => {
+          if (!newItemText.trim() || !activeId) return;
+          const newItem = { id: Date.now().toString(), text: newItemText.trim(), completed: false };
+          setNotes(prev => prev.map(n => 
+            n.id === activeId ? { ...n, items: [...(n.items || []), newItem], updatedAt: Date.now() } : n
+          ));
+          setNewItemText('');
+          addItemRef.current?.focus();
+        }, [newItemText, activeId]);
+
+        const toggleChecklistItem = (itemId) => {
+          setNotes(prev => prev.map(n => 
+            n.id === activeId ? { 
+              ...n, 
+              items: (n.items || []).map(i => i.id === itemId ? { ...i, completed: !i.completed } : i),
+              updatedAt: Date.now()
+            } : n
+          ));
         };
 
         return React.createElement('div', { 
           className: `h-screen w-full relative flex flex-col overflow-hidden transition-colors duration-200 bg-grid ${theme === 'dark' ? 'bg-[#0A0A0A] text-white' : 'bg-[#F0F0F0] text-black'}`
         }, [
+          // Global Hidden Inputs
+          React.createElement('input', { 
+            type: "file", 
+            ref: fileInputRef, 
+            className: "hidden", 
+            onChange: (e) => handleFileUpload(e, 'file'), 
+            key: "file-input" 
+          }),
+          React.createElement('input', { 
+            type: "file", 
+            ref: imageInputRef, 
+            accept: "image/*", 
+            className: "hidden", 
+            onChange: (e) => handleFileUpload(e, 'image'), 
+            key: "image-input" 
+          }),
+
           // Header
           React.createElement('header', { 
             key: 'header',
@@ -362,38 +554,35 @@
                 className: `md:hidden p-2 brutal-border brutal-shadow brutal-btn ${primaryColor} text-black`,
                 key: "menu-btn"
               }, React.createElement(Menu, { className: "w-6 h-6" })),
-              React.createElement('div', { className: "flex items-center gap-3", key: "logo-container" }, [
+              React.createElement('div', { className: "flex items-center gap-3", key: "logo-container" }, 
                 React.createElement('div', { className: `p-1 brutal-border brutal-shadow ${secondaryColor} text-black h-12 w-10 flex items-center justify-center` }, 
                   React.createElement(AppLogo, { className: "w-full h-full" })
                 )
-              ])
+              )
             ]),
-            React.createElement('div', { className: "flex-1 max-w-md mx-6 hidden md:block", key: "h-search" }, [
+            React.createElement('div', { className: "flex-1 max-w-md mx-6 hidden md:block", key: "h-search" }, 
               React.createElement('div', { className: `relative brutal-border brutal-shadow ${theme === 'dark' ? 'bg-zinc-800' : 'bg-white'}` }, [
-                React.createElement(Search, { className: `absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${theme === 'dark' ? 'text-zinc-400' : 'text-black'}`, key: "s-icon" }),
+                React.createElement(Search, { className: `absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${theme === 'dark' ? 'text-zinc-400' : 'text-black'}` }),
                 React.createElement('input', { 
                   type: "text", 
                   placeholder: "SEARCH YOUR BRAIN...",
                   value: searchQuery,
                   onChange: (e) => setSearchQuery(e.target.value),
-                  className: "w-full bg-transparent py-3 pl-12 pr-4 focus:outline-none font-bold placeholder:opacity-50",
-                  key: "s-input"
+                  className: "w-full bg-transparent py-3 pl-12 pr-4 focus:outline-none font-bold placeholder:opacity-50"
                 })
               ])
-            ]),
+            ),
             React.createElement('div', { className: "flex items-center gap-4", key: "h-actions" }, [
               React.createElement('button', { 
                 onClick: toggleTheme,
-                className: `p-3 brutal-border brutal-shadow brutal-btn ${accentColor} text-black`,
-                key: "theme-btn"
+                className: `p-3 brutal-border brutal-shadow brutal-btn ${accentColor} text-black`
               }, theme === 'dark' ? React.createElement(Sun, { className: "w-6 h-6" }) : React.createElement(Moon, { className: "w-6 h-6" })),
               React.createElement('button', { 
                 onClick: createNewNote,
-                className: `flex items-center gap-2 ${primaryColor} text-black px-6 py-3 brutal-border brutal-shadow brutal-btn font-black uppercase text-sm`,
-                key: "new-btn"
+                className: `flex items-center gap-2 ${primaryColor} text-black px-6 py-3 brutal-border brutal-shadow brutal-btn font-black uppercase text-sm`
               }, [
-                React.createElement(Plus, { className: "w-6 h-6", key: "p-icon" }),
-                React.createElement('span', { className: "hidden sm:inline", key: "p-text" }, "New Note")
+                React.createElement(Plus, { className: "w-6 h-6" }),
+                React.createElement('span', { className: "hidden sm:inline" }, "New Note")
               ])
             ])
           ]),
@@ -410,257 +599,177 @@
             }, [
               React.createElement('div', { 
                 className: `absolute inset-0 bg-black/80 md:hidden transition-opacity ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`,
-                onClick: () => setIsSidebarOpen(false),
-                key: "s-overlay"
+                onClick: () => setIsSidebarOpen(false)
               }),
-              React.createElement('div', { className: `relative w-80 h-full md:w-full brutal-border brutal-shadow-lg ${surfaceColor} overflow-hidden flex flex-col z-[110]`, key: "s-content" }, [
-                React.createElement('div', { className: `p-4 border-b-[3px] border-black flex items-center justify-between shrink-0 ${theme === 'dark' ? 'bg-zinc-900' : 'bg-zinc-100'}`, key: "s-header" }, [
+              React.createElement('div', { className: `relative w-80 h-full md:w-full brutal-border brutal-shadow-lg ${surfaceColor} overflow-hidden flex flex-col z-[110]` }, [
+                React.createElement('div', { className: `p-4 border-b-[3px] border-black flex items-center justify-between shrink-0 ${theme === 'dark' ? 'bg-zinc-900' : 'bg-zinc-100'}` }, [
                   React.createElement('span', { className: "font-black text-xs uppercase tracking-widest italic" }, "Notes"),
-                  React.createElement('button', { 
-                    onClick: () => setIsSidebarOpen(false),
-                    className: "md:hidden p-2 brutal-border bg-white text-black",
-                    key: "close-s"
-                  }, React.createElement(ChevronLeft, { className: "w-4 h-4" }))
+                  React.createElement('button', { onClick: () => setIsSidebarOpen(false), className: "md:hidden p-2 brutal-border bg-white text-black" }, React.createElement(ChevronLeft, { className: "w-4 h-4" }))
                 ]),
-                // Mobile Search Bar
-                React.createElement('div', { className: "px-4 py-4 border-b-[3px] border-black md:hidden shrink-0", key: "s-search-mobile" }, [
-                  React.createElement('div', { className: `relative brutal-border brutal-shadow ${theme === 'dark' ? 'bg-zinc-800' : 'bg-white'}` }, [
-                    React.createElement(Search, { className: `absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-black'}`, key: "ms-icon" }),
-                    React.createElement('input', { 
-                      type: "text", 
-                      placeholder: "SEARCH...",
-                      value: searchQuery,
-                      onChange: (e) => setSearchQuery(e.target.value),
-                      className: "w-full bg-transparent py-2 pl-9 pr-3 focus:outline-none font-bold text-sm placeholder:opacity-50",
-                      key: "ms-input"
-                    })
-                  ])
-                ]),
-                React.createElement('div', { className: "flex-1 scroll-container p-4 space-y-4", key: "s-list" }, [
-                  filteredNotes.length === 0 ? React.createElement('div', { className: "h-40 flex flex-col items-center justify-center text-center p-4", key: "no-notes" }, [
-                    React.createElement('div', { className: "w-16 h-16 brutal-border bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center mb-4", key: "nn-box" }, 
-                      React.createElement(Search, { className: "w-8 h-8 opacity-20" })
-                    ),
+                React.createElement('div', { className: "flex-1 scroll-container p-4 space-y-4" }, 
+                  filteredNotes.length === 0 ? React.createElement('div', { className: "h-40 flex flex-col items-center justify-center text-center p-4" }, [
+                    React.createElement('div', { className: "w-16 h-16 brutal-border bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center mb-4" }, React.createElement(Search, { className: "w-8 h-8 opacity-20" })),
                     React.createElement('p', { className: "text-sm font-bold uppercase opacity-30 italic" }, "No Data Found")
-                  ]) : filteredNotes.map(note => {
-                    const stats = getChecklistStats(note);
-                    return React.createElement('button', {
-                      key: note.id,
-                      onClick: () => { setActiveId(note.id); setIsSidebarOpen(false); },
-                      className: `group w-full text-left p-4 brutal-border transition-all relative flex flex-col gap-3 ${activeId === note.id ? `${primaryColor} ${textColor} brutal-shadow-active` : `hover:bg-zinc-100 dark:hover:bg-zinc-800 brutal-shadow`}`
-                    }, [
-                      React.createElement('div', { className: "flex items-start justify-between gap-3 w-full", key: "ni-top" }, [
-                        React.createElement('h3', { className: "font-black text-lg truncate leading-tight uppercase flex items-center gap-2 flex-1 min-w-0" }, [
-                          note.pinned && React.createElement(Pin, { className: "w-4 h-4 fill-current rotate-45 text-[#FF00F5] shrink-0", key: "pin-indicator" }),
-                          note.mode === 'checklist' && React.createElement(ListTodo, { className: "w-4 h-4 text-blue-500 shrink-0", key: "mode-icon" }),
-                          note.title || 'UNTITLED'
-                        ]),
-                        React.createElement('div', { className: "flex items-center gap-2 shrink-0", key: "ni-actions" }, [
-                          // Pin Toggle Button
-                          React.createElement('button', { 
-                            onClick: (e) => togglePin(note.id, e),
-                            className: `p-1.5 brutal-border ${note.pinned ? 'bg-[#FF00F5] text-white' : 'opacity-0 group-hover:opacity-100 bg-white text-black'} transition-all hover:scale-110 active:scale-95`,
-                            title: note.pinned ? "Unpin Note" : "Pin to Top",
-                            key: "pin-btn"
-                          }, React.createElement(Pin, { className: `w-3.5 h-3.5 ${note.pinned ? 'fill-current' : ''}` })),
-                          // Delete Button
-                          React.createElement('button', { 
-                            onClick: (e) => triggerDeleteNote(note.id, e),
-                            className: `opacity-0 group-hover:opacity-100 p-1.5 brutal-border bg-red-500 text-white transition-all hover:scale-110 active:scale-95`,
-                            title: "Delete Note",
-                            key: "del-btn"
-                          }, React.createElement(Trash2, { className: "w-3.5 h-3.5" }))
-                        ])
+                  ]) : filteredNotes.map(note => React.createElement('button', {
+                    key: note.id,
+                    onClick: () => { setActiveId(note.id); setIsSidebarOpen(false); },
+                    className: `group w-full text-left p-4 brutal-border transition-all relative flex flex-col gap-3 ${activeId === note.id ? `${primaryColor} text-black brutal-shadow-active` : `hover:bg-zinc-100 dark:hover:bg-zinc-800 brutal-shadow`}`
+                  }, [
+                    React.createElement('div', { className: "flex items-start justify-between gap-3 w-full" }, [
+                      React.createElement('h3', { className: "font-black text-lg truncate leading-tight uppercase flex items-center gap-2 flex-1 min-w-0" }, [
+                        note.pinned && React.createElement(Pin, { className: "w-4 h-4 fill-current rotate-45 text-[#FF00F5] shrink-0" }),
+                        note.mode === 'checklist' && React.createElement(ListTodo, { className: "w-4 h-4 text-blue-500 shrink-0" }),
+                        note.mode === 'doodle' && React.createElement(Pencil, { className: "w-4 h-4 text-orange-500 shrink-0" }),
+                        note.title || 'UNTITLED'
                       ]),
-                      React.createElement('div', { className: "flex items-center justify-between gap-2", key: "ni-info" }, [
-                        React.createElement('div', { className: "flex items-center gap-2 opacity-40 text-[10px] font-black italic uppercase shrink-0", key: "ni-time" }, [
-                          React.createElement(Clock, { className: "w-3 h-3" }),
-                          new Date(note.updatedAt).toLocaleDateString()
-                        ]),
-                        stats && React.createElement('div', { className: `text-[10px] font-black px-2 py-0.5 brutal-border whitespace-nowrap ${stats.completed === stats.total && stats.total > 0 ? 'bg-[#00FF41]' : 'bg-white text-black'}`, key: "ni-stats" }, 
-                          `[ ${stats.completed} / ${stats.total} ]`
-                        )
+                      React.createElement('div', { className: "flex items-center gap-2 shrink-0" }, [
+                        React.createElement('button', { onClick: (e) => togglePin(note.id, e), className: `p-1.5 brutal-border ${note.pinned ? 'bg-[#FF00F5] text-white' : 'opacity-0 group-hover:opacity-100 bg-white text-black'} transition-all hover:scale-110 active:scale-95` }, React.createElement(Pin, { className: "w-3.5 h-3.5" })),
+                        React.createElement('button', { onClick: (e) => triggerDeleteNote(note.id, e), className: `opacity-0 group-hover:opacity-100 p-1.5 brutal-border bg-red-500 text-white transition-all hover:scale-110 active:scale-95` }, React.createElement(Trash2, { className: "w-3.5 h-3.5" }))
                       ])
-                    ]);
-                  })
-                ])
+                    ]),
+                    React.createElement('div', { className: "flex items-center justify-between gap-2 opacity-40 text-[10px] font-black italic uppercase" }, [
+                      React.createElement('div', { className: "flex items-center gap-2" }, [React.createElement(Clock, { className: "w-3 h-3" }), new Date(note.updatedAt).toLocaleDateString()]),
+                      (note.attachments || []).length > 0 && React.createElement('div', { className: "flex items-center gap-1" }, [React.createElement(Paperclip, { className: "w-3 h-3" }), `${note.attachments.length}`])
+                    ])
+                  ]))
+                )
               ])
             ]),
 
             // Editor
-            React.createElement('div', { 
-              className: `flex-1 brutal-border brutal-shadow-lg ${surfaceColor} flex flex-col min-w-0 overflow-hidden`,
-              key: "editor-pane"
-            }, [
-              !activeNote ? React.createElement('div', { className: "flex-1 flex flex-col items-center justify-center text-center select-none p-12", key: "empty-ed" }, [
-                React.createElement('div', { className: `w-32 h-44 brutal-border ${accentColor} brutal-shadow flex items-center justify-center mb-8 rotate-3 text-black` }, 
-                  React.createElement(AppLogo, { className: "w-20 h-28" })
-                ),
+            React.createElement('div', { className: `flex-1 brutal-border brutal-shadow-lg ${surfaceColor} flex flex-col min-w-0 overflow-hidden` }, 
+              !activeNote ? React.createElement('div', { className: "flex-1 flex flex-col items-center justify-center text-center p-12 select-none" }, [
+                React.createElement('div', { className: `w-32 h-44 brutal-border ${accentColor} brutal-shadow flex items-center justify-center mb-8 rotate-3 text-black` }, React.createElement(AppLogo, { className: "w-20 h-28" })),
                 React.createElement('h2', { className: "text-4xl font-black uppercase italic tracking-tighter mb-4" }, "Awaiting Input"),
-                React.createElement('p', { className: "text-lg font-bold opacity-30" }, "Select a storage cell or create a new entry"),
-                React.createElement('button', { 
-                  onClick: createNewNote,
-                  className: `mt-10 px-8 py-4 brutal-border brutal-shadow brutal-btn ${primaryColor} text-black font-black uppercase text-xl`,
-                  key: "init-btn"
-                }, "Initialize Note")
-              ]) : React.createElement('div', { className: "flex-1 flex flex-col overflow-hidden relative", key: "full-ed" }, [
-                // Editor Header/Toolbar
-                React.createElement('div', { className: "px-8 md:px-16 pt-8 pb-4 flex items-center justify-between shrink-0", key: "ed-toolbar" }, [
-                   React.createElement('div', { className: "flex items-center gap-3", key: "mode-toggle" }, [
-                     React.createElement('button', {
-                       onClick: () => updateNote(activeNote.id, 'mode', 'text'),
-                       title: "Text Mode",
-                       className: `p-3 brutal-border transition-all ${activeNote.mode === 'text' ? `${accentColor} text-black brutal-shadow-active` : 'bg-white text-black hover:bg-zinc-100'}`,
-                       key: "mode-text"
-                     }, React.createElement(Type, { className: "w-5 h-5" })),
-                     React.createElement('button', {
-                       onClick: () => updateNote(activeNote.id, 'mode', 'checklist'),
-                       title: "Checklist Mode",
-                       className: `p-3 brutal-border transition-all ${activeNote.mode === 'checklist' ? 'bg-[#FF00F5] text-white brutal-shadow-active' : 'bg-white text-black hover:bg-zinc-100'}`,
-                       key: "mode-check"
-                     }, React.createElement(ListTodo, { className: "w-5 h-5" }))
-                   ])
+                React.createElement('p', { className: "text-lg font-bold opacity-30" }, "Initialize a new cell or select an existing one."),
+                React.createElement('button', { onClick: createNewNote, className: `mt-10 px-8 py-4 brutal-border brutal-shadow brutal-btn ${primaryColor} text-black font-black uppercase text-xl` }, "Initialize Note")
+              ]) : React.createElement('div', { className: "flex-1 flex flex-col overflow-hidden relative" }, [
+                // Editor Toolbar - Refined for mobile
+                React.createElement('div', { className: "px-4 md:px-12 pt-6 pb-2 flex items-center justify-between shrink-0 no-scrollbar overflow-x-auto gap-4" }, [
+                  React.createElement('div', { className: "flex items-center gap-1.5 md:gap-2 shrink-0" }, [
+                    React.createElement('button', { onClick: () => updateNote(activeNote.id, 'mode', 'text'), className: `p-2.5 md:p-3 brutal-border transition-all ${activeNote.mode === 'text' ? `${accentColor} text-black brutal-shadow-active` : 'bg-white text-black hover:bg-zinc-100'}`, title: "Text" }, React.createElement(Type, { className: "w-4 h-4 md:w-5 md:h-5" })),
+                    React.createElement('button', { onClick: () => updateNote(activeNote.id, 'mode', 'checklist'), className: `p-2.5 md:p-3 brutal-border transition-all ${activeNote.mode === 'checklist' ? 'bg-[#FF00F5] text-white brutal-shadow-active' : 'bg-white text-black hover:bg-zinc-100'}`, title: "Checklist" }, React.createElement(ListTodo, { className: "w-4 h-4 md:w-5 md:h-5" })),
+                    React.createElement('button', { onClick: () => updateNote(activeNote.id, 'mode', 'doodle'), className: `p-2.5 md:p-3 brutal-border transition-all ${activeNote.mode === 'doodle' ? 'bg-orange-500 text-white brutal-shadow-active' : 'bg-white text-black hover:bg-zinc-100'}`, title: "Doodle" }, React.createElement(Pencil, { className: "w-4 h-4 md:w-5 md:h-5" }))
+                  ]),
+                  React.createElement('div', { className: "flex items-center gap-1.5 md:gap-2 shrink-0" }, [
+                    React.createElement('button', { onClick: () => imageInputRef.current?.click(), className: "p-2.5 md:p-3 brutal-border bg-white text-black brutal-shadow brutal-btn hover:bg-zinc-100", title: "Attach Image" }, React.createElement(ImageIcon, { className: "w-4 h-4 md:w-5 md:h-5" })),
+                    React.createElement('button', { onClick: () => fileInputRef.current?.click(), className: "p-2.5 md:p-3 brutal-border bg-white text-black brutal-shadow brutal-btn hover:bg-zinc-100", title: "Attach File" }, React.createElement(Paperclip, { className: "w-4 h-4 md:w-5 md:h-5" })),
+                    React.createElement('button', { 
+                      onClick: toggleVoiceRecording, 
+                      className: `p-2.5 md:p-3 brutal-border transition-all brutal-shadow brutal-btn ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white text-black hover:bg-zinc-100'}`,
+                      title: isRecording ? "Stop Recording" : "Voice Note"
+                    }, isRecording ? React.createElement(Square, { className: "w-4 h-4 md:w-5 md:h-5" }) : React.createElement(Mic, { className: "w-4 h-4 md:w-5 md:h-5" }))
+                  ])
                 ]),
                 
-                // Content Scrollable - px-6 on mobile to avoid touching scrollbar
-                React.createElement('div', { className: "flex-1 flex flex-col px-6 md:px-16 pb-8 scroll-container", key: "ed-scrollable" }, [
-                  React.createElement('div', { className: "flex flex-col gap-6", key: "editor-main-inputs" }, [
+                // Editor Content
+                React.createElement('div', { className: "flex-1 flex flex-col px-6 md:px-12 pb-8 scroll-container" }, [
+                  React.createElement('div', { className: "flex flex-col gap-4 h-full" }, [
                     React.createElement('input', {
-                      key: "title-input",
-                      className: "w-full bg-transparent text-3xl md:text-5xl font-black uppercase placeholder:opacity-20 focus:outline-none tracking-tighter",
+                      className: "w-full bg-transparent text-3xl md:text-5xl font-black uppercase placeholder:opacity-20 focus:outline-none tracking-tighter shrink-0",
                       placeholder: "ENTER TITLE...",
                       value: activeNote.title,
                       onChange: (e) => updateNote(activeNote.id, 'title', e.target.value),
                       onKeyDown: handleTitleKeyDown
                     }),
-                    React.createElement('div', { className: "h-1 w-24 bg-black dark:bg-white", key: "divider" }),
+                    React.createElement('div', { className: "h-1 w-24 bg-black dark:bg-white shrink-0" }),
                     
+                    activeNote.mode === 'doodle' ? 
+                      React.createElement(DoodleCanvas, { 
+                        initialData: activeNote.doodleData, 
+                        onSave: (data) => updateNote(activeNote.id, 'doodleData', data),
+                        theme: theme
+                      }) :
                     activeNote.mode === 'checklist' ? 
-                      // Checklist Editor
-                      React.createElement('div', { className: "flex flex-col gap-6", key: "checklist-editor" }, [
-                        // Add Item Input
-                        React.createElement('div', { className: "flex gap-4", key: "add-task-row" }, [
+                      React.createElement('div', { className: "flex flex-col gap-6" }, [
+                        React.createElement('div', { className: "flex gap-2" }, [
                           React.createElement('input', {
                             ref: addItemRef,
                             type: "text",
-                            placeholder: "ADD NEW TASK...",
+                            placeholder: "ADD TASK...",
                             value: newItemText,
                             onChange: (e) => setNewItemText(e.target.value),
                             onKeyDown: (e) => e.key === 'Enter' && addChecklistItem(),
-                            className: `flex-1 brutal-border brutal-shadow p-4 font-black uppercase text-sm ${theme === 'dark' ? 'bg-zinc-800' : 'bg-white'} placeholder:opacity-30 min-w-0`,
-                            key: "add-input"
+                            className: `flex-1 brutal-border brutal-shadow p-4 font-black uppercase text-sm ${theme === 'dark' ? 'bg-zinc-800' : 'bg-white'}`
                           }),
-                          React.createElement('button', {
-                            onClick: addChecklistItem,
-                            className: `px-6 brutal-border brutal-shadow brutal-btn ${primaryColor} text-black font-black uppercase text-sm shrink-0`,
-                            key: "add-btn"
-                          }, "ADD")
+                          React.createElement('button', { onClick: addChecklistItem, className: `px-6 brutal-border brutal-shadow brutal-btn ${primaryColor} text-black font-black uppercase text-sm` }, "ADD")
                         ]),
-                        // Items List - Added right padding to prevent touching scrollbar
-                        React.createElement('div', { className: "flex flex-col gap-3 pr-2", key: "items-list" }, 
-                          (activeNote.items || []).map(item => React.createElement('div', {
-                            key: item.id,
-                            className: `flex items-center gap-4 p-4 brutal-border brutal-shadow ${theme === 'dark' ? 'bg-zinc-900' : 'bg-white'} group animate-in slide-in-from-left-2 duration-100`
-                          }, [
-                            React.createElement('input', {
-                              type: "checkbox",
-                              checked: item.completed,
-                              onChange: () => toggleChecklistItem(activeNote.id, item.id),
-                              className: "custom-checkbox shrink-0",
-                              key: `check-${item.id}`
-                            }),
-                            React.createElement('input', {
-                              type: "text",
-                              value: item.text,
-                              onChange: (e) => {
-                                const newItems = activeNote.items.map(i => i.id === item.id ? { ...i, text: e.target.value } : i);
-                                updateNote(activeNote.id, 'items', newItems);
-                              },
-                              className: `flex-1 bg-transparent font-bold text-lg focus:outline-none min-w-0 ${item.completed ? 'line-through opacity-40' : ''}`,
-                              key: `text-${item.id}`
-                            }),
-                            React.createElement('button', {
-                              onClick: () => removeChecklistItem(activeNote.id, item.id),
-                              className: "md:opacity-0 group-hover:opacity-100 p-2 brutal-border bg-red-500 text-white transition-all hover:scale-110 shrink-0",
-                              key: `del-${item.id}`
-                            }, React.createElement(X, { className: "w-4 h-4" }))
-                          ]))
-                        ),
-                        activeNote.items?.length === 0 && React.createElement('div', { className: "py-12 flex flex-col items-center opacity-20 italic font-black uppercase", key: "empty-list" }, [
-                          React.createElement(ListTodo, { className: "w-12 h-12 mb-4" }),
-                          "List is currently empty"
-                        ])
-                      ]) : 
-                      // Standard Text Editor
+                        React.createElement('div', { className: "flex flex-col gap-3 pr-2" }, (activeNote.items || []).map(item => React.createElement('div', { key: item.id, className: `flex items-center gap-4 p-4 brutal-border brutal-shadow ${theme === 'dark' ? 'bg-zinc-900' : 'bg-white'} group` }, [
+                          React.createElement('input', { type: "checkbox", checked: item.completed, onChange: () => toggleChecklistItem(item.id), className: "custom-checkbox shrink-0" }),
+                          React.createElement('span', { className: `flex-1 font-bold text-lg ${item.completed ? 'line-through opacity-40' : ''}` }, item.text),
+                          React.createElement('button', { onClick: () => updateNote(activeNote.id, 'items', activeNote.items.filter(i => i.id !== item.id)), className: "opacity-0 group-hover:opacity-100 p-2 brutal-border bg-red-500 text-white" }, React.createElement(X, { className: "w-4 h-4" }))
+                        ])))
+                      ]) :
                       React.createElement('textarea', {
-                        key: "content-textarea",
                         ref: contentRef,
-                        className: "flex-1 w-full bg-transparent text-lg md:text-xl font-medium leading-relaxed placeholder:opacity-20 focus:outline-none resize-none min-h-[400px]",
+                        className: "flex-1 w-full bg-transparent text-lg md:text-xl font-medium leading-relaxed placeholder:opacity-20 focus:outline-none resize-none min-h-[300px]",
                         placeholder: "WRITE YOUR MESSAGE TO THE VOID...",
-                        value: activeNote.content,
+                        value: activeNote.content || '',
                         onChange: (e) => updateNote(activeNote.id, 'content', e.target.value)
-                      })
+                      }),
+
+                    // Attachments List
+                    ((activeNote.attachments || []).length > 0) && React.createElement('div', { className: "mt-8 border-t-[3px] border-black pt-6 flex flex-col gap-4" }, [
+                      React.createElement('h4', { className: "font-black italic uppercase text-xs" }, "Attachments"),
+                      React.createElement('div', { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" }, 
+                        activeNote.attachments.map(att => React.createElement('div', { key: att.id, className: "brutal-border brutal-shadow bg-white text-black p-3 flex flex-col gap-2 relative group" }, [
+                          React.createElement('button', { 
+                            onClick: () => removeAttachment(att.id), 
+                            className: "absolute -top-2 -right-2 p-1 bg-red-500 border-2 border-black text-white rounded-none opacity-0 group-hover:opacity-100 transition-opacity z-10",
+                            title: "Remove"
+                          }, React.createElement(X, { className: "w-4 h-4" })),
+                          att.type === 'image' ? 
+                            React.createElement('img', { src: att.data, className: "w-full h-32 object-cover brutal-border mb-1" }) :
+                          att.type === 'voice' ?
+                            React.createElement('div', { className: "flex flex-col gap-2 p-2 bg-[#FFE600] brutal-border" }, [
+                              React.createElement('div', { className: "flex items-center gap-2" }, [
+                                React.createElement(Music, { className: "w-4 h-4" }),
+                                React.createElement('span', { className: "text-[10px] font-black uppercase truncate" }, att.name)
+                              ]),
+                              React.createElement('audio', { src: att.data, controls: true, className: "w-full h-10" })
+                            ]) :
+                            React.createElement('div', { className: "flex items-center gap-3 p-2 bg-[#00D1FF] brutal-border" }, [
+                              React.createElement(FileText, { className: "w-6 h-6 shrink-0" }),
+                              React.createElement('span', { className: "text-xs font-black truncate flex-1 uppercase" }, att.name),
+                              React.createElement('a', { href: att.data, download: att.name, className: "p-1 brutal-border bg-white hover:bg-zinc-100" }, React.createElement(Download, { className: "w-4 h-4" }))
+                            ])
+                        ]))
+                      )
+                    ])
                   ])
                 ]),
 
-                // Editor Footer
-                React.createElement('div', { className: "mt-auto px-8 md:px-16 pt-8 pb-8 border-t-[3px] border-black dark:border-zinc-800 flex flex-wrap items-center justify-between gap-4 font-black italic text-xs uppercase shrink-0", key: "ed-footer" }, [
-                  React.createElement('div', { className: "flex items-center gap-3", key: "ed-stats" }, [
-                    React.createElement('div', { className: `px-4 py-2 brutal-border ${accentColor} text-black brutal-shadow`, key: "w-count" }, 
-                      activeNote.mode === 'checklist' ? `${activeNote.items?.length || 0} TASKS` : `${wordCount} WORDS`
+                // Footer
+                React.createElement('div', { className: "mt-auto px-6 md:px-12 pt-6 pb-6 border-t-[3px] border-black dark:border-zinc-800 flex flex-wrap items-center justify-between gap-4 font-black italic text-xs uppercase" }, [
+                  React.createElement('div', { className: "flex items-center gap-3" }, [
+                    React.createElement('div', { className: `px-4 py-2 brutal-border ${accentColor} text-black brutal-shadow` }, 
+                      activeNote.mode === 'checklist' ? `${(activeNote.items || []).length} TASKS` : activeNote.mode === 'doodle' ? 'DOODLE' : `${wordCount} WORDS`
                     ),
-                    activeNote.pinned && React.createElement('div', { className: "px-4 py-2 brutal-border bg-[#FF00F5] text-white brutal-shadow flex items-center gap-2", key: "pin-badge" }, [
-                      React.createElement(Pin, { className: "w-3 h-3 fill-current rotate-45" }),
-                      "PINNED"
-                    ])
+                    activeNote.pinned && React.createElement('div', { className: "px-4 py-2 brutal-border bg-[#FF00F5] text-white brutal-shadow flex items-center gap-2" }, [React.createElement(Pin, { className: "w-3 h-3 fill-current" }), "PINNED"])
                   ]),
-                  React.createElement('div', { className: "flex items-center gap-3 opacity-60", key: "mod-time" }, [
-                    React.createElement(Clock, { className: "w-4 h-4" }),
-                    `STAMPED: ${new Date(activeNote.updatedAt).toLocaleString()}`
-                  ])
+                  React.createElement('div', { className: "flex items-center gap-3 opacity-60" }, [React.createElement(Clock, { className: "w-4 h-4" }), `STAMPED: ${new Date(activeNote.updatedAt).toLocaleString()}`])
                 ])
               ])
-            ])
+            )
           ]),
 
           // Global Footer
-          React.createElement('footer', { 
-            className: `h-12 border-t-[4px] border-black px-8 flex items-center justify-center text-[11px] font-black italic uppercase tracking-[0.3em] ${theme === 'dark' ? 'bg-black text-[#00FF41]' : 'bg-white text-black'}`,
-            key: "footer"
-          }, "Everything saves automatically."),
+          React.createElement('footer', { className: `h-12 border-t-[4px] border-black px-8 flex items-center justify-center text-[11px] font-black italic uppercase tracking-[0.3em] ${theme === 'dark' ? 'bg-black text-[#00FF41]' : 'bg-white text-black'}` }, "Everything saves automatically."),
 
-          // Delete Modal Overlay
-          noteToDelete && React.createElement('div', {
-            className: "fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm",
-            onClick: () => setNoteToDelete(null),
-            key: "delete-modal"
-          }, [
-            React.createElement('div', {
-              className: "bg-[#FFE600] text-black brutal-border brutal-shadow-lg p-10 max-w-md w-full modal-animate relative",
-              onClick: (e) => e.stopPropagation(),
-              key: "modal-box"
-            }, [
-              React.createElement('div', { className: "flex flex-col items-center text-center", key: "m-inner" }, [
-                React.createElement('div', { className: "p-4 bg-red-500 brutal-border brutal-shadow mb-6 rotate-3" }, 
-                   React.createElement(AlertTriangle, { className: "w-12 h-12 text-white" })
-                ),
+          // Delete Modal
+          noteToDelete && React.createElement('div', { className: "fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm", onClick: () => setNoteToDelete(null) }, 
+            React.createElement('div', { className: "bg-[#FFE600] text-black brutal-border brutal-shadow-lg p-10 max-w-md w-full modal-animate relative", onClick: (e) => e.stopPropagation() }, [
+              React.createElement('div', { className: "flex flex-col items-center text-center" }, [
+                React.createElement('div', { className: "p-4 bg-red-500 brutal-border brutal-shadow mb-6 rotate-3" }, React.createElement(AlertTriangle, { className: "w-12 h-12 text-white" })),
                 React.createElement('h2', { className: "text-4xl font-black uppercase italic tracking-tighter mb-4 leading-none" }, "CRITICAL ACTION"),
-                React.createElement('p', { className: "text-xl font-bold mb-10 leading-tight uppercase" }, "ARE YOU CERTAIN YOU WANT TO PERMANENTLY ERASE THIS DATA FROM THE SYSTEM?"),
-                React.createElement('div', { className: "flex flex-col sm:flex-row gap-4 w-full", key: "m-btns" }, [
-                  React.createElement('button', {
-                    className: "flex-1 py-4 brutal-border brutal-shadow brutal-btn bg-black text-white font-black uppercase tracking-widest text-sm",
-                    onClick: () => setNoteToDelete(null),
-                    key: "btn-cancel"
-                  }, "NO, KEEP IT"),
-                  React.createElement('button', {
-                    className: "flex-1 py-4 brutal-border brutal-shadow brutal-btn bg-red-500 text-white font-black uppercase tracking-widest text-sm",
-                    onClick: confirmDelete,
-                    key: "btn-confirm"
-                  }, "YES, ERASE IT")
+                React.createElement('p', { className: "text-xl font-bold mb-10 leading-tight uppercase" }, "PERMANENTLY ERASE THIS DATA FROM THE SYSTEM?"),
+                React.createElement('div', { className: "flex flex-col sm:flex-row gap-4 w-full" }, [
+                  React.createElement('button', { className: "flex-1 py-4 brutal-border brutal-shadow brutal-btn bg-black text-white font-black uppercase tracking-widest text-sm", onClick: () => setNoteToDelete(null) }, "NO, KEEP IT"),
+                  React.createElement('button', { className: "flex-1 py-4 brutal-border brutal-shadow brutal-btn bg-red-500 text-white font-black uppercase tracking-widest text-sm", onClick: confirmDelete }, "YES, ERASE IT")
                 ])
               ])
             ])
-          ])
+          )
         ]);
       };
 
