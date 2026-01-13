@@ -1,2575 +1,671 @@
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <title>Minimal Notes – Enhanced</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brutal Notes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --bg: #ffffff;
-            --bg-secondary: #fbfbfc;
-            --bg-hover: #FFDD44;
-            --bg-active: #FFDD44;
-            --border: #e5e5e7;
-            --text: #1c1c1e;
-            --text-muted: #8e8e93;
-            --input-bg: #f9f9fa;
-            --input-Nbg: #FFDD44;
-            --delete-red: #ff3b30;
-            --delete-dark: #ff453a;
-            --modal-overlay: rgba(0, 0, 0, 0.4);
-            --panel-width: 280px;
-            --placeholder-color: #8e8e93;
-            --checkbox-color: #4cd964;
-            --checkbox-unchecked: #c7c7cc;
-            --drawing-bg: #f9f9f9;
-            --toolbar-height: 44px;
-            --pin-color: #ff9500;
-            --pin-color-dark: #ff9f0a;
-        }
-
-        body.dark {
-            --bg: #1c1c1e;
-            --bg-secondary: #2c2c2e;
-            --bg-hover: #BB86FC;
-            --bg-active: #BB86FC;
-            --border: #3a3a3c;
-            --text: #f2f2f7;
-            --text-muted: #a1a1a6;
-            --input-bg: #2c2c2e;
-            --input-Nbg: #BB86FC;
-            --delete-red: #ff453a;
-            --modal-overlay: rgba(0, 0, 0, 0.6);
-            --placeholder-color: #a1a1a6;
-            --checkbox-color: #32d74b;
-            --checkbox-unchecked: #48484a;
-            --drawing-bg: #2c2c2e;
-            --pin-color: #ff9f0a;
-            --pin-color-dark: #ff9f0a;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            height: 100vh;
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            left: 0;
-            touch-action: none;
-        }
-
-        .app {
-            height: 100vh;
-            max-width: 1200px;
-            margin: 0 auto;
-            background: var(--bg);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .topbar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-            z-index: 100;
-            background: var(--bg);
-        }
-
-        .logo-btn {
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 46px;
-            flex-shrink: 0;
-        }
-
-        .logo-btn svg {
-            width: 33px;
-            height: 46px;
-        }
-
-        .search {
-            flex: 1;
-            padding: 6px 8px;
-            font-size: 14px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: var(--input-bg);
-            color: var(--text);
-            margin-left: 0;
-        }
-
-        .btn {
-            padding: 6px 10px;
-            font-size: 14px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: var(--input-bg);
-            color: var(--text);
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        .NNbtn {
-            padding: 6px 10px;
-            font-size: 14px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: var(--input-Nbg);
-            color: var(--text);
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        .main {
-            display: flex;
-            flex: 1;
-            min-height: 0;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Side panel for mobile */
-        .side-panel {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: var(--panel-width);
-            height: 100vh;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border);
-            z-index: 90;
-            transform: translateX(-100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
-            touch-action: pan-y;
-        }
-
-        .side-panel.open {
-            transform: translateX(0);
-        }
-
-        .side-panel-header {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg-secondary);
-            flex-shrink: 0;
-            touch-action: none;
-        }
-
-        .side-panel-title {
-            flex: 1;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .close-panel-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 20px;
-            cursor: pointer;
-            padding: 4px;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-        }
-
-        .close-panel-btn:hover {
-            background: var(--bg-hover);
-        }
-
-        .note-list-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px;
-            -webkit-overflow-scrolling: touch;
-            touch-action: pan-y;
-        }
-
-        /* Search preview panel */
-        .search-preview-panel {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: var(--panel-width);
-            height: 100vh;
-            background: var(--bg);
-            border-right: 1px solid var(--border);
-            z-index: 95;
-            transform: translateX(-100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
-            touch-action: pan-y;
-        }
-
-        .search-preview-panel.open {
-            transform: translateX(0);
-        }
-
-        .search-preview-header {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg);
-            flex-shrink: 0;
-            touch-action: none;
-        }
-
-        .search-preview-title {
-            flex: 1;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .close-search-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 20px;
-            cursor: pointer;
-            padding: 4px;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-        }
-
-        .close-search-btn:hover {
-            background: var(--bg-hover);
-        }
-
-        .search-results-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px;
-            -webkit-overflow-scrolling: touch;
-            touch-action: pan-y;
-        }
-
-        /* Panel overlay */
-        .panel-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 85;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
-            backdrop-filter: blur(2px);
-            touch-action: none;
-        }
-
-        .panel-overlay.visible {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* Desktop list */
-        .desktop-list {
-            width: 28%;
-            border-right: 1px solid var(--border);
-            background: var(--bg-secondary);
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-        }
-
-        .editor-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-            position: relative;
-        }
-
-        /* Editor Toolbar */
-        .editor-toolbar {
-            display: flex;
-            padding: 8px 20px;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg);
-            flex-wrap: wrap;
-            gap: 8px;
-            z-index: 10;
-            flex-shrink: 0;
-        }
-
-        .toolbar-group {
-            display: flex;
-            gap: 4px;
-        }
-
-        .toolbar-btn {
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 6px 10px;
-            font-size: 14px;
-            color: var(--text);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            transition: background 0.2s;
-        }
-
-        .toolbar-btn:hover {
-            background: var(--bg-hover);
-        }
-
-        .toolbar-btn.active {
-            background: var(--bg-active);
-        }
-
-        .pin-btn {
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            padding: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-muted);
-            transition: color 0.2s, transform 0.2s;
-            font-size: 16px;
-        }
-
-        .pin-btn:hover {
-            color: var(--pin-color);
-        }
-
-        .pin-btn.pinned {
-            color: var(--pin-color);
-        }
-
-        .pin-btn.pinned:hover {
-            color: var(--text-muted);
-        }
-
-        .media-upload-btn {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .media-upload-input {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        .editor {
-            flex: 1;
-            padding: 16px 20px;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            position: relative;
-        }
-
-        #editor {
-            flex: 1;
-            outline: none;
-            font-size: 16px;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            color: var(--text);
-            font-family: inherit;
-            min-height: 0;
-            cursor: text;
-            -webkit-user-select: text;
-            user-select: text;
-            position: relative;
-        }
-
-        /* Ghost placeholder for empty editor */
-        .editor-placeholder {
-            position: absolute;
-            top: 16px;
-            left: 20px;
-            right: 20px;
-            color: var(--placeholder-color);
-            pointer-events: none;
-            font-size: 20px;
-            font-weight: 600;
-            line-height: 1.3;
-            opacity: 0.7;
-            transition: opacity 0.2s;
-            z-index: 1;
-        }
-
-        .editor-placeholder.hidden {
-            display: none;
-        }
-
-        /* First line styling */
-        #editor > div:first-child {
-            font-size: 20px;
-            font-weight: 600;
-            line-height: 1.3;
-            margin-bottom: 8px;
-            min-height: 1.3em;
-        }
-
-        .hint {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-top: 6px;
-            flex-shrink: 0;
-            padding: 0 20px 16px;
-        }
-
-        /* Note styles */
-        .note {
-            position: relative;
-            border-radius: 6px;
-            margin-bottom: 4px;
-            overflow: hidden;
-            background: transparent;
-        }
-
-        .note .swipe-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--delete-red);
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding-right: 12px;
-            color: #fff;
-            font-weight: bold;
-            z-index: 0;
-            border-radius: 0;
-            transform: translateX(100%);
-            transition: transform 0.2s ease-out;
-        }
-
-        .note.swiping .swipe-bg {
-            transform: translateX(0);
-        }
-
-        .note-content {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--bg-secondary);
-            padding: 10px 12px;
-            font-size: 14px;
-            cursor: pointer;
-            border-radius: 6px;
-            transition: background .2s, transform .2s;
-            transform: translateX(0);
-            overflow: hidden;
-        }
-
-        .note.active .note-content {
-            background: var(--bg-active);
-            font-weight: 500;
-        }
-
-        .note:hover .note-content {
-            background: var(--bg-hover);
-        }
-
-        /* .note.pinned {
-            border-left: 3px solid var(--pin-color);
-        } */
-
-        .note mark {
-            background: #ffd600;
-            color: inherit;
-        }
-
-        body.dark .note mark {
-            background: #ffd60a;
-            color: #000;
-        }
-
-        .note-actions {
-            display: flex;
-            gap: 4px;
-            align-items: center;
-        }
-
-        .delete-btn {
-            opacity: 0;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            font-size: 14px;
-            color: var(--text-muted);
-            padding: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.2s;
-        }
-
-        .delete-btn svg {
-            display: block;
-            stroke: currentColor;
-        }
-
-        .note:hover .delete-btn,
-        .note:hover .pin-btn {
-            opacity: 1;
-        }
-
-        .delete-btn:hover {
-            color: var(--text);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 24px 12px;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-
-        /* Section headers for pinned/unpinned notes */
-        .section-header {
-            font-size: 12px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 12px 12px 4px;
-            background: var(--bg-secondary);
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 1;
-        }
-
-        /* Checklist Styles */
-        .checklist-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            padding: 4px 0;
-            margin: 4px 0;
-            min-height: 24px;
-        }
-
-        .checklist-checkbox {
-            width: 18px;
-            height: 18px;
-            border: 2px solid var(--checkbox-unchecked);
-            border-radius: 4px;
-            background: transparent;
-            flex-shrink: 0;
-            margin-top: 2px;
-            cursor: pointer;
-            position: relative;
-            transition: all 0.2s;
-        }
-
-        .checklist-checkbox.checked {
-            background: var(--checkbox-color);
-            border-color: var(--checkbox-color);
-        }
-
-        .checklist-checkbox.checked::after {
-            content: '✓';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .checklist-text {
-            flex: 1;
-            outline: none;
-            font-size: 16px;
-            line-height: 1.4;
-            color: var(--text);
-            background: transparent;
-            border: none;
-            font-family: inherit;
-            min-height: 1.4em;
-        }
-
-        .checklist-text.completed {
-            text-decoration: line-through;
-            color: var(--text-muted);
-            opacity: 0.7;
-        }
-
-        /* Media Styles */
-        .media-container {
-            margin: 12px 0;
-            position: relative;
-        }
-
-        .image-preview {
-            max-width: 100%;
-            max-height: 400px;
-            border-radius: 8px;
-            object-fit: contain;
-            background: var(--drawing-bg);
-            cursor: pointer;
-        }
-
-        .audio-preview {
-            width: 100%;
-            margin: 8px 0;
-        }
-
-        .file-attachment {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            margin: 8px 0;
-        }
-
-        .file-icon {
-            font-size: 20px;
-            color: var(--text-muted);
-            flex-shrink: 0;
-        }
-
-        .file-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .file-name {
-            font-size: 14px;
-            color: var(--text);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .file-size {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .file-remove {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 4px;
-            flex-shrink: 0;
-        }
-
-        .file-remove:hover {
-            color: var(--delete-red);
-        }
-
-        /* Drawing Container */
-        .drawing-container {
-            margin: 12px 0;
-            position: relative;
-            display: none;
-        }
-
-        .drawing-canvas {
-            background: var(--drawing-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            cursor: crosshair;
-            touch-action: none;
-            display: block;
-            width: 100%;
-            height: 400px;
-        }
-
-        .drawing-tools {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-            flex-wrap: wrap;
-        }
-
-        .drawing-tool-btn {
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 6px 10px;
-            font-size: 12px;
-            color: var(--text);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .drawing-tool-btn.active {
-            background: var(--bg-active);
-        }
-
-        .color-picker {
-            width: 30px;
-            height: 30px;
-            border: 2px solid var(--border);
-            border-radius: 4px;
-            padding: 0;
-            cursor: pointer;
-        }
-
-        /* Desktop: show all notes, scroll when needed */
-        @media (min-width: 769px) {
-            body {
-                position: static;
-                overflow: auto;
-            }
-            
-            .app {
-                height: auto;
-                min-height: 100vh;
-            }
-            
-            .desktop-list {
-                height: auto;
-                overflow-y: hidden;
-            }
-            
-            .note-list-container {
-                overflow-y: auto;
-            }
-            
-            /* Hide mobile elements on desktop */
-            .side-panel,
-            .search-preview-panel,
-            .panel-overlay {
-                display: none !important;
-            }
-        }
-
-        /* Mobile: slide-out panel from left */
-        @media (max-width: 768px) {
-            body {
-                position: fixed;
-                width: 100%;
-                height: 100%;
-                overflow: hidden;
-            }
-            
-            .app {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                max-width: 100%;
-                margin: 0;
-                height: 100%;
-                overflow: hidden;
-            }
-
-            .main {
-                flex-direction: column;
-                height: calc(100% - 49px);
-                flex: 1;
-                min-height: 0;
-                overflow: hidden;
-            }
-
-            /* Hide desktop list on mobile */
-            .desktop-list {
-                display: none;
-            }
-
-            .editor-container {
-                flex: 1;
-                min-height: 0;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-                position: relative;
-                width: 100%;
-            }
-
-            .editor-toolbar {
-                padding: 8px 12px;
-                overflow-x: auto;
-            }
-
-            .editor {
-                padding: 12px 16px;
-                flex: 1;
-                overflow-y: auto;
-                min-height: 0;
-                height: 100%;
-                -webkit-overflow-scrolling: touch;
-                padding-bottom: 20px;
-            }
-
-            .editor-placeholder {
-                top: 12px;
-                left: 16px;
-                right: 16px;
-            }
-
-            #editor > div:first-child {
-                font-size: 20px;
-                font-weight: 600;
-                line-height: 1.3;
-                margin-bottom: 8px;
-                min-height: 1.3em;
-            }
-
-            .hint {
-                padding: 0 16px 12px;
-                flex-shrink: 0;
-            }
-
-            .drawing-canvas {
-                height: 300px;
-            }
-
-            /* When virtual keyboard is active */
-            .keyboard-active .editor {
-                padding-top: 8px;
-                padding-bottom: 40px;
-            }
-
-            .keyboard-active .hint {
-                display: none;
-            }
-            
-            /* Adjust for iOS Safari bottom bar */
-            @supports (-webkit-touch-callout: none) {
-                body {
-                    height: -webkit-fill-available;
-                }
-                
-                .app {
-                    height: -webkit-fill-available;
-                }
-                
-                .editor {
-                    padding-bottom: env(safe-area-inset-bottom, 20px);
-                }
-                
-                .side-panel,
-                .search-preview-panel {
-                    padding-top: env(safe-area-inset-top, 0);
-                    height: calc(100vh - env(safe-area-inset-top, 0));
-                }
-                
-                .editor-toolbar {
-                    padding-top: calc(8px + env(safe-area-inset-top, 0));
-                }
-            }
-        }
-
-        /* Delete Confirmation Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: var(--modal-overlay);
-            backdrop-filter: blur(4px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .modal {
-            background: var(--bg);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            padding: 24px;
-            min-width: 300px;
-            max-width: 90%;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            animation: modalFadeIn 0.2s ease-out;
-        }
-
-        @keyframes modalFadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .modal-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: var(--text);
-        }
-
-        .modal-message {
-            font-size: 15px;
-            color: var(--text-muted);
-            margin-bottom: 24px;
-            line-height: 1.5;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-
-        .modal-btn {
-            padding: 8px 20px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--input-bg);
-            color: var(--text);
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 500;
-            transition: all 0.2s;
-            min-width: 80px;
-        }
-
-        .modal-btn.cancel:hover {
-            background: var(--bg-hover);
-        }
-
-        .modal-btn.delete {
-            background: var(--delete-red);
-            color: white;
-            border-color: var(--delete-red);
-        }
-
-        .modal-btn.delete:hover {
-            opacity: 0.9;
-        }
-
-        /* Media Preview Modal */
-        .media-modal {
-            max-width: 90%;
-            max-height: 90%;
-            width: auto;
-        }
-
-        .modal-content {
-            max-height: 70vh;
-            overflow-y: auto;
-            margin-bottom: 16px;
-        }
-
-        .modal-image {
-            max-width: 100%;
-            max-height: 60vh;
-            object-fit: contain;
-            border-radius: 8px;
-        }
-
-        /* Note Preview Icons */
-        .note-preview-icons {
-            display: flex;
-            gap: 4px;
-            margin-top: 2px;
-            flex-wrap: wrap;
-        }
-
-        .preview-icon {
-            font-size: 10px;
-            opacity: 0.7;
-        }
-
-        /* Empty state for sections */
-        .section-empty {
-            text-align: center;
-            padding: 16px;
-            color: var(--text-muted);
-            font-size: 13px;
-            font-style: italic;
-        }
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+      
+      body {
+        font-family: 'Inter', sans-serif;
+        overflow: hidden;
+      }
+
+      .brutal-border {
+        border: 3px solid black;
+      }
+
+      .brutal-shadow {
+        box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+      }
+
+      .brutal-shadow-lg {
+        box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+      }
+
+      .brutal-shadow-active {
+        box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
+        transform: translate(2px, 2px);
+      }
+
+      .brutal-btn:hover {
+        transform: translate(-1px, -1px);
+        box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
+      }
+
+      .brutal-btn:active {
+        transform: translate(2px, 2px);
+        box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
+      }
+
+      /* Grid Background */
+      .bg-grid {
+        background-size: 30px 30px;
+        background-image: radial-gradient(circle, rgba(0,0,0,0.1) 1.5px, transparent 0);
+      }
+
+      .dark .bg-grid {
+        background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1.5px, transparent 0);
+      }
+
+      /* Custom scrollbar - Refined for better spacing */
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+        border-left: 2px solid rgba(0,0,0,0.1);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: black;
+        border: 2px solid transparent;
+        background-clip: content-box;
+      }
+      
+      .dark ::-webkit-scrollbar-track {
+        background: transparent;
+        border-left: 2px solid rgba(255,255,255,0.1);
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #00FF41;
+      }
+
+      textarea:focus, input:focus {
+        outline: none;
+      }
+
+      /* Modal Animation */
+      @keyframes modal-pop {
+        0% { transform: scale(0.9) rotate(-1deg); opacity: 0; }
+        100% { transform: scale(1) rotate(0deg); opacity: 1; }
+      }
+      .modal-animate {
+        animation: modal-pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      }
+      
+      .custom-checkbox {
+        appearance: none;
+        width: 28px;
+        height: 28px;
+        border: 3px solid black;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.1s;
+        background: white;
+      }
+      
+      .custom-checkbox:checked {
+        background: #00FF41;
+        box-shadow: 2px 2px 0px 0px black;
+      }
+      
+      .custom-checkbox:checked::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: black;
+        font-weight: 900;
+        font-size: 18px;
+      }
+
+      /* Ensure vertical only scrolling */
+      .scroll-container {
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
     </style>
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@^19.2.3",
+        "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
+        "lucide-react": "https://esm.sh/lucide-react@^0.475.0"
+      }
+    }
+    </script>
 </head>
+<body class="transition-colors duration-200">
+    <div id="root"></div>
 
-<body>
-    <div class="app">
-        <div class="topbar">
-            <button class="logo-btn" id="logoBtn">
-                <svg width="35" height="19" viewBox="0 0 35 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4.09943 0.997175L8.31818 14.2585H8.48011L12.7074 0.997175H16.7983L10.7813 18.4517H6.02557L7.30157e-07 0.997175H4.09943ZM17.151 18.4517V5.36081H20.7816V18.4517H17.151ZM18.9748 3.67331C18.4351 3.67331 17.972 3.49433 17.5856 3.13638C17.2049 2.77274 17.0146 2.33808 17.0146 1.8324C17.0146 1.3324 17.2049 0.903425 17.5856 0.545471C17.972 0.181834 18.4351 1.57356e-05 18.9748 1.57356e-05C19.5146 1.57356e-05 19.9748 0.181834 20.3555 0.545471C20.7419 0.903425 20.9351 1.3324 20.9351 1.8324C20.9351 2.33808 20.7419 2.77274 20.3555 3.13638C19.9748 3.49433 19.5146 3.67331 18.9748 3.67331ZM25.6407 10.8835V18.4517H22.01V5.36081H25.4703V7.67047H25.6237C25.9134 6.90911 26.3992 6.30683 27.0811 5.86365C27.7629 5.41479 28.5896 5.19036 29.5612 5.19036C30.4703 5.19036 31.2629 5.38922 31.939 5.78695C32.6151 6.18468 33.1407 6.75286 33.5157 7.49149C33.8907 8.22445 34.0782 9.09945 34.0782 10.1165V18.4517H30.4475V10.7642C30.4532 9.96308 30.2487 9.33808 29.8339 8.88922C29.4191 8.43468 28.8481 8.2074 28.1208 8.2074C27.6322 8.2074 27.2004 8.31252 26.8254 8.52274C26.4561 8.73297 26.1663 9.03979 25.9561 9.4432C25.7515 9.84093 25.6464 10.321 25.6407 10.8835Z" fill="currentColor"/>
-                </svg>
-            </button>
+    <script type="module">
+      import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+      import ReactDOM from 'react-dom/client';
+      import { 
+        Plus, 
+        Search, 
+        Moon, 
+        Sun, 
+        Trash2, 
+        ChevronLeft, 
+        Menu,
+        Clock,
+        AlertTriangle,
+        Pin,
+        PinOff,
+        ListTodo,
+        Type,
+        X,
+        CheckCircle2
+      } from 'lucide-react';
 
-            <input class="search" placeholder="Search…" />
-            <button class="btn" id="toggleTheme">🌙</button>
-            <button class="NNbtn" id="newNote">＋</button>
-        </div>
+      // Custom Logo Component
+      const AppLogo = ({ className }) => (
+        React.createElement('svg', { 
+          width: "44", 
+          height: "62", 
+          viewBox: "0 0 44 62", 
+          fill: "none", 
+          xmlns: "http://www.w3.org/2000/svg",
+          className: className
+        }, [
+          React.createElement('path', { 
+            key: "p1",
+            d: "M14.0408 8.81818L20.369 28.7102H20.6119L26.9528 8.81818H33.0891L24.0636 35H16.93L7.89169 8.81818H14.0408Z", 
+            fill: "currentColor" 
+          }),
+          React.createElement('path', { 
+            key: "p2",
+            d: "M42.5 7V58.5L20.5 44L5.5 54M1.5 1.5H39.5V53L20.5 41L1.5 53V1.5Z", 
+            stroke: "currentColor", 
+            strokeWidth: "3" 
+          })
+        ])
+      );
+
+      const App = () => {
+        // State
+        const [notes, setNotes] = useState(() => {
+          const saved = localStorage.getItem('notes');
+          return saved ? JSON.parse(saved) : [];
+        });
+        const [activeId, setActiveId] = useState(() => {
+          return localStorage.getItem('activeId');
+        });
+        const [searchQuery, setSearchQuery] = useState('');
+        const [theme, setTheme] = useState(() => {
+          const saved = localStorage.getItem('theme');
+          return saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        });
+        const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+        const [newItemText, setNewItemText] = useState('');
         
-        <!-- Panel overlay -->
-        <div class="panel-overlay" id="panelOverlay"></div>
+        // Modal State
+        const [noteToDelete, setNoteToDelete] = useState(null);
+
+        // Refs for focus management
+        const contentRef = useRef(null);
+        const addItemRef = useRef(null);
+
+        // Derived state
+        const activeNote = useMemo(() => notes.find(n => n.id === activeId) || null, [notes, activeId]);
         
-        <!-- Mobile side panel -->
-        <div class="side-panel" id="sidePanel">
-            <div class="side-panel-header">
-                <div class="side-panel-title">Notes</div>
-                <button class="close-panel-btn" id="closePanelBtn">×</button>
-            </div>
-            <div class="note-list-container" id="noteListContainer"></div>
-        </div>
-        
-        <!-- Search preview panel -->
-        <div class="search-preview-panel" id="searchPreviewPanel">
-            <div class="search-preview-header">
-                <div class="search-preview-title">Search Results</div>
-                <button class="close-search-btn" id="closeSearchBtn">×</button>
-            </div>
-            <div class="search-results-container" id="searchResultsContainer"></div>
-        </div>
-        
-        <div class="main">
-            <!-- Desktop list -->
-            <div class="desktop-list" id="desktopList">
-                <div class="note-list-container" id="desktopNoteListContainer"></div>
-            </div>
-            
-            <div class="editor-container">
-                <!-- Editor Toolbar with Pin button -->
-                <div class="editor-toolbar" id="editorToolbar">
-                    <div class="toolbar-group">
-                        <button class="toolbar-btn" id="toggleChecklist" title="Add Checklist">
-                            <span>✓</span>
-                        </button>
-                        <button class="toolbar-btn media-upload-btn" title="Add Image">
-                            <span>🖼️</span>
-                            <input type="file" class="media-upload-input" id="imageUpload" accept="image/*" multiple>
-                        </button>
-                        <button class="toolbar-btn media-upload-btn" title="Record/Upload Audio">
-                            <span>🎤</span>
-                            <input type="file" class="media-upload-input" id="audioUpload" accept="audio/*">
-                        </button>
-                        <button class="toolbar-btn media-upload-btn" title="Attach File">
-                            <span>📎</span>
-                            <input type="file" class="media-upload-input" id="fileUpload" multiple>
-                        </button>
-                        <button class="toolbar-btn" id="startDrawing" title="Start Drawing">
-                            <span>✏️</span>
-                        </button>
-                    </div>
-                    <div class="toolbar-group" style="margin-left: auto;">
-                        <button class="pin-btn" id="togglePin" title="Pin/Unpin Note">
-                            📌
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="editor">
-                    <div id="editor" contenteditable="true" spellcheck="false"></div>
-                    
-                    <!-- Drawing Canvas (hidden by default) -->
-                    <div class="drawing-container" id="drawingContainer">
-                        <canvas id="drawingCanvas" class="drawing-canvas"></canvas>
-                        <div class="drawing-tools">
-                            <button class="drawing-tool-btn" data-tool="pen" title="Pen">✏️ Pen</button>
-                            <button class="drawing-tool-btn" data-tool="eraser" title="Eraser">🧽 Eraser</button>
-                            <input type="color" class="color-picker" id="drawingColor" value="#000000" title="Color">
-                            <button class="drawing-tool-btn" id="clearDrawing" title="Clear">🗑️ Clear</button>
-                            <button class="drawing-tool-btn" id="saveDrawing" title="Save Drawing">💾 Save</button>
-                            <button class="drawing-tool-btn" id="cancelDrawing" title="Cancel">✖️ Cancel</button>
-                        </div>
-                    </div>
-                    
-                    <!-- Ghost placeholder -->
-                    <div class="editor-placeholder" id="editorPlaceholder">Start typing…</div>
-                </div>
-                <div class="hint">Everything saves automatically • Use toolbar for checklists, media, drawings, and pinning</div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Delete Confirmation Modal -->
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal">
-            <div class="modal-title">Delete Note</div>
-            <div class="modal-message">Are you sure you want to delete this note? This action cannot be undone.</div>
-            <div class="modal-buttons">
-                <button class="modal-btn cancel" id="modalCancel">Cancel</button>
-                <button class="modal-btn delete" id="modalDelete">Delete</button>
-            </div>
-        </div>
-    </div>
+        const wordCount = useMemo(() => {
+          if (!activeNote) return 0;
+          if (activeNote.mode === 'checklist') return activeNote.items?.length || 0;
+          const fullText = `${activeNote.title} ${activeNote.content}`.trim();
+          return fullText ? fullText.split(/\s+/).filter(Boolean).length : 0;
+        }, [activeNote]);
 
-    <!-- Media Preview Modal -->
-    <div class="modal-overlay" id="mediaModalOverlay" style="display: none;">
-        <div class="modal media-modal">
-            <div class="modal-title" id="mediaModalTitle">Media Preview</div>
-            <div class="modal-content" id="mediaModalContent"></div>
-            <div class="modal-buttons">
-                <button class="modal-btn cancel" id="closeMediaModal">Close</button>
-            </div>
-        </div>
-    </div>
+        const filteredNotes = useMemo(() => {
+          // Sort logic: Pinned first, then by updatedAt
+          const sorted = [...notes].sort((a, b) => {
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
+            return b.updatedAt - a.updatedAt;
+          });
 
-    <script>
-        /* ---------- helpers ---------- */
-        const $ = q => document.querySelector(q);
-        const escapeHTML = t => {
-            const d = document.createElement('div');
-            d.textContent = t;
-            return d.innerHTML;
-        };
+          if (!searchQuery.trim()) return sorted;
+          const query = searchQuery.toLowerCase();
+          return sorted.filter(n => 
+            n.title.toLowerCase().includes(query) || 
+            (n.mode === 'checklist' ? n.items?.some(i => i.text.toLowerCase().includes(query)) : n.content.toLowerCase().includes(query))
+          );
+        }, [notes, searchQuery]);
 
-        /* ---------- state ---------- */
-        let notes = JSON.parse(localStorage.getItem('notes')) || [];
-        let activeId = localStorage.getItem('activeId');
-        let theme = localStorage.getItem('theme') || 'light';
-        let searchTimeout = null;
-        let noteToDelete = null;
-        let isMobile = window.innerWidth <= 768;
-        let keyboardActive = false;
-        let windowHeight = window.innerHeight;
-        let currentPanel = null;
+        // Effects
+        useEffect(() => {
+          localStorage.setItem('notes', JSON.stringify(notes));
+        }, [notes]);
 
-        // Drawing state
-        let isDrawing = false;
-        let drawingContext = null;
-        let currentTool = 'pen';
-        let currentColor = '#000000';
-        let lastX = 0;
-        let lastY = 0;
+        useEffect(() => {
+          if (activeId) localStorage.setItem('activeId', activeId);
+          else localStorage.removeItem('activeId');
+        }, [activeId]);
 
-        /* ---------- initialize note structure ---------- */
-        function initializeNoteStructure() {
-            notes = notes.map(note => {
-                // Migrate old notes to new structure
-                if (!note.content) {
-                    note.content = {
-                        text: note.text || '',
-                        checklists: [],
-                        media: [],
-                        drawings: []
-                    };
-                    delete note.text;
-                }
-                // Ensure all properties exist
-                if (!note.content.checklists) note.content.checklists = [];
-                if (!note.content.media) note.content.media = [];
-                if (!note.content.drawings) note.content.drawings = [];
-                if (!note.created) note.created = parseInt(note.id) || Date.now();
-                // Add pinned property if it doesn't exist
-                if (note.pinned === undefined) note.pinned = false;
-                
-                return note;
-            });
-            save();
-        }
+        useEffect(() => {
+          document.documentElement.classList.toggle('dark', theme === 'dark');
+          localStorage.setItem('theme', theme);
+        }, [theme]);
 
-       /* ---------- update logo based on theme ---------- */
-        function updateLogo() {
-            const logoBtn = $('#logoBtn');
-            if (theme === 'dark') {
-                logoBtn.innerHTML = `
-<svg width="33" height="43" viewBox="0 0 33 43" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M33 31.154V10C33 5.28595 33 2.92893 31.5355 1.46447C30.0711 0 27.714 0 23 0H10C5.28595 0 2.92893 0 1.46446 1.46447C0 2.92893 0 5.28596 0 10V31.1261C0 35.6589 0 37.9253 0.945379 39.2354C1.78535 40.3995 3.08511 41.1464 4.51377 41.286C6.12173 41.4431 8.07986 40.3019 11.9961 38.0196C13.4909 37.1484 14.2383 36.7128 15.032 36.5469C15.7468 36.3974 16.4856 36.4063 17.1965 36.5729C17.9859 36.758 18.7357 37.2195 20.2352 38.1426L20.2353 38.1426C24.6995 40.8906 26.9316 42.2646 28.735 41.9965C29.9417 41.8172 31.0411 41.2029 31.8264 40.2694C33 38.8741 33 36.3007 33 31.154Z" fill="#BB86FC"/>
-<path d="M10.2729 5.06818L16.601 24.9602H16.8439L23.1848 5.06818H29.3212L20.2956 31.25H13.1621L4.12375 5.06818H10.2729Z" fill="white"/>
-</svg>
+        // Actions
+        const createNewNote = useCallback(() => {
+          const newNote = {
+            id: Date.now().toString(),
+            title: '',
+            content: '',
+            mode: 'text',
+            items: [],
+            pinned: false,
+            updatedAt: Date.now()
+          };
+          setNotes(prev => [newNote, ...prev]);
+          setActiveId(newNote.id);
+          setIsSidebarOpen(false);
+        }, []);
 
-    `;
-            } else {
-                logoBtn.innerHTML = `
-<svg width="33" height="43" viewBox="0 0 33 43" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M33 31.154V10C33 5.28595 33 2.92893 31.5355 1.46447C30.0711 0 27.714 0 23 0H10C5.28595 0 2.92893 0 1.46446 1.46447C0 2.92893 0 5.28596 0 10V31.1261C0 35.6589 0 37.9253 0.945379 39.2354C1.78535 40.3995 3.08511 41.1464 4.51377 41.286C6.12173 41.4431 8.07986 40.3019 11.9961 38.0196C13.4909 37.1484 14.2383 36.7128 15.032 36.5469C15.7468 36.3974 16.4856 36.4063 17.1965 36.5729C17.9859 36.758 18.7357 37.2195 20.2352 38.1426L20.2353 38.1426C24.6995 40.8906 26.9316 42.2646 28.735 41.9965C29.9417 41.8172 31.0411 41.2029 31.8264 40.2694C33 38.8741 33 36.3007 33 31.154Z" fill="#FFE100"/>
-<path d="M10.3088 5.06818L16.6369 24.9602H16.8798L23.2207 5.06818H29.3571L20.3315 31.25H13.198L4.15963 5.06818H10.3088Z" fill="black"/>
-</svg>
+        const triggerDeleteNote = useCallback((id, e) => {
+          if (e) e.stopPropagation();
+          setNoteToDelete(id);
+        }, []);
 
-    `;
-            }
-        }
+        const confirmDelete = useCallback(() => {
+          if (!noteToDelete) return;
+          setNotes(prev => {
+            const updated = prev.filter(n => n.id !== noteToDelete);
+            return updated;
+          });
+          if (activeId === noteToDelete) {
+            setActiveId(null);
+          }
+          setNoteToDelete(null);
+        }, [noteToDelete, activeId]);
 
-        /* ---------- panel functions ---------- */
-        function openPanel(type) {
-            if (!isMobile) return;
-            
-            if (currentPanel) closePanel();
-            
-            currentPanel = type;
-            
-            if (type === 'notes') {
-                $('#sidePanel').classList.add('open');
-            } else if (type === 'search') {
-                $('#searchPreviewPanel').classList.add('open');
-            }
-            
-            $('#panelOverlay').classList.add('visible');
-            document.body.style.overflow = 'hidden';
-        }
+        const updateNote = useCallback((id, field, value) => {
+          setNotes(prev => prev.map(n => 
+            n.id === id ? { ...n, [field]: value, updatedAt: Date.now() } : n
+          ));
+        }, []);
 
-        function closePanel() {
-            if (!isMobile || !currentPanel) return;
-            
-            if (currentPanel === 'notes') {
-                $('#sidePanel').classList.remove('open');
-            } else if (currentPanel === 'search') {
-                $('#searchPreviewPanel').classList.remove('open');
-            }
-            
-            currentPanel = null;
-            $('#panelOverlay').classList.remove('visible');
-            document.body.style.overflow = '';
-        }
+        const addChecklistItem = useCallback(() => {
+          if (!newItemText.trim() || !activeId) return;
+          const newItem = {
+            id: Date.now().toString(),
+            text: newItemText.trim(),
+            completed: false
+          };
+          setNotes(prev => prev.map(n => 
+            n.id === activeId ? { ...n, items: [...(n.items || []), newItem], updatedAt: Date.now() } : n
+          ));
+          setNewItemText('');
+          addItemRef.current?.focus();
+        }, [newItemText, activeId]);
 
-        function closeAllPanels() {
-            closePanel();
-        }
+        const toggleChecklistItem = useCallback((noteId, itemId) => {
+          setNotes(prev => prev.map(n => 
+            n.id === noteId ? { 
+              ...n, 
+              items: n.items.map(i => i.id === itemId ? { ...i, completed: !i.completed } : i),
+              updatedAt: Date.now()
+            } : n
+          ));
+        }, []);
 
-        function togglePanel() {
-            if (currentPanel === 'notes') {
-                closePanel();
-            } else {
-                openPanel('notes');
-            }
-        }
+        const removeChecklistItem = useCallback((noteId, itemId) => {
+          setNotes(prev => prev.map(n => 
+            n.id === noteId ? { 
+              ...n, 
+              items: n.items.filter(i => i.id !== itemId),
+              updatedAt: Date.now()
+            } : n
+          ));
+        }, []);
 
-        /* ---------- theme ---------- */
-        function applyTheme() {
-            document.body.classList.toggle('dark', theme === 'dark');
-            $('#toggleTheme').textContent = theme === 'dark' ? '☀️' : '🌑';
-            localStorage.setItem('theme', theme);
-            updateLogo();
-        }
-        $('#toggleTheme').onclick = () => { theme = theme === 'dark' ? 'light' : 'dark'; applyTheme(); };
-        applyTheme();
+        const togglePin = useCallback((id, e) => {
+          if (e) e.stopPropagation();
+          setNotes(prev => prev.map(n => 
+            n.id === id ? { ...n, pinned: !n.pinned } : n
+          ));
+        }, []);
 
-        /* ---------- storage ---------- */
-        function save() {
-            localStorage.setItem('notes', JSON.stringify(notes));
-            localStorage.setItem('activeId', activeId);
-        }
+        const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
-        /* ---------- caret ---------- */
-        function caretEnd(el) {
-            el.focus();
-            const r = document.createRange();
-            r.selectNodeContents(el);
-            r.collapse(false);
-            const s = window.getSelection();
-            s.removeAllRanges();
-            s.addRange(r);
-        }
+        const primaryColor = theme === 'dark' ? 'bg-[#00FF41]' : 'bg-[#FFE600]';
+        const secondaryColor = theme === 'dark' ? 'bg-[#FF00F5]' : 'bg-[#FF00F5]';
+        const accentColor = theme === 'dark' ? 'bg-[#3300FF]' : 'bg-[#00D1FF]';
+        const textColor = 'text-black';
+        const surfaceColor = theme === 'dark' ? 'bg-[#121212]' : 'bg-white';
 
-        /* ---------- editor placeholder ---------- */
-        function updatePlaceholder() {
-            const editor = $('#editor');
-            const placeholder = $('#editorPlaceholder');
-            const hasContent = editor.children.length > 1 || 
-                              (editor.children.length === 1 && editor.children[0].textContent.trim().length > 0) ||
-                              editor.querySelector('.checklist-item') ||
-                              editor.querySelector('.media-container');
-            
-            placeholder.classList.toggle('hidden', hasContent);
-        }
-
-        /* ---------- format timestamp ---------- */
-        function formatTimestamp(timestamp) {
-            const createdDate = new Date(timestamp);
-            const now = new Date();
-            const diffTime = now - createdDate;
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays === 0) {
-                return createdDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            } else if (diffDays === 1) {
-                return 'Yesterday';
-            } else if (diffDays < 7) {
-                return createdDate.toLocaleDateString([], {weekday: 'short'});
-            } else if (createdDate.getFullYear() === now.getFullYear()) {
-                return createdDate.toLocaleDateString([], {month: 'short', day: 'numeric'});
-            } else {
-                return createdDate.toLocaleDateString([], {year: 'numeric', month: 'short', day: 'numeric'});
-            }
-        }
-
-        /* ---------- format file size ---------- */
-        function formatFileSize(bytes) {
-            if (!bytes || bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        /* ---------- get note preview ---------- */
-        function getNotePreview(note) {
-            const content = note.content;
-            
-            // Check text content
-            if (content.text && content.text.trim()) {
-                const lines = content.text.split('\n');
-                return lines[0].substring(0, 100) || 'Untitled';
-            }
-            
-            // Check checklists
-            if (content.checklists && content.checklists.length > 0) {
-                const completed = content.checklists.filter(item => item.checked).length;
-                const total = content.checklists.length;
-                return `Checklist (${completed}/${total})`;
-            }
-            
-            // Check media
-            if (content.media && content.media.length > 0) {
-                const images = content.media.filter(m => m.type === 'image').length;
-                const audio = content.media.filter(m => m.type === 'audio').length;
-                const files = content.media.filter(m => m.type === 'file').length;
-                
-                if (images > 0) return `📷 ${images} image${images > 1 ? 's' : ''}`;
-                if (audio > 0) return `🎵 ${audio} audio${audio > 1 ? 's' : ''}`;
-                if (files > 0) return `📎 ${files} file${files > 1 ? 's' : ''}`;
-            }
-            
-            // Check drawings
-            if (content.drawings && content.drawings.length > 0) {
-                return `✏️ ${content.drawings.length} drawing${content.drawings.length > 1 ? 's' : ''}`;
-            }
-            
-            return 'Untitled';
-        }
-
-        /* ---------- render ---------- */
-        function render(filter = '') {
-            const mobileContainer = $('#noteListContainer');
-            const desktopContainer = $('#desktopNoteListContainer');
-            const searchResultsContainer = $('#searchResultsContainer');
-            
-            const f = filter.toLowerCase();
-            const filtered = notes.filter(n => {
-                if (!f) return true;
-                
-                const content = n.content;
-                const textMatch = content.text && content.text.toLowerCase().includes(f);
-                const checklistMatch = content.checklists && 
-                    content.checklists.some(item => item.text && item.text.toLowerCase().includes(f));
-                
-                return textMatch || checklistMatch;
-            });
-
-            // Render notes list with sections
-            const containers = isMobile ? [mobileContainer] : [desktopContainer];
-            containers.forEach(container => {
-                container.innerHTML = '';
-                
-                if (!notes.length) {
-                    const e = document.createElement('div');
-                    e.className = 'empty-state';
-                    e.textContent = 'No notes yet';
-                    container.appendChild(e);
-                    return;
-                }
-
-                // Separate pinned and unpinned notes
-                const pinnedNotes = notes.filter(n => n.pinned);
-                const unpinnedNotes = notes.filter(n => !n.pinned);
-                
-                // Render pinned notes section
-                if (pinnedNotes.length > 0) {
-                    const pinnedHeader = document.createElement('div');
-                    pinnedHeader.className = 'section-header';
-                    pinnedHeader.textContent = 'Pinned';
-                    container.appendChild(pinnedHeader);
-                    
-                    pinnedNotes.forEach(n => {
-                        container.appendChild(createNoteElement(n));
-                    });
-                }
-                
-                // Render unpinned notes section
-                if (unpinnedNotes.length > 0) {
-                    const unpinnedHeader = document.createElement('div');
-                    unpinnedHeader.className = 'section-header';
-                    unpinnedHeader.textContent = pinnedNotes.length > 0 ? 'Others' : 'Notes';
-                    container.appendChild(unpinnedHeader);
-                    
-                    unpinnedNotes.forEach(n => {
-                        container.appendChild(createNoteElement(n));
-                    });
-                }
-                
-                // Show empty state for sections if needed
-                if (pinnedNotes.length === 0 && unpinnedNotes.length === 0) {
-                    const empty = document.createElement('div');
-                    empty.className = 'section-empty';
-                    empty.textContent = 'No notes';
-                    container.appendChild(empty);
-                }
-            });
-
-            // Render search results (no sections in search)
-            if (searchResultsContainer) {
-                searchResultsContainer.innerHTML = '';
-                
-                if (!filtered.length) {
-                    const e = document.createElement('div');
-                    e.className = 'empty-state';
-                    e.textContent = f ? 'No notes match your search' : 'Type to search...';
-                    searchResultsContainer.appendChild(e);
-                    return;
-                }
-
-                filtered.forEach(n => {
-                    const wrap = document.createElement('div');
-                    wrap.className = 'note' + (n.id === activeId ? ' active' : '') + (n.pinned ? ' pinned' : '');
-                    wrap.dataset.noteId = n.id;
-
-                    const content = document.createElement('div');
-                    content.className = 'note-content';
-                    
-                    const preview = getNotePreview(n);
-                    let previewHTML = escapeHTML(preview);
-                    
-                    if (f) {
-                        previewHTML = previewHTML.replace(
-                            new RegExp(`(${escapeHTML(filter)})`, 'gi'),
-                            '<mark>$1</mark>'
-                        );
-                    }
-
-                    const title = document.createElement('div');
-                    title.style.cssText = 'flex:1;min-width:0;';
-
-                    const titleText = document.createElement('div');
-                    titleText.innerHTML = previewHTML;
-                    titleText.style.cssText = 'font-size:14px;line-height:1.4;white-space:normal;margin-bottom:2px;';
-
-                    const timestamp = document.createElement('div');
-                    timestamp.style.cssText = 'font-size:11px;color:var(--text-muted);opacity:0.7;margin-top:2px;';
-
-                    timestamp.textContent = formatTimestamp(n.created);
-
-                    title.appendChild(titleText);
-                    title.appendChild(timestamp);
-
-                    content.appendChild(title);
-                    wrap.appendChild(content);
-
-                    wrap.onclick = () => {
-                        selectNote(n.id);
-                        if (isMobile) {
-                            closeAllPanels();
-                            $('.search').value = '';
-                        }
-                    };
-                    
-                    searchResultsContainer.appendChild(wrap);
-                });
-            }
-            
-            // Update pin button state
-            updatePinButton();
-            updatePlaceholder();
-        }
-
-        /* ---------- create note element ---------- */
-        function createNoteElement(note) {
-            const wrap = document.createElement('div');
-            wrap.className = 'note' + (note.id === activeId ? ' active' : '') + (note.pinned ? ' pinned' : '');
-            wrap.dataset.noteId = note.id;
-
-            const bg = document.createElement('div');
-            bg.className = 'swipe-bg';
-            bg.textContent = 'Delete';
-            wrap.appendChild(bg);
-
-            const content = document.createElement('div');
-            content.className = 'note-content';
-            
-            const preview = getNotePreview(note);
-            const previewText = escapeHTML(preview);
-
-            const title = document.createElement('div');
-            title.style.cssText = 'flex:1;min-width:0;';
-
-            const titleText = document.createElement('div');
-            titleText.innerHTML = previewText;
-            titleText.style.cssText = 'font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px;';
-
-            const timestamp = document.createElement('div');
-            timestamp.style.cssText = 'font-size:11px;color:var(--text-muted);opacity:0.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
-
-            timestamp.textContent = formatTimestamp(note.created);
-
-            title.appendChild(titleText);
-            title.appendChild(timestamp);
-            
-            // Actions container
-            const actions = document.createElement('div');
-            actions.className = 'note-actions';
-            
-            // Pin button for note list
-            const pinBtn = document.createElement('button');
-            pinBtn.className = 'pin-btn' + (note.pinned ? ' pinned' : '');
-            pinBtn.innerHTML = note.pinned ? '📌' : '📍';
-            pinBtn.title = note.pinned ? 'Unpin note' : 'Pin note';
-            pinBtn.onclick = (e) => {
-                e.stopPropagation();
-                togglePin(note.id);
-            };
-            
-            const del = document.createElement('button');
-            del.className = 'delete-btn';
-            del.innerHTML = `
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 6h18"></path>
-                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                <line x1="10" y1="11" x2="10" y2="17"></line>
-                <line x1="14" y1="11" x2="14" y2="17"></line>
-              </svg>
-            `;
-            del.setAttribute('aria-label', 'Delete note');
-            del.onclick = e => {
-                e.stopPropagation();
-                requestDeleteNote(note.id);
-            };
-
-            actions.appendChild(pinBtn);
-            actions.appendChild(del);
-            content.appendChild(title);
-            content.appendChild(actions);
-            wrap.appendChild(content);
-
-            wrap.onclick = (e) => {
-                if (e.target.closest('.pin-btn') || e.target.closest('.delete-btn')) return;
-                selectNote(note.id);
-                if (isMobile) closeAllPanels();
-            };
-            
-            addSwipe(wrap, note.id);
-            return wrap;
-        }
-
-        /* ---------- toggle pin ---------- */
-        function togglePin(noteId) {
-            const note = notes.find(n => n.id === noteId);
-            if (!note) return;
-            
-            note.pinned = !note.pinned;
-            
-            // If pinning, move to top of its section
-            if (note.pinned) {
-                // Remove from current position
-                const index = notes.indexOf(note);
-                notes.splice(index, 1);
-                // Add to beginning
-                notes.unshift(note);
-            }
-            
-            save();
-            render($('.search').value);
-            
-            // Update pin button in toolbar if this is the active note
-            if (noteId === activeId) {
-                updatePinButton();
-            }
-        }
-
-        /* ---------- update pin button ---------- */
-        function updatePinButton() {
-            const note = notes.find(n => n.id === activeId);
-            const pinBtn = $('#togglePin');
-            
-            if (note) {
-                pinBtn.classList.toggle('pinned', note.pinned);
-                pinBtn.title = note.pinned ? 'Unpin note' : 'Pin note';
-                pinBtn.innerHTML = note.pinned ? '📌' : '📍';
-            } else {
-                pinBtn.classList.remove('pinned');
-                pinBtn.title = 'Pin note';
-                pinBtn.innerHTML = '📍';
-            }
-        }
-
-        /* ---------- pin button click handler ---------- */
-        $('#togglePin').onclick = () => {
-            const note = notes.find(n => n.id === activeId);
-            if (note) {
-                togglePin(note.id);
-            }
-        };
-
-        /* ---------- render editor content ---------- */
-        function renderEditorContent(note) {
-            const editor = $('#editor');
-            editor.innerHTML = '';
-            
-            const content = note.content;
-            
-            // Render text content
-            if (content.text) {
-                const lines = content.text.split('\n');
-                lines.forEach((line, index) => {
-                    const div = document.createElement('div');
-                    div.textContent = line || (index === 0 ? '' : '');
-                    editor.appendChild(div);
-                });
-            }
-            
-            // Render checklists
-            if (content.checklists && content.checklists.length > 0) {
-                content.checklists.forEach((item, index) => {
-                    const checklistItem = createChecklistElement(item, index);
-                    editor.appendChild(checklistItem);
-                });
-            }
-            
-            // Render media
-            if (content.media && content.media.length > 0) {
-                content.media.forEach((media, index) => {
-                    const mediaElement = createMediaElement(media, index);
-                    editor.appendChild(mediaElement);
-                });
-            }
-            
-            // Render drawings
-            if (content.drawings && content.drawings.length > 0) {
-                content.drawings.forEach((drawing, index) => {
-                    const drawingElement = createDrawingPreview(drawing.data, index);
-                    editor.appendChild(drawingElement);
-                });
-            }
-            
-            // Add empty div if editor is empty
-            if (editor.children.length === 0) {
-                const div = document.createElement('div');
-                editor.appendChild(div);
-            }
-            
-            updatePlaceholder();
-        }
-
-        /* ---------- create checklist element ---------- */
-        function createChecklistElement(item, index) {
-            const container = document.createElement('div');
-            container.className = 'checklist-item';
-            container.dataset.index = index;
-            
-            const checkbox = document.createElement('div');
-            checkbox.className = 'checklist-checkbox';
-            if (item.checked) checkbox.classList.add('checked');
-            
-            const text = document.createElement('div');
-            text.className = 'checklist-text';
-            text.contentEditable = true;
-            text.textContent = item.text || '';
-            if (item.checked) text.classList.add('completed');
-            
-            checkbox.onclick = () => {
-                const note = notes.find(n => n.id === activeId);
-                if (!note) return;
-                
-                const checked = !note.content.checklists[index].checked;
-                note.content.checklists[index].checked = checked;
-                
-                if (checked) {
-                    checkbox.classList.add('checked');
-                    text.classList.add('completed');
-                } else {
-                    checkbox.classList.remove('checked');
-                    text.classList.remove('completed');
-                }
-                
-                save();
-            };
-            
-            text.oninput = () => {
-                const note = notes.find(n => n.id === activeId);
-                if (!note) return;
-                
-                note.content.checklists[index].text = text.textContent;
-                save();
-            };
-            
-            text.onkeydown = (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addChecklistItem(index + 1);
-                } else if (e.key === 'Backspace' && text.textContent === '' && note.content.checklists.length > 1) {
-                    e.preventDefault();
-                    removeChecklistItem(index);
-                }
-            };
-            
-            container.appendChild(checkbox);
-            container.appendChild(text);
-            
-            return container;
-        }
-
-        /* ---------- checklist functions ---------- */
-        function addChecklistItem(atIndex = -1) {
-            const note = notes.find(n => n.id === activeId);
-            if (!note) return;
-            
-            if (!note.content.checklists) note.content.checklists = [];
-            
-            const newItem = {
-                text: '',
-                checked: false
-            };
-            
-            if (atIndex === -1) {
-                note.content.checklists.push(newItem);
-            } else {
-                note.content.checklists.splice(atIndex, 0, newItem);
-            }
-            
-            renderEditorContent(note);
-            
-            // Focus the new item
-            setTimeout(() => {
-                const items = $('#editor').querySelectorAll('.checklist-text');
-                const itemIndex = atIndex === -1 ? items.length - 1 : atIndex;
-                if (items[itemIndex]) {
-                    const item = items[itemIndex];
-                    item.focus();
-                    const range = document.createRange();
-                    range.selectNodeContents(item);
-                    range.collapse(false);
-                    const sel = window.getSelection();
-                    sel.removeAllRanges();
-                    sel.addRange(range);
-                }
-            }, 10);
-            
-            save();
-        }
-
-        function removeChecklistItem(index) {
-            const note = notes.find(n => n.id === activeId);
-            if (!note || !note.content.checklists) return;
-            
-            note.content.checklists.splice(index, 1);
-            renderEditorContent(note);
-            save();
-        }
-
-        /* ---------- toggle checklist ---------- */
-        $('#toggleChecklist').onclick = () => {
-            const note = notes.find(n => n.id === activeId);
-            if (!note) return;
-            
-            if (!note.content.checklists) {
-                note.content.checklists = [];
-            }
-            
-            addChecklistItem();
-        };
-
-        /* ---------- create media element ---------- */
-        function createMediaElement(media, index) {
-            const container = document.createElement('div');
-            container.className = 'media-container';
-            container.dataset.index = index;
-            
-            if (media.type === 'image') {
-                const img = document.createElement('img');
-                img.className = 'image-preview';
-                img.src = media.data;
-                img.alt = media.name || 'Image';
-                img.onclick = () => previewMedia(media);
-                container.appendChild(img);
-                
-                // Add remove button for images
-                const removeBtn = document.createElement('button');
-                removeBtn.className = 'file-remove';
-                removeBtn.style.position = 'absolute';
-                removeBtn.style.top = '8px';
-                removeBtn.style.right = '8px';
-                removeBtn.style.background = 'var(--bg)';
-                removeBtn.style.borderRadius = '50%';
-                removeBtn.style.width = '24px';
-                removeBtn.style.height = '24px';
-                removeBtn.style.display = 'flex';
-                removeBtn.style.alignItems = 'center';
-                removeBtn.style.justifyContent = 'center';
-                removeBtn.innerHTML = '✕';
-                removeBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    removeMedia(index);
-                };
-                container.appendChild(removeBtn);
-                
-            } else if (media.type === 'audio') {
-                const audio = document.createElement('audio');
-                audio.className = 'audio-preview';
-                audio.controls = true;
-                audio.src = media.data;
-                container.appendChild(audio);
-                
-                const removeBtn = document.createElement('button');
-                removeBtn.className = 'file-remove';
-                removeBtn.innerHTML = '✕';
-                removeBtn.style.marginLeft = '8px';
-                removeBtn.onclick = () => removeMedia(index);
-                container.appendChild(removeBtn);
-                
-            } else if (media.type === 'file') {
-                const fileDiv = document.createElement('div');
-                fileDiv.className = 'file-attachment';
-                
-                const icon = document.createElement('div');
-                icon.className = 'file-icon';
-                icon.textContent = '📎';
-                
-                const info = document.createElement('div');
-                info.className = 'file-info';
-                
-                const name = document.createElement('div');
-                name.className = 'file-name';
-                name.textContent = media.name || 'File';
-                
-                const size = document.createElement('div');
-                size.className = 'file-size';
-                size.textContent = formatFileSize(media.size);
-                
-                const removeBtn = document.createElement('button');
-                removeBtn.className = 'file-remove';
-                removeBtn.innerHTML = '✕';
-                removeBtn.onclick = () => removeMedia(index);
-                
-                info.appendChild(name);
-                info.appendChild(size);
-                fileDiv.appendChild(icon);
-                fileDiv.appendChild(info);
-                fileDiv.appendChild(removeBtn);
-                container.appendChild(fileDiv);
-            }
-            
-            return container;
-        }
-
-        /* ---------- media upload ---------- */
-        async function handleMediaUpload(file, type) {
-            const note = notes.find(n => n.id === activeId);
-            if (!note) return;
-            
-            if (!note.content.media) note.content.media = [];
-            
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                
-                reader.onload = (e) => {
-                    const media = {
-                        type: type,
-                        name: file.name,
-                        size: file.size,
-                        data: e.target.result,
-                        timestamp: Date.now()
-                    };
-                    
-                    note.content.media.push(media);
-                    renderEditorContent(note);
-                    save();
-                    resolve();
-                };
-                
-                reader.onerror = reject;
-                
-                if (type === 'image' && file.size > 1024 * 1024) { // 1MB
-                    compressImage(file).then(compressedFile => {
-                        reader.readAsDataURL(compressedFile);
-                    }).catch(() => {
-                        reader.readAsDataURL(file);
-                    });
-                } else {
-                    reader.readAsDataURL(file);
-                }
-            });
-        }
-
-        /* ---------- image compression ---------- */
-        function compressImage(file, maxWidth = 1024, quality = 0.8) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                const reader = new FileReader();
-                
-                reader.onload = (e) => {
-                    img.src = e.target.result;
-                    
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
-                        
-                        if (width > maxWidth) {
-                            height = (height * maxWidth) / width;
-                            width = maxWidth;
-                        }
-                        
-                        canvas.width = width;
-                        canvas.height = height;
-                        
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        
-                        canvas.toBlob(
-                            (blob) => {
-                                if (!blob) {
-                                    reject(new Error('Canvas to Blob conversion failed'));
-                                    return;
-                                }
-                                resolve(new File([blob], file.name, { type: 'image/jpeg' }));
-                            },
-                            'image/jpeg',
-                            quality
-                        );
-                    };
-                    
-                    img.onerror = reject;
-                };
-                
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        }
-
-        /* ---------- remove media ---------- */
-        function removeMedia(index) {
-            const note = notes.find(n => n.id === activeId);
-            if (!note || !note.content.media) return;
-            
-            note.content.media.splice(index, 1);
-            renderEditorContent(note);
-            save();
-        }
-
-        /* ---------- preview media ---------- */
-        function previewMedia(media) {
-            const modal = $('#mediaModalOverlay');
-            const title = $('#mediaModalTitle');
-            const content = $('#mediaModalContent');
-            
-            title.textContent = media.name || 'Media Preview';
-            content.innerHTML = '';
-            
-            if (media.type === 'image') {
-                const img = document.createElement('img');
-                img.className = 'modal-image';
-                img.src = media.data;
-                content.appendChild(img);
-            } else if (media.type === 'audio') {
-                const audio = document.createElement('audio');
-                audio.controls = true;
-                audio.src = media.data;
-                audio.style.width = '100%';
-                content.appendChild(audio);
-            }
-            
-            modal.style.display = 'flex';
-        }
-
-        /* ---------- drawing functions ---------- */
-        function initDrawing() {
-            const canvas = $('#drawingCanvas');
-            const container = $('#drawingContainer');
-            
-            // Set canvas size
-            canvas.width = container.clientWidth - 40; // Account for padding
-            canvas.height = 400;
-            
-            drawingContext = canvas.getContext('2d');
-            
-            // Set initial drawing style
-            drawingContext.lineWidth = 2;
-            drawingContext.lineCap = 'round';
-            drawingContext.lineJoin = 'round';
-            drawingContext.strokeStyle = currentColor;
-            
-            // Clear canvas with background color
-            drawingContext.fillStyle = theme === 'dark' ? '#2c2c2e' : '#f9f9f9';
-            drawingContext.fillRect(0, 0, canvas.width, canvas.height);
-        }
-
-        function startDrawing(e) {
-            isDrawing = true;
-            const canvas = $('#drawingCanvas');
-            const rect = canvas.getBoundingClientRect();
-            
-            lastX = (e.clientX || e.touches[0].clientX) - rect.left;
-            lastY = (e.clientY || e.touches[0].clientY) - rect.top;
-            
-            if (currentTool === 'eraser') {
-                drawingContext.globalCompositeOperation = 'destination-out';
-                drawingContext.lineWidth = 20;
-            } else {
-                drawingContext.globalCompositeOperation = 'source-over';
-                drawingContext.lineWidth = 2;
-                drawingContext.strokeStyle = currentColor;
-            }
-            
-            drawingContext.beginPath();
-            drawingContext.moveTo(lastX, lastY);
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
-            
+        const handleTitleKeyDown = (e) => {
+          if (e.key === 'Enter') {
             e.preventDefault();
-            const canvas = $('#drawingCanvas');
-            const rect = canvas.getBoundingClientRect();
-            
-            let x, y;
-            if (e.touches) {
-                x = e.touches[0].clientX - rect.left;
-                y = e.touches[0].clientY - rect.top;
+            if (activeNote.mode === 'checklist') {
+              addItemRef.current?.focus();
             } else {
-                x = e.clientX - rect.left;
-                y = e.clientY - rect.top;
+              contentRef.current?.focus();
             }
-            
-            drawingContext.lineTo(x, y);
-            drawingContext.stroke();
-            
-            lastX = x;
-            lastY = y;
-        }
-
-        function stopDrawing() {
-            if (!isDrawing) return;
-            isDrawing = false;
-            drawingContext.beginPath();
-        }
-
-        function saveDrawing() {
-            const canvas = $('#drawingCanvas');
-            const dataURL = canvas.toDataURL('image/png');
-            
-            const note = notes.find(n => n.id === activeId);
-            if (!note) return;
-            
-            if (!note.content.drawings) note.content.drawings = [];
-            
-            note.content.drawings.push({
-                data: dataURL,
-                timestamp: Date.now()
-            });
-            
-            // Hide drawing canvas and show editor
-            $('#drawingContainer').style.display = 'none';
-            $('#editor').style.display = 'block';
-            
-            // Add drawing preview to editor
-            const drawingElement = createDrawingPreview(dataURL, note.content.drawings.length - 1);
-            $('#editor').appendChild(drawingElement);
-            
-            save();
-            updatePlaceholder();
-        }
-
-        function createDrawingPreview(dataURL, index) {
-            const container = document.createElement('div');
-            container.className = 'media-container';
-            
-            const img = document.createElement('img');
-            img.className = 'image-preview';
-            img.src = dataURL;
-            img.alt = 'Drawing';
-            img.onclick = () => {
-                previewMedia({ type: 'image', data: dataURL, name: 'Drawing' });
-            };
-            
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'file-remove';
-            removeBtn.style.position = 'absolute';
-            removeBtn.style.top = '8px';
-            removeBtn.style.right = '8px';
-            removeBtn.style.background = 'var(--bg)';
-            removeBtn.style.borderRadius = '50%';
-            removeBtn.style.width = '24px';
-            removeBtn.style.height = '24px';
-            removeBtn.style.display = 'flex';
-            removeBtn.style.alignItems = 'center';
-            removeBtn.style.justifyContent = 'center';
-            removeBtn.innerHTML = '✕';
-            removeBtn.onclick = (e) => {
-                e.stopPropagation();
-                const note = notes.find(n => n.id === activeId);
-                if (note && note.content.drawings) {
-                    note.content.drawings.splice(index, 1);
-                    container.remove();
-                    save();
-                }
-            };
-            
-            container.appendChild(img);
-            container.appendChild(removeBtn);
-            return container;
-        }
-
-        /* ---------- initialize drawing ---------- */
-        $('#startDrawing').onclick = () => {
-            $('#drawingContainer').style.display = 'block';
-            $('#editor').style.display = 'none';
-            initDrawing();
+          }
         };
 
-        $('#cancelDrawing').onclick = () => {
-            $('#drawingContainer').style.display = 'none';
-            $('#editor').style.display = 'block';
+        const getChecklistStats = (note) => {
+          if (note.mode !== 'checklist' || !note.items) return null;
+          const total = note.items.length;
+          const completed = note.items.filter(i => i.completed).length;
+          return { total, completed };
         };
 
-        $('#saveDrawing').onclick = saveDrawing;
+        return React.createElement('div', { 
+          className: `h-screen w-full relative flex flex-col overflow-hidden transition-colors duration-200 bg-grid ${theme === 'dark' ? 'bg-[#0A0A0A] text-white' : 'bg-[#F0F0F0] text-black'}`
+        }, [
+          // Header
+          React.createElement('header', { 
+            key: 'header',
+            className: `h-20 px-6 flex items-center justify-between z-50 border-b-[4px] border-black ${theme === 'dark' ? 'bg-black' : 'bg-white'}`
+          }, [
+            React.createElement('div', { className: "flex items-center gap-4", key: "h-left" }, [
+              React.createElement('button', { 
+                onClick: () => setIsSidebarOpen(true),
+                className: `md:hidden p-2 brutal-border brutal-shadow brutal-btn ${primaryColor} text-black`,
+                key: "menu-btn"
+              }, React.createElement(Menu, { className: "w-6 h-6" })),
+              React.createElement('div', { className: "flex items-center gap-3", key: "logo-container" }, [
+                React.createElement('div', { className: `p-1 brutal-border brutal-shadow ${secondaryColor} text-black h-12 w-10 flex items-center justify-center` }, 
+                  React.createElement(AppLogo, { className: "w-full h-full" })
+                )
+              ])
+            ]),
+            React.createElement('div', { className: "flex-1 max-w-md mx-6 hidden md:block", key: "h-search" }, [
+              React.createElement('div', { className: `relative brutal-border brutal-shadow ${theme === 'dark' ? 'bg-zinc-800' : 'bg-white'}` }, [
+                React.createElement(Search, { className: `absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${theme === 'dark' ? 'text-zinc-400' : 'text-black'}`, key: "s-icon" }),
+                React.createElement('input', { 
+                  type: "text", 
+                  placeholder: "SEARCH YOUR BRAIN...",
+                  value: searchQuery,
+                  onChange: (e) => setSearchQuery(e.target.value),
+                  className: "w-full bg-transparent py-3 pl-12 pr-4 focus:outline-none font-bold placeholder:opacity-50",
+                  key: "s-input"
+                })
+              ])
+            ]),
+            React.createElement('div', { className: "flex items-center gap-4", key: "h-actions" }, [
+              React.createElement('button', { 
+                onClick: toggleTheme,
+                className: `p-3 brutal-border brutal-shadow brutal-btn ${accentColor} text-black`,
+                key: "theme-btn"
+              }, theme === 'dark' ? React.createElement(Sun, { className: "w-6 h-6" }) : React.createElement(Moon, { className: "w-6 h-6" })),
+              React.createElement('button', { 
+                onClick: createNewNote,
+                className: `flex items-center gap-2 ${primaryColor} text-black px-6 py-3 brutal-border brutal-shadow brutal-btn font-black uppercase text-sm`,
+                key: "new-btn"
+              }, [
+                React.createElement(Plus, { className: "w-6 h-6", key: "p-icon" }),
+                React.createElement('span', { className: "hidden sm:inline", key: "p-text" }, "New Note")
+              ])
+            ])
+          ]),
 
-        $('#clearDrawing').onclick = () => {
-            const canvas = $('#drawingCanvas');
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = theme === 'dark' ? '#2c2c2e' : '#f9f9f9';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        };
+          // Main Body
+          React.createElement('main', { 
+            className: "flex-1 flex gap-6 p-6 overflow-hidden relative",
+            key: "main"
+          }, [
+            // Sidebar
+            React.createElement('aside', { 
+              className: `fixed inset-0 z-[100] md:relative md:inset-auto md:z-auto md:flex md:w-80 flex-col transition-all duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`,
+              key: "sidebar"
+            }, [
+              React.createElement('div', { 
+                className: `absolute inset-0 bg-black/80 md:hidden transition-opacity ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`,
+                onClick: () => setIsSidebarOpen(false),
+                key: "s-overlay"
+              }),
+              React.createElement('div', { className: `relative w-80 h-full md:w-full brutal-border brutal-shadow-lg ${surfaceColor} overflow-hidden flex flex-col z-[110]`, key: "s-content" }, [
+                React.createElement('div', { className: `p-4 border-b-[3px] border-black flex items-center justify-between shrink-0 ${theme === 'dark' ? 'bg-zinc-900' : 'bg-zinc-100'}`, key: "s-header" }, [
+                  React.createElement('span', { className: "font-black text-xs uppercase tracking-widest italic" }, "Notes"),
+                  React.createElement('button', { 
+                    onClick: () => setIsSidebarOpen(false),
+                    className: "md:hidden p-2 brutal-border bg-white text-black",
+                    key: "close-s"
+                  }, React.createElement(ChevronLeft, { className: "w-4 h-4" }))
+                ]),
+                // Mobile Search Bar
+                React.createElement('div', { className: "px-4 py-4 border-b-[3px] border-black md:hidden shrink-0", key: "s-search-mobile" }, [
+                  React.createElement('div', { className: `relative brutal-border brutal-shadow ${theme === 'dark' ? 'bg-zinc-800' : 'bg-white'}` }, [
+                    React.createElement(Search, { className: `absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-black'}`, key: "ms-icon" }),
+                    React.createElement('input', { 
+                      type: "text", 
+                      placeholder: "SEARCH...",
+                      value: searchQuery,
+                      onChange: (e) => setSearchQuery(e.target.value),
+                      className: "w-full bg-transparent py-2 pl-9 pr-3 focus:outline-none font-bold text-sm placeholder:opacity-50",
+                      key: "ms-input"
+                    })
+                  ])
+                ]),
+                React.createElement('div', { className: "flex-1 scroll-container p-4 space-y-4", key: "s-list" }, [
+                  filteredNotes.length === 0 ? React.createElement('div', { className: "h-40 flex flex-col items-center justify-center text-center p-4", key: "no-notes" }, [
+                    React.createElement('div', { className: "w-16 h-16 brutal-border bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center mb-4", key: "nn-box" }, 
+                      React.createElement(Search, { className: "w-8 h-8 opacity-20" })
+                    ),
+                    React.createElement('p', { className: "text-sm font-bold uppercase opacity-30 italic" }, "No Data Found")
+                  ]) : filteredNotes.map(note => {
+                    const stats = getChecklistStats(note);
+                    return React.createElement('button', {
+                      key: note.id,
+                      onClick: () => { setActiveId(note.id); setIsSidebarOpen(false); },
+                      className: `group w-full text-left p-4 brutal-border transition-all relative flex flex-col gap-3 ${activeId === note.id ? `${primaryColor} ${textColor} brutal-shadow-active` : `hover:bg-zinc-100 dark:hover:bg-zinc-800 brutal-shadow`}`
+                    }, [
+                      React.createElement('div', { className: "flex items-start justify-between gap-3 w-full", key: "ni-top" }, [
+                        React.createElement('h3', { className: "font-black text-lg truncate leading-tight uppercase flex items-center gap-2 flex-1 min-w-0" }, [
+                          note.pinned && React.createElement(Pin, { className: "w-4 h-4 fill-current rotate-45 text-[#FF00F5] shrink-0", key: "pin-indicator" }),
+                          note.mode === 'checklist' && React.createElement(ListTodo, { className: "w-4 h-4 text-blue-500 shrink-0", key: "mode-icon" }),
+                          note.title || 'UNTITLED'
+                        ]),
+                        React.createElement('div', { className: "flex items-center gap-2 shrink-0", key: "ni-actions" }, [
+                          // Pin Toggle Button
+                          React.createElement('button', { 
+                            onClick: (e) => togglePin(note.id, e),
+                            className: `p-1.5 brutal-border ${note.pinned ? 'bg-[#FF00F5] text-white' : 'opacity-0 group-hover:opacity-100 bg-white text-black'} transition-all hover:scale-110 active:scale-95`,
+                            title: note.pinned ? "Unpin Note" : "Pin to Top",
+                            key: "pin-btn"
+                          }, React.createElement(Pin, { className: `w-3.5 h-3.5 ${note.pinned ? 'fill-current' : ''}` })),
+                          // Delete Button
+                          React.createElement('button', { 
+                            onClick: (e) => triggerDeleteNote(note.id, e),
+                            className: `opacity-0 group-hover:opacity-100 p-1.5 brutal-border bg-red-500 text-white transition-all hover:scale-110 active:scale-95`,
+                            title: "Delete Note",
+                            key: "del-btn"
+                          }, React.createElement(Trash2, { className: "w-3.5 h-3.5" }))
+                        ])
+                      ]),
+                      React.createElement('div', { className: "flex items-center justify-between gap-2", key: "ni-info" }, [
+                        React.createElement('div', { className: "flex items-center gap-2 opacity-40 text-[10px] font-black italic uppercase shrink-0", key: "ni-time" }, [
+                          React.createElement(Clock, { className: "w-3 h-3" }),
+                          new Date(note.updatedAt).toLocaleDateString()
+                        ]),
+                        stats && React.createElement('div', { className: `text-[10px] font-black px-2 py-0.5 brutal-border whitespace-nowrap ${stats.completed === stats.total && stats.total > 0 ? 'bg-[#00FF41]' : 'bg-white text-black'}`, key: "ni-stats" }, 
+                          `[ ${stats.completed} / ${stats.total} ]`
+                        )
+                      ])
+                    ]);
+                  })
+                ])
+              ])
+            ]),
 
-        // Drawing tool selection
-        document.querySelectorAll('.drawing-tool-btn[data-tool]').forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll('.drawing-tool-btn[data-tool]').forEach(b => {
-                    b.classList.remove('active');
-                });
-                btn.classList.add('active');
-                currentTool = btn.dataset.tool;
-            };
-        });
-
-        // Color picker
-        $('#drawingColor').onchange = (e) => {
-            currentColor = e.target.value;
-        };
-
-        /* ---------- event listeners for drawing ---------- */
-        const canvas = $('#drawingCanvas');
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseout', stopDrawing);
-
-        // Touch support for mobile
-        canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            startDrawing(e);
-        });
-        canvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            draw(e);
-        });
-        canvas.addEventListener('touchend', stopDrawing);
-        canvas.addEventListener('touchcancel', stopDrawing);
-
-        /* ---------- media upload event listeners ---------- */
-        $('#imageUpload').addEventListener('change', (e) => {
-            const files = Array.from(e.target.files);
-            files.forEach(file => handleMediaUpload(file, 'image'));
-            e.target.value = '';
-        });
-
-        $('#audioUpload').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) handleMediaUpload(file, 'audio');
-            e.target.value = '';
-        });
-
-        $('#fileUpload').addEventListener('change', (e) => {
-            const files = Array.from(e.target.files);
-            files.forEach(file => handleMediaUpload(file, 'file'));
-            e.target.value = '';
-        });
-
-        /* ---------- modal close ---------- */
-        $('#closeMediaModal').onclick = () => {
-            $('#mediaModalOverlay').style.display = 'none';
-        };
-
-        $('#mediaModalOverlay').onclick = (e) => {
-            if (e.target === $('#mediaModalOverlay')) {
-                $('#mediaModalOverlay').style.display = 'none';
-            }
-        };
-
-        /* ---------- swipe ---------- */
-        function addSwipe(el, id) {
-            let sx = 0, cx = 0, swiping = false;
-            const content = el.querySelector('.note-content');
-            const swipeBg = el.querySelector('.swipe-bg');
-            const threshold = 0.55;
-
-            el.addEventListener('touchstart', e => {
-                sx = e.touches[0].clientX;
-                cx = sx;
-                swiping = true;
-                el.classList.add('swiping');
-                e.stopPropagation();
-            }, { passive: true });
-
-            el.addEventListener('touchmove', e => {
-                if (!swiping) return;
-                cx = e.touches[0].clientX;
-                const dx = cx - sx;
-                if (dx < 0) {
-                    content.style.transform = `translateX(${dx}px)`;
-                    swipeBg.style.transform = 'translateX(0)';
-                }
-            }, { passive: true });
-
-            el.addEventListener('touchend', (e) => {
-                if (!swiping) return;
-                swiping = false;
-                el.classList.remove('swiping');
-                const dx = cx - sx;
-                const swipePercentage = -dx / el.offsetWidth;
+            // Editor
+            React.createElement('div', { 
+              className: `flex-1 brutal-border brutal-shadow-lg ${surfaceColor} flex flex-col min-w-0 overflow-hidden`,
+              key: "editor-pane"
+            }, [
+              !activeNote ? React.createElement('div', { className: "flex-1 flex flex-col items-center justify-center text-center select-none p-12", key: "empty-ed" }, [
+                React.createElement('div', { className: `w-32 h-44 brutal-border ${accentColor} brutal-shadow flex items-center justify-center mb-8 rotate-3 text-black` }, 
+                  React.createElement(AppLogo, { className: "w-20 h-28" })
+                ),
+                React.createElement('h2', { className: "text-4xl font-black uppercase italic tracking-tighter mb-4" }, "Awaiting Input"),
+                React.createElement('p', { className: "text-lg font-bold opacity-30" }, "Select a storage cell or create a new entry"),
+                React.createElement('button', { 
+                  onClick: createNewNote,
+                  className: `mt-10 px-8 py-4 brutal-border brutal-shadow brutal-btn ${primaryColor} text-black font-black uppercase text-xl`,
+                  key: "init-btn"
+                }, "Initialize Note")
+              ]) : React.createElement('div', { className: "flex-1 flex flex-col overflow-hidden relative", key: "full-ed" }, [
+                // Editor Header/Toolbar
+                React.createElement('div', { className: "px-8 md:px-16 pt-8 pb-4 flex items-center justify-between shrink-0", key: "ed-toolbar" }, [
+                   React.createElement('div', { className: "flex items-center gap-3", key: "mode-toggle" }, [
+                     React.createElement('button', {
+                       onClick: () => updateNote(activeNote.id, 'mode', 'text'),
+                       title: "Text Mode",
+                       className: `p-3 brutal-border transition-all ${activeNote.mode === 'text' ? `${accentColor} text-black brutal-shadow-active` : 'bg-white text-black hover:bg-zinc-100'}`,
+                       key: "mode-text"
+                     }, React.createElement(Type, { className: "w-5 h-5" })),
+                     React.createElement('button', {
+                       onClick: () => updateNote(activeNote.id, 'mode', 'checklist'),
+                       title: "Checklist Mode",
+                       className: `p-3 brutal-border transition-all ${activeNote.mode === 'checklist' ? 'bg-[#FF00F5] text-white brutal-shadow-active' : 'bg-white text-black hover:bg-zinc-100'}`,
+                       key: "mode-check"
+                     }, React.createElement(ListTodo, { className: "w-5 h-5" }))
+                   ])
+                ]),
                 
-                if (swipePercentage > threshold) {
-                    deleteNote(id);
-                    e.stopPropagation();
-                    e.preventDefault();
-                } else {
-                    content.style.transition = 'transform 0.3s ease-out';
-                    swipeBg.style.transition = 'transform 0.3s ease-out';
-                    content.style.transform = 'translateX(0)';
-                    swipeBg.style.transform = 'translateX(100%)';
+                // Content Scrollable - px-6 on mobile to avoid touching scrollbar
+                React.createElement('div', { className: "flex-1 flex flex-col px-6 md:px-16 pb-8 scroll-container", key: "ed-scrollable" }, [
+                  React.createElement('div', { className: "flex flex-col gap-6", key: "editor-main-inputs" }, [
+                    React.createElement('input', {
+                      key: "title-input",
+                      className: "w-full bg-transparent text-3xl md:text-5xl font-black uppercase placeholder:opacity-20 focus:outline-none tracking-tighter",
+                      placeholder: "ENTER TITLE...",
+                      value: activeNote.title,
+                      onChange: (e) => updateNote(activeNote.id, 'title', e.target.value),
+                      onKeyDown: handleTitleKeyDown
+                    }),
+                    React.createElement('div', { className: "h-1 w-24 bg-black dark:bg-white", key: "divider" }),
                     
-                    setTimeout(() => {
-                        content.style.transition = '';
-                        swipeBg.style.transition = '';
-                    }, 300);
-                    
-                    if (swipePercentage < 0.1 && Math.abs(dx) < 10) {
-                        selectNote(id);
-                        if (isMobile) closeAllPanels();
-                    }
-                }
-            }, { passive: true });
+                    activeNote.mode === 'checklist' ? 
+                      // Checklist Editor
+                      React.createElement('div', { className: "flex flex-col gap-6", key: "checklist-editor" }, [
+                        // Add Item Input
+                        React.createElement('div', { className: "flex gap-4", key: "add-task-row" }, [
+                          React.createElement('input', {
+                            ref: addItemRef,
+                            type: "text",
+                            placeholder: "ADD NEW TASK...",
+                            value: newItemText,
+                            onChange: (e) => setNewItemText(e.target.value),
+                            onKeyDown: (e) => e.key === 'Enter' && addChecklistItem(),
+                            className: `flex-1 brutal-border brutal-shadow p-4 font-black uppercase text-sm ${theme === 'dark' ? 'bg-zinc-800' : 'bg-white'} placeholder:opacity-30 min-w-0`,
+                            key: "add-input"
+                          }),
+                          React.createElement('button', {
+                            onClick: addChecklistItem,
+                            className: `px-6 brutal-border brutal-shadow brutal-btn ${primaryColor} text-black font-black uppercase text-sm shrink-0`,
+                            key: "add-btn"
+                          }, "ADD")
+                        ]),
+                        // Items List - Added right padding to prevent touching scrollbar
+                        React.createElement('div', { className: "flex flex-col gap-3 pr-2", key: "items-list" }, 
+                          (activeNote.items || []).map(item => React.createElement('div', {
+                            key: item.id,
+                            className: `flex items-center gap-4 p-4 brutal-border brutal-shadow ${theme === 'dark' ? 'bg-zinc-900' : 'bg-white'} group animate-in slide-in-from-left-2 duration-100`
+                          }, [
+                            React.createElement('input', {
+                              type: "checkbox",
+                              checked: item.completed,
+                              onChange: () => toggleChecklistItem(activeNote.id, item.id),
+                              className: "custom-checkbox shrink-0",
+                              key: `check-${item.id}`
+                            }),
+                            React.createElement('input', {
+                              type: "text",
+                              value: item.text,
+                              onChange: (e) => {
+                                const newItems = activeNote.items.map(i => i.id === item.id ? { ...i, text: e.target.value } : i);
+                                updateNote(activeNote.id, 'items', newItems);
+                              },
+                              className: `flex-1 bg-transparent font-bold text-lg focus:outline-none min-w-0 ${item.completed ? 'line-through opacity-40' : ''}`,
+                              key: `text-${item.id}`
+                            }),
+                            React.createElement('button', {
+                              onClick: () => removeChecklistItem(activeNote.id, item.id),
+                              className: "md:opacity-0 group-hover:opacity-100 p-2 brutal-border bg-red-500 text-white transition-all hover:scale-110 shrink-0",
+                              key: `del-${item.id}`
+                            }, React.createElement(X, { className: "w-4 h-4" }))
+                          ]))
+                        ),
+                        activeNote.items?.length === 0 && React.createElement('div', { className: "py-12 flex flex-col items-center opacity-20 italic font-black uppercase", key: "empty-list" }, [
+                          React.createElement(ListTodo, { className: "w-12 h-12 mb-4" }),
+                          "List is currently empty"
+                        ])
+                      ]) : 
+                      // Standard Text Editor
+                      React.createElement('textarea', {
+                        key: "content-textarea",
+                        ref: contentRef,
+                        className: "flex-1 w-full bg-transparent text-lg md:text-xl font-medium leading-relaxed placeholder:opacity-20 focus:outline-none resize-none min-h-[400px]",
+                        placeholder: "WRITE YOUR MESSAGE TO THE VOID...",
+                        value: activeNote.content,
+                        onChange: (e) => updateNote(activeNote.id, 'content', e.target.value)
+                      })
+                  ])
+                ]),
 
-            el.addEventListener('touchcancel', () => {
-                swiping = false;
-                el.classList.remove('swiping');
-                content.style.transition = 'transform 0.3s ease-out';
-                swipeBg.style.transition = 'transform 0.3s ease-out';
-                content.style.transform = 'translateX(0)';
-                swipeBg.style.transform = 'translateX(100%)';
-                
-                setTimeout(() => {
-                    content.style.transition = '';
-                    swipeBg.style.transition = '';
-                }, 300);
-            });
+                // Editor Footer
+                React.createElement('div', { className: "mt-auto px-8 md:px-16 pt-8 pb-8 border-t-[3px] border-black dark:border-zinc-800 flex flex-wrap items-center justify-between gap-4 font-black italic text-xs uppercase shrink-0", key: "ed-footer" }, [
+                  React.createElement('div', { className: "flex items-center gap-3", key: "ed-stats" }, [
+                    React.createElement('div', { className: `px-4 py-2 brutal-border ${accentColor} text-black brutal-shadow`, key: "w-count" }, 
+                      activeNote.mode === 'checklist' ? `${activeNote.items?.length || 0} TASKS` : `${wordCount} WORDS`
+                    ),
+                    activeNote.pinned && React.createElement('div', { className: "px-4 py-2 brutal-border bg-[#FF00F5] text-white brutal-shadow flex items-center gap-2", key: "pin-badge" }, [
+                      React.createElement(Pin, { className: "w-3 h-3 fill-current rotate-45" }),
+                      "PINNED"
+                    ])
+                  ]),
+                  React.createElement('div', { className: "flex items-center gap-3 opacity-60", key: "mod-time" }, [
+                    React.createElement(Clock, { className: "w-4 h-4" }),
+                    `STAMPED: ${new Date(activeNote.updatedAt).toLocaleString()}`
+                  ])
+                ])
+              ])
+            ])
+          ]),
 
-            el.addEventListener('click', (e) => {
-                if (swiping) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                }
-            }, { capture: true });
-        }
+          // Global Footer
+          React.createElement('footer', { 
+            className: `h-12 border-t-[4px] border-black px-8 flex items-center justify-center text-[11px] font-black italic uppercase tracking-[0.3em] ${theme === 'dark' ? 'bg-black text-[#00FF41]' : 'bg-white text-black'}`,
+            key: "footer"
+          }, "Everything saves automatically."),
 
-        /* ---------- crud ---------- */
-        function selectNote(id) {
-            // Save current note's content first
-            saveCurrentNoteContent();
-            
-            const note = notes.find(n => n.id === id);
-            if (!note) return createNote();
-            
-            activeId = id;
-            renderEditorContent(note);
-            render($('.search').value);
-            save();
-            
-            // Hide drawing canvas if visible
-            $('#drawingContainer').style.display = 'none';
-            $('#editor').style.display = 'block';
-            
-            setTimeout(() => {
-                updatePlaceholder();
-            }, 0);
-        }
+          // Delete Modal Overlay
+          noteToDelete && React.createElement('div', {
+            className: "fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm",
+            onClick: () => setNoteToDelete(null),
+            key: "delete-modal"
+          }, [
+            React.createElement('div', {
+              className: "bg-[#FFE600] text-black brutal-border brutal-shadow-lg p-10 max-w-md w-full modal-animate relative",
+              onClick: (e) => e.stopPropagation(),
+              key: "modal-box"
+            }, [
+              React.createElement('div', { className: "flex flex-col items-center text-center", key: "m-inner" }, [
+                React.createElement('div', { className: "p-4 bg-red-500 brutal-border brutal-shadow mb-6 rotate-3" }, 
+                   React.createElement(AlertTriangle, { className: "w-12 h-12 text-white" })
+                ),
+                React.createElement('h2', { className: "text-4xl font-black uppercase italic tracking-tighter mb-4 leading-none" }, "CRITICAL ACTION"),
+                React.createElement('p', { className: "text-xl font-bold mb-10 leading-tight uppercase" }, "ARE YOU CERTAIN YOU WANT TO PERMANENTLY ERASE THIS DATA FROM THE SYSTEM?"),
+                React.createElement('div', { className: "flex flex-col sm:flex-row gap-4 w-full", key: "m-btns" }, [
+                  React.createElement('button', {
+                    className: "flex-1 py-4 brutal-border brutal-shadow brutal-btn bg-black text-white font-black uppercase tracking-widest text-sm",
+                    onClick: () => setNoteToDelete(null),
+                    key: "btn-cancel"
+                  }, "NO, KEEP IT"),
+                  React.createElement('button', {
+                    className: "flex-1 py-4 brutal-border brutal-shadow brutal-btn bg-red-500 text-white font-black uppercase tracking-widest text-sm",
+                    onClick: confirmDelete,
+                    key: "btn-confirm"
+                  }, "YES, ERASE IT")
+                ])
+              ])
+            ])
+          ])
+        ]);
+      };
 
-        function saveCurrentNoteContent() {
-            const note = notes.find(n => n.id === activeId);
-            if (!note) return;
-            
-            // Save text content from regular editor divs
-            const editor = $('#editor');
-            const textDivs = Array.from(editor.children).filter(child => 
-                !child.classList.contains('checklist-item') && 
-                !child.classList.contains('media-container')
-            );
-            
-            note.content.text = textDivs.map(div => div.textContent).join('\n');
-            save();
-        }
-
-        function createNote() {
-            const note = { 
-                id: Date.now().toString(), 
-                created: Date.now(),
-                pinned: false,
-                content: {
-                    text: '',
-                    checklists: [],
-                    media: [],
-                    drawings: []
-                }
-            };
-            notes.unshift(note);
-            activeId = note.id;
-            
-            $('#editor').innerHTML = '<div></div>';
-            render($('.search').value);
-            save();
-            
-            setTimeout(() => {
-                caretEnd($('#editor'));
-                updatePlaceholder();
-            }, 0);
-            
-            if (isMobile) closeAllPanels();
-        }
-
-        /* ---------- delete with confirmation ---------- */
-        function requestDeleteNote(id) {
-            if (window.innerWidth > 768) {
-                noteToDelete = id;
-                showModal();
-            } else {
-                deleteNote(id);
-            }
-        }
-
-        function showModal() {
-            $('#modalOverlay').style.display = 'flex';
-        }
-
-        function hideModal() {
-            $('#modalOverlay').style.display = 'none';
-            noteToDelete = null;
-        }
-
-        function confirmDelete() {
-            if (noteToDelete) {
-                deleteNote(noteToDelete);
-                hideModal();
-            }
-        }
-
-        function cancelDelete() {
-            hideModal();
-        }
-
-        function deleteNote(id) {
-            const idx = notes.findIndex(n => n.id === id);
-            if (idx === -1) return;
-            notes.splice(idx, 1);
-            
-            if (activeId === id) {
-                notes.length ? selectNote(notes[0].id) : createNote();
-            } else {
-                render($('.search').value);
-                save();
-            }
-        }
-
-        /* ---------- editor input ---------- */
-        $('#editor').addEventListener('input', (e) => {
-            // Only handle text input, not checklist or media changes
-            if (e.target.classList.contains('checklist-text') || 
-                e.target.closest('.media-container')) {
-                return;
-            }
-            
-            saveCurrentNoteContent();
-            render($('.search').value);
-            updatePlaceholder();
-        });
-
-        // Update placeholder on focus and blur
-        $('#editor').addEventListener('focus', updatePlaceholder);
-        $('#editor').addEventListener('blur', updatePlaceholder);
-        
-        // Hide placeholder immediately when typing starts
-        $('#editor').addEventListener('keydown', (e) => {
-            if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.length === 1) {
-                $('#editorPlaceholder').classList.add('hidden');
-            }
-            
-            if (e.key === 'Backspace') {
-                setTimeout(() => {
-                    updatePlaceholder();
-                }, 10);
-            }
-        });
-
-        // Also hide placeholder on paste
-        $('#editor').addEventListener('paste', () => {
-            setTimeout(() => {
-                $('#editorPlaceholder').classList.add('hidden');
-            }, 10);
-        });
-
-        /* ---------- search ---------- */
-        $('.search').addEventListener('input', () => {
-            const searchValue = $('.search').value.trim();
-            
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                render(searchValue);
-                
-                if (isMobile && searchValue.length > 0 && currentPanel !== 'search') {
-                    if (currentPanel === 'notes') closePanel();
-                    openPanel('search');
-                } else if (isMobile && searchValue.length === 0 && currentPanel === 'search') {
-                    closePanel();
-                }
-            }, 200);
-        });
-
-        // Clear search handler
-        $('.search').addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                $('.search').value = '';
-                render('');
-                $('#editor').focus();
-                if (isMobile && currentPanel === 'search') closePanel();
-            }
-        });
-
-        // Focus handler for search
-        $('.search').addEventListener('focus', () => {
-            if (isMobile && $('.search').value.trim().length > 0 && currentPanel !== 'search') {
-                if (currentPanel === 'notes') closePanel();
-                openPanel('search');
-            }
-        });
-
-        /* ---------- buttons ---------- */
-        $('#newNote').onclick = createNote;
-        $('#logoBtn').onclick = () => {
-            if (isMobile) togglePanel();
-        };
-        $('#closePanelBtn').onclick = closeAllPanels;
-        $('#closeSearchBtn').onclick = closeAllPanels;
-        $('#panelOverlay').onclick = closeAllPanels;
-
-        // Modal button handlers
-        $('#modalDelete').onclick = confirmDelete;
-        $('#modalCancel').onclick = cancelDelete;
-
-        // Close modal when clicking on overlay
-        $('#modalOverlay').onclick = (e) => {
-            if (e.target === $('#modalOverlay')) cancelDelete();
-        };
-
-        /* ---------- resize handling ---------- */
-        window.addEventListener('resize', handleResize);
-
-        function handleResize() {
-            const wasMobile = isMobile;
-            isMobile = window.innerWidth <= 768;
-            windowHeight = window.innerHeight;
-            
-            if (wasMobile !== isMobile) {
-                if (!isMobile) closeAllPanels();
-                render($('.search').value);
-            }
-        }
-
-        /* ---------- keyboard shortcuts ---------- */
-        addEventListener('keydown', e => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-                e.preventDefault();
-                createNote();
-            }
-            if (e.key === 'Escape' && document.activeElement === $('.search')) {
-                $('.search').value = '';
-                render('');
-                $('#editor').focus();
-                if (isMobile && currentPanel === 'search') closePanel();
-            }
-            if (e.key === 'Escape' && noteToDelete) cancelDelete();
-            // Pin shortcut: Ctrl/Cmd + P
-            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-                e.preventDefault();
-                const note = notes.find(n => n.id === activeId);
-                if (note) togglePin(note.id);
-            }
-        });
-
-        /* ---------- init ---------- */
-        function init() {
-            initializeNoteStructure();
-            
-            if (!notes.length) {
-                createNote();
-            } else {
-                const exists = notes.find(n => n.id === activeId);
-                selectNote(exists ? activeId : notes[0].id);
-            }
-            
-            windowHeight = window.innerHeight;
-            isMobile = window.innerWidth <= 768;
-            
-            // Initialize drawing tools
-            document.querySelector('.drawing-tool-btn[data-tool="pen"]').classList.add('active');
-            
-            render();
-            updatePlaceholder();
-        }
-        
-        // Initialize the app
-        init();
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(React.createElement(App));
     </script>
 </body>
-
 </html>
