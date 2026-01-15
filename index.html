@@ -1,783 +1,779 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-
-    
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brutal Notes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Notes.</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap');
       
+      :root {
+        --accent-orange: #ffd438;
+        --grey-muted: rgba(128, 128, 128, 0.4);
+        --grey-border: rgba(128, 128, 128, 0.15);
+        --grey-card-bg: rgba(0, 0, 0, 0.405);
+      }
+
       body {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Inter Tight', sans-serif;
         overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+        touch-action: manipulation;
       }
 
-      .brutal-border {
-        border: 3px solid black;
+      .bg-soft-grey { background-color: #9c9c9c; }
+      .dark .bg-soft-grey { background-color: #0D0D0D; }
+
+      .bg-dot-grid {
+        background-image: radial-gradient(currentColor 1.5px, transparent 1.5px);
+        background-size: 24px 24px;
+        opacity: 0.25; 
+      }
+      .dark .bg-dot-grid {
+        opacity: 0.1;
       }
 
-      .brutal-shadow {
-        box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+      .flat-border {
+        border: 1.5px solid var(--grey-border);
       }
 
-      .brutal-shadow-lg {
-        box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
-      }
-
-      .brutal-shadow-active {
-        box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
-        transform: translate(2px, 2px);
-      }
-
-      .brutal-btn:hover {
-        transform: translate(-1px, -1px);
-        box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
-      }
-
-      .brutal-btn:active {
-        transform: translate(2px, 2px);
-        box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
-      }
-
-      /* Grid Background */
-      .bg-grid {
-        background-size: 30px 30px;
-        background-image: radial-gradient(circle, rgba(0,0,0,0.1) 1.5px, transparent 0);
-      }
-
-      .dark .bg-grid {
-        background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1.5px, transparent 0);
-      }
-
-      /* Custom scrollbar - Refined for better spacing */
-      ::-webkit-scrollbar {
-        width: 10px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-        border-left: 2px solid rgba(0,0,0,0.1);
-      }
+      ::-webkit-scrollbar { width: 4px; }
+      ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb {
-        background: black;
-        border: 2px solid transparent;
-        background-clip: content-box;
+        background: rgba(128, 128, 128, 0.3);
+        border-radius: 10px;
       }
       
-      .dark ::-webkit-scrollbar-track {
-        background: transparent;
-        border-left: 2px solid rgba(255,255,255,0.1);
-      }
-      .dark ::-webkit-scrollbar-thumb {
-        background: #00FF41;
-      }
+      textarea:focus, input:focus { outline: none; }
 
-      textarea:focus, input:focus {
-        outline: none;
-      }
-
-      /* Modal Animation */
-      @keyframes modal-pop {
-        0% { transform: scale(0.9) rotate(-1deg); opacity: 0; }
-        100% { transform: scale(1) rotate(0deg); opacity: 1; }
-      }
-      .modal-animate {
-        animation: modal-pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-      }
-      
       .custom-checkbox {
         appearance: none;
-        width: 28px;
-        height: 28px;
-        border: 3px solid black;
+        width: 24px;
+        height: 24px;
+        border: 2px solid currentColor;
+        border-radius: 50%;
         cursor: pointer;
         position: relative;
-        transition: all 0.1s;
-        background: white;
+        background: transparent;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
       
       .custom-checkbox:checked {
-        background: #00FF41;
-        box-shadow: 2px 2px 0px 0px black;
+        background: var(--accent-orange);
+        border-color: var(--accent-orange);
       }
       
       .custom-checkbox:checked::after {
-        content: '✓';
+        content: '';
         position: absolute;
-        top: 50%;
+        width: 10px;
+        height: 5px;
+        border-left: 2px solid white;
+        border-bottom: 2px solid white;
+        top: 45%;
         left: 50%;
-        transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+
+      .transition-standard {
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .transition-slide {
+        transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      ::placeholder {
+        opacity: 1 !important;
+        color: var(--grey-muted) !important;
+      }
+
+      .spoke-spin:hover {
+        transform: rotate(45deg);
+      }
+
+      .sidebar-item-active {
+        color: var(--accent-orange) !important;
+      }
+
+      /* ========== EDITOR LIGHT MODE FIXES ========== */
+
+      /* Fix for all toolbar text and icons in light mode */
+      .editor-sheet {
         color: black;
-        font-weight: 900;
-        font-size: 18px;
       }
 
-      /* Ensure vertical only scrolling */
-      .scroll-container {
-        overflow-y: auto;
-        overflow-x: hidden;
+      .dark .editor-sheet {
+        color: white;
       }
 
-      .canvas-container {
-        cursor: crosshair;
+      /* Fix for the icons inside toolbar buttons */
+      .editor-sheet button svg {
+        color: black;
+      }
+
+      .dark .editor-sheet button svg {
+        color: white;
+      }
+
+      /* Fix for editor text content in light mode */
+      .editor-sheet #note-title,
+      .editor-sheet #note-body {
+        color: black;
+      }
+
+      .dark .editor-sheet #note-title,
+      .dark .editor-sheet #note-body {
+        color: white;
+      }
+
+      /* Fix for checklist items text */
+      .editor-sheet #checklist-items span,
+      .editor-sheet .text-black {
+        color: black;
+      }
+
+      .dark .editor-sheet #checklist-items span,
+      .dark .editor-sheet .text-white {
+        color: white;
+      }
+
+      /* Fix for checklist input */
+      .editor-sheet #new-item-input {
+        color: black;
+      }
+
+      .dark .editor-sheet #new-item-input {
+        color: white;
+      }
+
+      /* Fix for clear canvas button */
+      .editor-sheet button[onclick="clearCanvas()"] {
+        color: black;
+      }
+
+      .dark .editor-sheet button[onclick="clearCanvas()"] {
+        color: white;
+      }
+
+      /* Fix for placeholder text in light mode */
+      .editor-sheet input::placeholder,
+      .editor-sheet textarea::placeholder {
+        color: rgba(0, 0, 0, 0.3) !important;
+      }
+
+      .dark .editor-sheet input::placeholder,
+      .dark .editor-sheet textarea::placeholder {
+        color: rgba(255, 255, 255, 0.3) !important;
+      }
+
+      /* Fix for footer text in editor */
+      .editor-sheet #note-status,
+      .editor-sheet #note-time {
+        color: black !important;
+      }
+
+      .dark .editor-sheet #note-status,
+      .dark .editor-sheet #note-time {
+        color: white !important;
+      }
+
+      /* Fix for footer icons */
+      .editor-sheet .px-10 svg {
+        color: black !important;
+      }
+
+      .dark .editor-sheet .px-10 svg {
+        color: white !important;
+      }
+
+      /* ========== END EDITOR FIXES ========== */
+
+      .editor-container {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: 0;
+        z-index: 150;
+        transform: translateY(105%);
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        background: rgba(0, 0, 0, 0.1);
+        backdrop-blur: 8px;
+        pointer-events: none;
+      }
+      .editor-container.is-active {
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+      .editor-sheet {
+        width: 100%;
+        max-width: 1024px;
+        height: 94vh;
+        border-radius: 40px 40px 0 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 -20px 60px -15px rgba(0, 0, 0, 0.1);
+        background-color: #FFFFFF; 
+      }
+      .dark .editor-sheet {
+        background-color: #111111;
+        box-shadow: 0 -20px 60px -15px rgba(0, 0, 0, 0.6);
+      }
+      
+      .note-card-inactive {
+        background-color: var(--grey-card-bg);
+      }
+      .note-card-active {
+        background-color: #FFFFFF;
+        box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+      }
+      .dark .note-card-active {
+        background-color: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+      }
+
+      #canvas-container canvas {
         touch-action: none;
       }
-
-      /* Audio player styling to match theme */
-      audio::-webkit-media-controls-panel {
-        background-color: #FFE600;
-      }
-
-      /* Hide horizontal scrollbar but keep functionality */
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
     </style>
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@^19.2.3",
-        "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
-        "lucide-react": "https://esm.sh/lucide-react@^0.475.0"
-      }
-    }
-    </script>
 </head>
-<body class="transition-colors duration-200">
-    <div id="root"></div>
+<body class="transition-colors duration-500 bg-soft-grey text-black dark:text-white">
+    <div id="root" class="h-screen w-full flex flex-col overflow-hidden relative">
+      <div class="absolute inset-0 bg-dot-grid pointer-events-none"></div>
 
-    <script type="module">
-      import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-      import ReactDOM from 'react-dom/client';
-      import { 
-        Plus, 
-        Search, 
-        Moon, 
-        Sun, 
-        Trash2, 
-        ChevronLeft, 
-        Menu,
-        Clock,
-        AlertTriangle,
-        Pin,
-        PinOff,
-        ListTodo,
-        Type,
-        X,
-        CheckCircle2,
-        Paperclip,
-        Image as ImageIcon,
-        Mic,
-        Pencil,
-        RotateCcw,
-        Download,
-        Play,
-        Square,
-        Music,
-        FileText
-      } from 'lucide-react';
+      <!-- Header -->
+      <header class="h-16 md:h-20 px-4 md:px-8 flex items-center justify-between z-50 shrink-0">
+        <div class="flex items-center gap-4 md:gap-6">
+          <h1 class="text-xl md:text-2xl font-extrabold tracking-tight">V.</h1>
+        </div>
+        <div class="flex-1 max-sm:w-32 max-w-sm mx-4 md:mx-12">
+          <div class="relative w-full">
+            <i data-lucide="search" class="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-40"></i>
+            <input id="search-input" type="text" placeholder="Search." class="w-full bg-black/5 dark:bg-white/10 py-2 md:py-2.5 pl-9 md:pl-11 pr-4 md:pr-5 text-sm font-bold rounded-full border-none transition-standard focus:bg-black/10 dark:focus:bg-white/15 shadow-sm">
+          </div>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4">
+          <button id="theme-toggle" class="p-2 md:p-2.5 bg-white dark:bg-white/5 rounded-full shadow-sm hover:scale-105 transition-standard">
+            <i data-lucide="moon" id="theme-icon" class="w-4 h-4 md:w-5 md:h-5"></i>
+          </button>
+          <button id="add-note" class="flex items-center justify-center bg-black text-white dark:bg-white dark:text-black w-9 h-9 md:w-11 md:h-11 rounded-full shadow-lg hover:scale-105 transition-standard active:scale-95">
+            <i data-lucide="plus" class="w-5 h-5 md:w-6 md:h-6"></i>
+          </button>
+        </div>
+      </header>
 
-      // Custom Logo Component
-      const AppLogo = ({ className }) => (
-        React.createElement('svg', { 
-          width: "44", 
-          height: "62", 
-          viewBox: "0 0 44 62", 
-          fill: "none", 
-          xmlns: "http://www.w3.org/2000/svg",
-          className: className
-        }, [
-          React.createElement('path', { 
-            key: "p1",
-            d: "M14.0408 8.81818L20.369 28.7102H20.6119L26.9528 8.81818H33.0891L24.0636 35H16.93L7.89169 8.81818H14.0408Z", 
-            fill: "currentColor" 
-          }),
-          React.createElement('path', { 
-            key: "p2",
-            d: "M42.5 7V58.5L20.5 44L5.5 54M1.5 1.5H39.5V53L20.5 41L1.5 53V1.5Z", 
-            stroke: "currentColor", 
-            strokeWidth: "3" 
-          })
-        ])
-      );
+      <!-- Main List -->
+      <main id="note-list" class="flex-1 flex flex-col overflow-y-auto no-scrollbar relative px-4 md:px-8 space-y-4 py-8 max-w-4xl mx-auto w-full">
+        <!-- Notes rendered here -->
+      </main>
 
-      const DoodleCanvas = ({ initialData, onSave, theme }) => {
-        const canvasRef = useRef(null);
-        const [isDrawing, setIsDrawing] = useState(false);
-        const ctxRef = useRef(null);
-        const savedInitialData = useRef(initialData);
+      <!-- Editor Bottom Sheet -->
+      <div id="editor-overlay" class="editor-container transition-slide">
+        <div class="editor-sheet flex flex-col">
+          <!-- Toolbar -->
+          <div class="px-4 md:px-10 pt-8 pb-4 flex items-center justify-between shrink-0 text-black dark:text-white">
+            <div class="flex gap-2 md:gap-8 items-center">
+              <button id="close-editor" class="p-2 bg-black/5 dark:bg-white/10 rounded-full hover:scale-110 transition-standard shrink-0">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+              </button>
+              <div class="flex gap-3 md:gap-6">
+                <button id="mode-text" class="text-mode-btn text-[11px] md:text-[12px] font-black tracking-[0.1em] md:tracking-[0.15em] uppercase transition-standard ">DRAFT</button>
+                <button id="mode-checklist" class="text-mode-btn text-[11px] md:text-[12px] font-black tracking-[0.1em] md:tracking-[0.15em] uppercase transition-standard">LIST</button>
+                <button id="mode-doodle" class="text-mode-btn text-[11px] md:text-[12px] font-black tracking-[0.1em] md:tracking-[0.15em] uppercase transition-standard">DRAW</button>
+              </div>
+            </div>
+            <div class="flex gap-1.5 md:gap-4 items-center shrink-0">
+              <button id="attach-image" class="p-2 md:p-2.5 opacity-50 dark:opacity-30 hover:opacity-100 transition-standard hover:bg-black/5 rounded-full"><i data-lucide="image" class="w-4 h-4 md:w-5 md:h-5"></i></button>
+              <button id="attach-file" class="p-2 md:p-2.5 opacity-50 dark:opacity-30 hover:opacity-100 transition-standard hover:bg-black/5 rounded-full"><i data-lucide="paperclip" class="w-4 h-4 md:w-5 md:h-5"></i></button>
+              <button id="toggle-mic" class="p-2 md:p-2.5 transition-standard rounded-full opacity-50 dark:opacity-30 hover:opacity-100 hover:bg-black/5"><i data-lucide="mic" class="w-4 h-4 md:w-5 md:h-5"></i></button>
+              <button id="toggle-pin" class="p-2 md:p-2.5 transition-standard rounded-full opacity-50 dark:opacity-30 hover:opacity-100 hover:bg-black/5"><i data-lucide="pin" class="w-4 h-4 md:w-5 md:h-5"></i></button>
+            </div>
+          </div>
 
-        useEffect(() => {
-          const canvas = canvasRef.current;
-          canvas.width = canvas.offsetWidth;
-          canvas.height = canvas.offsetHeight;
-          const ctx = canvas.getContext('2d');
-          ctx.lineCap = 'round';
-          ctx.lineWidth = 5;
-          ctx.strokeStyle = theme === 'dark' ? '#00FF41' : 'black';
-          ctxRef.current = ctx;
+          <!-- Editor Content -->
+          <div class="flex-1 flex flex-col px-6 md:px-12 py-6 overflow-y-auto no-scrollbar">
+            <div class="max-w-4xl mx-auto w-full flex-1 flex flex-col">
+              <input id="note-title" type="text" placeholder="Title." class="w-full bg-transparent text-5xl md:text-7xl font-black placeholder:opacity-30 focus:outline-none py-8 border-none transition-standard tracking-tight text-black dark:text-white">
+              
+              <div id="content-area" class="flex-1 flex flex-col">
+                <!-- Dynamic Content (Textarea, Checklist, or Canvas) -->
+              </div>
 
-          if (initialData) {
-            const img = new Image();
-            img.onload = () => ctx.drawImage(img, 0, 0);
-            img.src = initialData;
-          }
-        }, [theme]); // Re-init context on theme change
+              <!-- Assets -->
+              <div id="assets-area" class="hidden mt-32 pt-16 border-t flat-border pb-24">
+                <h4 class="text-[14px] font-black tracking-[0.25em] uppercase opacity-30 mb-12">Vaulted Assets.</h4>
+                <div id="assets-grid" class="grid grid-cols-2 md:grid-cols-4 gap-10"></div>
+              </div>
+            </div>
+          </div>
 
-        const startDrawing = (e) => {
-          const { offsetX, offsetY } = getCoordinates(e);
-          ctxRef.current.beginPath();
-          ctxRef.current.moveTo(offsetX, offsetY);
-          setIsDrawing(true);
-        };
+          <!-- Footer -->
+          <div class="px-10 py-8 border-t flat-border flex justify-between items-center text-[12px] font-black uppercase tracking-[0.25em] opacity-30 bg-black/5 dark:bg-white/5 text-black dark:text-white">
+            <div id="note-status">Personal Draft</div>
+            <div class="flex items-center gap-4">
+              <i data-lucide="clock" class="w-4 h-4"></i>
+              <span id="note-time">Just now</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        const draw = (e) => {
-          if (!isDrawing) return;
-          const { offsetX, offsetY } = getCoordinates(e);
-          ctxRef.current.lineTo(offsetX, offsetY);
-          ctxRef.current.stroke();
-        };
+      <!-- Delete Dialog -->
+      <div id="delete-dialog" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/40 backdrop-blur-md">
+        <div class="bg-white dark:bg-[#1A1A1A] rounded-[56px] p-16 max-md:p-10 max-w-md w-full shadow-2xl transition-standard">
+          <div class="flex flex-col items-center text-center">
+            <div class="w-24 h-24 bg-red-500/10 rounded-full flex items-center justify-center mb-10"><i data-lucide="alert-triangle" class="w-12 h-12 text-red-500"></i></div>
+            <h2 class="text-4xl font-black tracking-tight mb-6">Delete?</h2>
+            <p class="text-lg font-medium mb-16 opacity-40 leading-relaxed px-6">Are you certain?</p>
+            <div class="flex flex-col gap-6 w-full">
+              <button id="confirm-delete" class="w-full py-5 bg-red-500 text-white rounded-full text-sm font-black uppercase tracking-widest transition-standard hover:bg-red-600 shadow-xl shadow-red-500/30">DELETE</button>
+              <button id="cancel-delete" class="w-full py-5 bg-black/5 dark:bg-white/10 text-sm font-black uppercase tracking-widest transition-standard hover:bg-black/10 dark:hover:bg-white/20 rounded-full">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        const stopDrawing = () => {
-          if (!isDrawing) return;
-          ctxRef.current.closePath();
-          setIsDrawing(false);
-          onSave(canvasRef.current.toDataURL());
-        };
+      <!-- Hidden Inputs -->
+      <input type="file" id="file-input" class="hidden">
+      <input type="file" id="image-input" accept="image/*" class="hidden">
+    </div>
 
-        const getCoordinates = (e) => {
-          if (e.nativeEvent.offsetX !== undefined) {
-            return { offsetX: e.nativeEvent.offsetX, offsetY: e.nativeEvent.offsetY };
-          } else {
-            const rect = canvasRef.current.getBoundingClientRect();
-            const clientX = e.nativeEvent.touches ? e.nativeEvent.touches[0].clientX : e.clientX;
-            const clientY = e.nativeEvent.touches ? e.nativeEvent.touches[0].clientY : e.clientY;
-            return {
-              offsetX: clientX - rect.left,
-              offsetY: clientY - rect.top
-            };
-          }
-        };
-
-        const clear = () => {
-          ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-          onSave(null);
-        };
-
-        return React.createElement('div', { className: "flex-1 flex flex-col gap-4" }, [
-          React.createElement('div', { className: "flex justify-end", key: "canvas-tools" }, 
-            React.createElement('button', { 
-              onClick: clear,
-              className: "p-2 brutal-border bg-red-500 text-white brutal-shadow brutal-btn flex items-center gap-2 font-black uppercase text-xs"
-            }, [React.createElement(RotateCcw, { className: "w-4 h-4" }), "Reset Canvas"])
-          ),
-          React.createElement('canvas', {
-            ref: canvasRef,
-            onMouseDown: startDrawing,
-            onMouseMove: draw,
-            onMouseUp: stopDrawing,
-            onMouseOut: stopDrawing,
-            onTouchStart: startDrawing,
-            onTouchMove: draw,
-            onTouchEnd: stopDrawing,
-            className: `flex-1 w-full brutal-border brutal-shadow canvas-container ${theme === 'dark' ? 'bg-zinc-900' : 'bg-white'}`,
-            key: "canvas"
-          })
-        ]);
+    <script>
+      // State Management
+      let state = {
+        notes: JSON.parse(localStorage.getItem('notes') || '[]'),
+        activeId: null,
+        searchQuery: '',
+        theme: localStorage.getItem('theme') || 'light',
+        isRecording: false,
+        noteToDelete: null
       };
 
-      const App = () => {
-        // State
-        const [notes, setNotes] = useState(() => {
-          const saved = localStorage.getItem('notes');
-          return saved ? JSON.parse(saved) : [];
-        });
-        const [activeId, setActiveId] = useState(() => {
-          return localStorage.getItem('activeId');
-        });
-        const [searchQuery, setSearchQuery] = useState('');
-        const [theme, setTheme] = useState(() => {
-          const saved = localStorage.getItem('theme');
-          return saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        });
-        const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-        const [newItemText, setNewItemText] = useState('');
-        const [isRecording, setIsRecording] = useState(false);
-        
-        const mediaRecorderRef = useRef(null);
-        const audioChunksRef = useRef([]);
-        const [noteToDelete, setNoteToDelete] = useState(null);
+      const save = () => localStorage.setItem('notes', JSON.stringify(state.notes));
+      const getActiveNote = () => state.notes.find(n => n.id === state.activeId);
 
-        // Refs
-        const contentRef = useRef(null);
-        const addItemRef = useRef(null);
-        const fileInputRef = useRef(null);
-        const imageInputRef = useRef(null);
+      // DOM Elements
+      const noteList = document.getElementById('note-list');
+      const editorOverlay = document.getElementById('editor-overlay');
+      const noteTitle = document.getElementById('note-title');
+      const contentArea = document.getElementById('content-area');
+      const assetsArea = document.getElementById('assets-area');
+      const assetsGrid = document.getElementById('assets-grid');
+      const deleteDialog = document.getElementById('delete-dialog');
 
-        // Derived state
-        const activeNote = useMemo(() => notes.find(n => n.id === activeId) || null, [notes, activeId]);
-        
-        const wordCount = useMemo(() => {
-          if (!activeNote) return 0;
-          if (activeNote.mode === 'checklist') return activeNote.items?.length || 0;
-          if (activeNote.mode === 'doodle') return 0;
-          const fullText = `${activeNote.title} ${activeNote.content || ''}`.trim();
-          return fullText ? fullText.split(/\s+/).filter(Boolean).length : 0;
-        }, [activeNote]);
+      // Initialization
+      const init = () => {
+        applyTheme();
+        renderNoteList();
+        lucide.createIcons();
+      };
 
-        const filteredNotes = useMemo(() => {
-          const sorted = [...notes].sort((a, b) => {
+      const applyTheme = () => {
+        document.documentElement.classList.toggle('dark', state.theme === 'dark');
+        localStorage.setItem('theme', state.theme);
+        const icon = document.getElementById('theme-icon');
+        icon.setAttribute('data-lucide', state.theme === 'dark' ? 'sun' : 'moon');
+        icon.classList.toggle('text-orange-400', state.theme === 'dark');
+        icon.classList.toggle('text-black', state.theme === 'light');
+        lucide.createIcons();
+      };
+
+      // Rendering logic
+      const renderNoteList = () => {
+        const filtered = state.notes
+          .filter(n => {
+            const q = state.searchQuery.toLowerCase();
+            return n.title.toLowerCase().includes(q) || (n.content || '').toLowerCase().includes(q);
+          })
+          .sort((a, b) => {
             if (a.pinned && !b.pinned) return -1;
             if (!a.pinned && b.pinned) return 1;
             return b.updatedAt - a.updatedAt;
           });
 
-          if (!searchQuery.trim()) return sorted;
-          const query = searchQuery.toLowerCase();
-          return sorted.filter(n => 
-            (n.title || '').toLowerCase().includes(query) || 
-            (n.mode === 'checklist' ? (n.items || []).some(i => i.text.toLowerCase().includes(query)) : (n.content || '').toLowerCase().includes(query))
-          );
-        }, [notes, searchQuery]);
+        if (filtered.length === 0) {
+          noteList.innerHTML = `<div class="py-20 text-center text-sm font-bold tracking-widest uppercase opacity-20">Empty.</div>`;
+          return;
+        }
 
-        // Effects
-        useEffect(() => {
-          localStorage.setItem('notes', JSON.stringify(notes));
-        }, [notes]);
-
-        useEffect(() => {
-          if (activeId) localStorage.setItem('activeId', activeId);
-          else localStorage.removeItem('activeId');
-        }, [activeId]);
-
-        useEffect(() => {
-          document.documentElement.classList.toggle('dark', theme === 'dark');
-          localStorage.setItem('theme', theme);
-        }, [theme]);
-
-        // Handlers
-        const createNewNote = useCallback(() => {
-          const newNote = {
-            id: Date.now().toString(),
-            title: '',
-            content: '',
-            mode: 'text',
-            items: [],
-            pinned: false,
-            updatedAt: Date.now(),
-            attachments: [],
-            doodleData: null
-          };
-          setNotes(prev => [newNote, ...prev]);
-          setActiveId(newNote.id);
-          setIsSidebarOpen(false);
-        }, []);
-
-        const triggerDeleteNote = useCallback((id, e) => {
-          if (e) e.stopPropagation();
-          setNoteToDelete(id);
-        }, []);
-
-        const confirmDelete = useCallback(() => {
-          if (!noteToDelete) return;
-          setNotes(prev => prev.filter(n => n.id !== noteToDelete));
-          if (activeId === noteToDelete) setActiveId(null);
-          setNoteToDelete(null);
-        }, [noteToDelete, activeId]);
-
-        const updateNote = useCallback((id, field, value) => {
-          setNotes(prev => prev.map(n => 
-            n.id === id ? { ...n, [field]: value, updatedAt: Date.now() } : n
-          ));
-        }, []);
-
-        const handleFileUpload = useCallback(async (e, type) => {
-          const file = e.target.files[0];
-          if (!file || !activeId) return;
-
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const attachment = {
-              id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9),
-              type,
-              name: file.name,
-              mimeType: file.type,
-              data: event.target.result
-            };
-            setNotes(prev => prev.map(n => 
-              n.id === activeId ? { 
-                ...n, 
-                attachments: [...(n.attachments || []), attachment], 
-                updatedAt: Date.now() 
-              } : n
-            ));
-            // Reset input so it triggers again for the same file if needed
-            e.target.value = '';
-          };
-          reader.onerror = () => alert("Failed to read file.");
-          reader.readAsDataURL(file);
-        }, [activeId]);
-
-        const toggleVoiceRecording = async () => {
-          if (isRecording) {
-            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-              mediaRecorderRef.current.stop();
-            }
-            setIsRecording(false);
-          } else {
-            if (!activeId) return;
-            try {
-              const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-              const mediaRecorder = new MediaRecorder(stream);
-              mediaRecorderRef.current = mediaRecorder;
-              audioChunksRef.current = [];
-
-              mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) audioChunksRef.current.push(e.data);
-              };
-
-              mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                  const attachment = {
-                    id: Date.now().toString() + '-voice',
-                    type: 'voice',
-                    name: `Voice Clip ${new Date().toLocaleTimeString()}`,
-                    mimeType: 'audio/webm',
-                    data: e.target.result
-                  };
-                  setNotes(prev => prev.map(n => 
-                    n.id === activeId ? { 
-                      ...n, 
-                      attachments: [...(n.attachments || []), attachment], 
-                      updatedAt: Date.now() 
-                    } : n
-                  ));
-                };
-                reader.readAsDataURL(audioBlob);
-                stream.getTracks().forEach(track => track.stop());
-              };
-
-              mediaRecorder.start();
-              setIsRecording(true);
-            } catch (err) {
-              console.error("Mic access denied", err);
-              alert("Could not access microphone. Ensure you have given permission.");
-            }
-          }
-        };
-
-        const removeAttachment = (attachmentId) => {
-          setNotes(prev => prev.map(n => 
-            n.id === activeId ? { 
-              ...n, 
-              attachments: (n.attachments || []).filter(a => a.id !== attachmentId), 
-              updatedAt: Date.now() 
-            } : n
-          ));
-        };
-
-        const togglePin = useCallback((id, e) => {
-          if (e) e.stopPropagation();
-          setNotes(prev => prev.map(n => n.id === id ? { ...n, pinned: !n.pinned } : n));
-        }, []);
-
-        const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
-
-        const primaryColor = theme === 'dark' ? 'bg-[#00FF41]' : 'bg-[#FFE600]';
-        const secondaryColor = theme === 'dark' ? 'bg-[#FF00F5]' : 'bg-[#FF00F5]';
-        const accentColor = theme === 'dark' ? 'bg-[#3300FF]' : 'bg-[#00D1FF]';
-        const surfaceColor = theme === 'dark' ? 'bg-[#121212]' : 'bg-white';
-
-        const handleTitleKeyDown = (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            if (activeNote.mode === 'checklist') addItemRef.current?.focus();
-            else contentRef.current?.focus();
-          }
-        };
-
-        const addChecklistItem = useCallback(() => {
-          if (!newItemText.trim() || !activeId) return;
-          const newItem = { id: Date.now().toString(), text: newItemText.trim(), completed: false };
-          setNotes(prev => prev.map(n => 
-            n.id === activeId ? { ...n, items: [...(n.items || []), newItem], updatedAt: Date.now() } : n
-          ));
-          setNewItemText('');
-          addItemRef.current?.focus();
-        }, [newItemText, activeId]);
-
-        const toggleChecklistItem = (itemId) => {
-          setNotes(prev => prev.map(n => 
-            n.id === activeId ? { 
-              ...n, 
-              items: (n.items || []).map(i => i.id === itemId ? { ...i, completed: !i.completed } : i),
-              updatedAt: Date.now()
-            } : n
-          ));
-        };
-
-        return React.createElement('div', { 
-          className: `h-screen w-full relative flex flex-col overflow-hidden transition-colors duration-200 bg-grid ${theme === 'dark' ? 'bg-[#0A0A0A] text-white' : 'bg-[#F0F0F0] text-black'}`
-        }, [
-          // Global Hidden Inputs
-          React.createElement('input', { 
-            type: "file", 
-            ref: fileInputRef, 
-            className: "hidden", 
-            onChange: (e) => handleFileUpload(e, 'file'), 
-            key: "file-input" 
-          }),
-          React.createElement('input', { 
-            type: "file", 
-            ref: imageInputRef, 
-            accept: "image/*", 
-            className: "hidden", 
-            onChange: (e) => handleFileUpload(e, 'image'), 
-            key: "image-input" 
-          }),
-
-          // Header
-          React.createElement('header', { 
-            key: 'header',
-            className: `h-20 px-6 flex items-center justify-between z-50 border-b-[4px] border-black ${theme === 'dark' ? 'bg-black' : 'bg-white'}`
-          }, [
-            React.createElement('div', { className: "flex items-center gap-4", key: "h-left" }, [
-              React.createElement('button', { 
-                onClick: () => setIsSidebarOpen(true),
-                className: `md:hidden p-2 brutal-border brutal-shadow brutal-btn ${primaryColor} text-black`,
-                key: "menu-btn"
-              }, React.createElement(Menu, { className: "w-6 h-6" })),
-              React.createElement('div', { className: "flex items-center gap-3", key: "logo-container" }, 
-                React.createElement('div', { className: `p-1 brutal-border brutal-shadow ${secondaryColor} text-black h-12 w-10 flex items-center justify-center` }, 
-                  React.createElement(AppLogo, { className: "w-full h-full" })
-                )
-              )
-            ]),
-            React.createElement('div', { className: "flex-1 max-w-md mx-6 hidden md:block", key: "h-search" }, 
-              React.createElement('div', { className: `relative brutal-border brutal-shadow ${theme === 'dark' ? 'bg-zinc-800' : 'bg-white'}` }, [
-                React.createElement(Search, { className: `absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${theme === 'dark' ? 'text-zinc-400' : 'text-black'}` }),
-                React.createElement('input', { 
-                  type: "text", 
-                  placeholder: "SEARCH YOUR BRAIN...",
-                  value: searchQuery,
-                  onChange: (e) => setSearchQuery(e.target.value),
-                  className: "w-full bg-transparent py-3 pl-12 pr-4 focus:outline-none font-bold placeholder:opacity-50"
-                })
-              ])
-            ),
-            React.createElement('div', { className: "flex items-center gap-4", key: "h-actions" }, [
-              React.createElement('button', { 
-                onClick: toggleTheme,
-                className: `p-3 brutal-border brutal-shadow brutal-btn ${accentColor} text-black`
-              }, theme === 'dark' ? React.createElement(Sun, { className: "w-6 h-6" }) : React.createElement(Moon, { className: "w-6 h-6" })),
-              React.createElement('button', { 
-                onClick: createNewNote,
-                className: `flex items-center gap-2 ${primaryColor} text-black px-6 py-3 brutal-border brutal-shadow brutal-btn font-black uppercase text-sm`
-              }, [
-                React.createElement(Plus, { className: "w-6 h-6" }),
-                React.createElement('span', { className: "hidden sm:inline" }, "New Note")
-              ])
-            ])
-          ]),
-
-          // Main Body
-          React.createElement('main', { 
-            className: "flex-1 flex gap-6 p-6 overflow-hidden relative",
-            key: "main"
-          }, [
-            // Sidebar
-            React.createElement('aside', { 
-              className: `fixed inset-0 z-[100] md:relative md:inset-auto md:z-auto md:flex md:w-80 flex-col transition-all duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`,
-              key: "sidebar"
-            }, [
-              React.createElement('div', { 
-                className: `absolute inset-0 bg-black/80 md:hidden transition-opacity ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`,
-                onClick: () => setIsSidebarOpen(false)
-              }),
-              React.createElement('div', { className: `relative w-80 h-full md:w-full brutal-border brutal-shadow-lg ${surfaceColor} overflow-hidden flex flex-col z-[110]` }, [
-                React.createElement('div', { className: `p-4 border-b-[3px] border-black flex items-center justify-between shrink-0 ${theme === 'dark' ? 'bg-zinc-900' : 'bg-zinc-100'}` }, [
-                  React.createElement('span', { className: "font-black text-xs uppercase tracking-widest italic" }, "Notes"),
-                  React.createElement('button', { onClick: () => setIsSidebarOpen(false), className: "md:hidden p-2 brutal-border bg-white text-black" }, React.createElement(ChevronLeft, { className: "w-4 h-4" }))
-                ]),
-                React.createElement('div', { className: "flex-1 scroll-container p-4 space-y-4" }, 
-                  filteredNotes.length === 0 ? React.createElement('div', { className: "h-40 flex flex-col items-center justify-center text-center p-4" }, [
-                    React.createElement('div', { className: "w-16 h-16 brutal-border bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center mb-4" }, React.createElement(Search, { className: "w-8 h-8 opacity-20" })),
-                    React.createElement('p', { className: "text-sm font-bold uppercase opacity-30 italic" }, "No Data Found")
-                  ]) : filteredNotes.map(note => React.createElement('button', {
-                    key: note.id,
-                    onClick: () => { setActiveId(note.id); setIsSidebarOpen(false); },
-                    className: `group w-full text-left p-4 brutal-border transition-all relative flex flex-col gap-3 ${activeId === note.id ? `${primaryColor} text-black brutal-shadow-active` : `hover:bg-zinc-100 dark:hover:bg-zinc-800 brutal-shadow`}`
-                  }, [
-                    React.createElement('div', { className: "flex items-start justify-between gap-3 w-full" }, [
-                      React.createElement('h3', { className: "font-black text-lg truncate leading-tight uppercase flex items-center gap-2 flex-1 min-w-0" }, [
-                        note.pinned && React.createElement(Pin, { className: "w-4 h-4 fill-current rotate-45 text-[#FF00F5] shrink-0" }),
-                        note.mode === 'checklist' && React.createElement(ListTodo, { className: "w-4 h-4 text-blue-500 shrink-0" }),
-                        note.mode === 'doodle' && React.createElement(Pencil, { className: "w-4 h-4 text-orange-500 shrink-0" }),
-                        note.title || 'UNTITLED'
-                      ]),
-                      React.createElement('div', { className: "flex items-center gap-2 shrink-0" }, [
-                        React.createElement('button', { onClick: (e) => togglePin(note.id, e), className: `p-1.5 brutal-border ${note.pinned ? 'bg-[#FF00F5] text-white' : 'opacity-0 group-hover:opacity-100 bg-white text-black'} transition-all hover:scale-110 active:scale-95` }, React.createElement(Pin, { className: "w-3.5 h-3.5" })),
-                        React.createElement('button', { onClick: (e) => triggerDeleteNote(note.id, e), className: `opacity-0 group-hover:opacity-100 p-1.5 brutal-border bg-red-500 text-white transition-all hover:scale-110 active:scale-95` }, React.createElement(Trash2, { className: "w-3.5 h-3.5" }))
-                      ])
-                    ]),
-                    React.createElement('div', { className: "flex items-center justify-between gap-2 opacity-40 text-[10px] font-black italic uppercase" }, [
-                      React.createElement('div', { className: "flex items-center gap-2" }, [React.createElement(Clock, { className: "w-3 h-3" }), new Date(note.updatedAt).toLocaleDateString()]),
-                      (note.attachments || []).length > 0 && React.createElement('div', { className: "flex items-center gap-1" }, [React.createElement(Paperclip, { className: "w-3 h-3" }), `${note.attachments.length}`])
-                    ])
-                  ]))
-                )
-              ])
-            ]),
-
-            // Editor
-            React.createElement('div', { className: `flex-1 brutal-border brutal-shadow-lg ${surfaceColor} flex flex-col min-w-0 overflow-hidden` }, 
-              !activeNote ? React.createElement('div', { className: "flex-1 flex flex-col items-center justify-center text-center p-12 select-none" }, [
-                React.createElement('div', { className: `w-32 h-44 brutal-border ${accentColor} brutal-shadow flex items-center justify-center mb-8 rotate-3 text-black` }, React.createElement(AppLogo, { className: "w-20 h-28" })),
-                React.createElement('h2', { className: "text-4xl font-black uppercase italic tracking-tighter mb-4" }, "Awaiting Input"),
-                React.createElement('p', { className: "text-lg font-bold opacity-30" }, "Initialize a new cell or select an existing one."),
-                React.createElement('button', { onClick: createNewNote, className: `mt-10 px-8 py-4 brutal-border brutal-shadow brutal-btn ${primaryColor} text-black font-black uppercase text-xl` }, "Initialize Note")
-              ]) : React.createElement('div', { className: "flex-1 flex flex-col overflow-hidden relative" }, [
-                // Editor Toolbar - Refined for mobile
-                React.createElement('div', { className: "px-4 md:px-12 pt-6 pb-2 flex items-center justify-between shrink-0 no-scrollbar overflow-x-auto gap-4" }, [
-                  React.createElement('div', { className: "flex items-center gap-1.5 md:gap-2 shrink-0" }, [
-                    React.createElement('button', { onClick: () => updateNote(activeNote.id, 'mode', 'text'), className: `p-2.5 md:p-3 brutal-border transition-all ${activeNote.mode === 'text' ? `${accentColor} text-black brutal-shadow-active` : 'bg-white text-black hover:bg-zinc-100'}`, title: "Text" }, React.createElement(Type, { className: "w-4 h-4 md:w-5 md:h-5" })),
-                    React.createElement('button', { onClick: () => updateNote(activeNote.id, 'mode', 'checklist'), className: `p-2.5 md:p-3 brutal-border transition-all ${activeNote.mode === 'checklist' ? 'bg-[#FF00F5] text-white brutal-shadow-active' : 'bg-white text-black hover:bg-zinc-100'}`, title: "Checklist" }, React.createElement(ListTodo, { className: "w-4 h-4 md:w-5 md:h-5" })),
-                    React.createElement('button', { onClick: () => updateNote(activeNote.id, 'mode', 'doodle'), className: `p-2.5 md:p-3 brutal-border transition-all ${activeNote.mode === 'doodle' ? 'bg-orange-500 text-white brutal-shadow-active' : 'bg-white text-black hover:bg-zinc-100'}`, title: "Doodle" }, React.createElement(Pencil, { className: "w-4 h-4 md:w-5 md:h-5" }))
-                  ]),
-                  React.createElement('div', { className: "flex items-center gap-1.5 md:gap-2 shrink-0" }, [
-                    React.createElement('button', { onClick: () => imageInputRef.current?.click(), className: "p-2.5 md:p-3 brutal-border bg-white text-black brutal-shadow brutal-btn hover:bg-zinc-100", title: "Attach Image" }, React.createElement(ImageIcon, { className: "w-4 h-4 md:w-5 md:h-5" })),
-                    React.createElement('button', { onClick: () => fileInputRef.current?.click(), className: "p-2.5 md:p-3 brutal-border bg-white text-black brutal-shadow brutal-btn hover:bg-zinc-100", title: "Attach File" }, React.createElement(Paperclip, { className: "w-4 h-4 md:w-5 md:h-5" })),
-                    React.createElement('button', { 
-                      onClick: toggleVoiceRecording, 
-                      className: `p-2.5 md:p-3 brutal-border transition-all brutal-shadow brutal-btn ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white text-black hover:bg-zinc-100'}`,
-                      title: isRecording ? "Stop Recording" : "Voice Note"
-                    }, isRecording ? React.createElement(Square, { className: "w-4 h-4 md:w-5 md:h-5" }) : React.createElement(Mic, { className: "w-4 h-4 md:w-5 md:h-5" }))
-                  ])
-                ]),
-                
-                // Editor Content
-                React.createElement('div', { className: "flex-1 flex flex-col px-6 md:px-12 pb-8 scroll-container" }, [
-                  React.createElement('div', { className: "flex flex-col gap-4 h-full" }, [
-                    React.createElement('input', {
-                      className: "w-full bg-transparent text-3xl md:text-5xl font-black uppercase placeholder:opacity-20 focus:outline-none tracking-tighter shrink-0",
-                      placeholder: "ENTER TITLE...",
-                      value: activeNote.title,
-                      onChange: (e) => updateNote(activeNote.id, 'title', e.target.value),
-                      onKeyDown: handleTitleKeyDown
-                    }),
-                    React.createElement('div', { className: "h-1 w-24 bg-black dark:bg-white shrink-0" }),
-                    
-                    activeNote.mode === 'doodle' ? 
-                      React.createElement(DoodleCanvas, { 
-                        initialData: activeNote.doodleData, 
-                        onSave: (data) => updateNote(activeNote.id, 'doodleData', data),
-                        theme: theme
-                      }) :
-                    activeNote.mode === 'checklist' ? 
-                      React.createElement('div', { className: "flex flex-col gap-6" }, [
-                        React.createElement('div', { className: "flex gap-2" }, [
-                          React.createElement('input', {
-                            ref: addItemRef,
-                            type: "text",
-                            placeholder: "ADD TASK...",
-                            value: newItemText,
-                            onChange: (e) => setNewItemText(e.target.value),
-                            onKeyDown: (e) => e.key === 'Enter' && addChecklistItem(),
-                            className: `flex-1 brutal-border brutal-shadow p-4 font-black uppercase text-sm ${theme === 'dark' ? 'bg-zinc-800' : 'bg-white'}`
-                          }),
-                          React.createElement('button', { onClick: addChecklistItem, className: `px-6 brutal-border brutal-shadow brutal-btn ${primaryColor} text-black font-black uppercase text-sm` }, "ADD")
-                        ]),
-                        React.createElement('div', { className: "flex flex-col gap-3 pr-2" }, (activeNote.items || []).map(item => React.createElement('div', { key: item.id, className: `flex items-center gap-4 p-4 brutal-border brutal-shadow ${theme === 'dark' ? 'bg-zinc-900' : 'bg-white'} group` }, [
-                          React.createElement('input', { type: "checkbox", checked: item.completed, onChange: () => toggleChecklistItem(item.id), className: "custom-checkbox shrink-0" }),
-                          React.createElement('span', { className: `flex-1 font-bold text-lg ${item.completed ? 'line-through opacity-40' : ''}` }, item.text),
-                          React.createElement('button', { onClick: () => updateNote(activeNote.id, 'items', activeNote.items.filter(i => i.id !== item.id)), className: "opacity-0 group-hover:opacity-100 p-2 brutal-border bg-red-500 text-white" }, React.createElement(X, { className: "w-4 h-4" }))
-                        ])))
-                      ]) :
-                      React.createElement('textarea', {
-                        ref: contentRef,
-                        className: "flex-1 w-full bg-transparent text-lg md:text-xl font-medium leading-relaxed placeholder:opacity-20 focus:outline-none resize-none min-h-[300px]",
-                        placeholder: "WRITE YOUR MESSAGE TO THE VOID...",
-                        value: activeNote.content || '',
-                        onChange: (e) => updateNote(activeNote.id, 'content', e.target.value)
-                      }),
-
-                    // Attachments List
-                    ((activeNote.attachments || []).length > 0) && React.createElement('div', { className: "mt-8 border-t-[3px] border-black pt-6 flex flex-col gap-4" }, [
-                      React.createElement('h4', { className: "font-black italic uppercase text-xs" }, "Attachments"),
-                      React.createElement('div', { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" }, 
-                        activeNote.attachments.map(att => React.createElement('div', { key: att.id, className: "brutal-border brutal-shadow bg-white text-black p-3 flex flex-col gap-2 relative group" }, [
-                          React.createElement('button', { 
-                            onClick: () => removeAttachment(att.id), 
-                            className: "absolute -top-2 -right-2 p-1 bg-red-500 border-2 border-black text-white rounded-none opacity-0 group-hover:opacity-100 transition-opacity z-10",
-                            title: "Remove"
-                          }, React.createElement(X, { className: "w-4 h-4" })),
-                          att.type === 'image' ? 
-                            React.createElement('img', { src: att.data, className: "w-full h-32 object-cover brutal-border mb-1" }) :
-                          att.type === 'voice' ?
-                            React.createElement('div', { className: "flex flex-col gap-2 p-2 bg-[#FFE600] brutal-border" }, [
-                              React.createElement('div', { className: "flex items-center gap-2" }, [
-                                React.createElement(Music, { className: "w-4 h-4" }),
-                                React.createElement('span', { className: "text-[10px] font-black uppercase truncate" }, att.name)
-                              ]),
-                              React.createElement('audio', { src: att.data, controls: true, className: "w-full h-10" })
-                            ]) :
-                            React.createElement('div', { className: "flex items-center gap-3 p-2 bg-[#00D1FF] brutal-border" }, [
-                              React.createElement(FileText, { className: "w-6 h-6 shrink-0" }),
-                              React.createElement('span', { className: "text-xs font-black truncate flex-1 uppercase" }, att.name),
-                              React.createElement('a', { href: att.data, download: att.name, className: "p-1 brutal-border bg-white hover:bg-zinc-100" }, React.createElement(Download, { className: "w-4 h-4" }))
-                            ])
-                        ]))
-                      )
-                    ])
-                  ])
-                ]),
-
-                // Footer
-                React.createElement('div', { className: "mt-auto px-6 md:px-12 pt-6 pb-6 border-t-[3px] border-black dark:border-zinc-800 flex flex-wrap items-center justify-between gap-4 font-black italic text-xs uppercase" }, [
-                  React.createElement('div', { className: "flex items-center gap-3" }, [
-                    React.createElement('div', { className: `px-4 py-2 brutal-border ${accentColor} text-black brutal-shadow` }, 
-                      activeNote.mode === 'checklist' ? `${(activeNote.items || []).length} TASKS` : activeNote.mode === 'doodle' ? 'DOODLE' : `${wordCount} WORDS`
-                    ),
-                    activeNote.pinned && React.createElement('div', { className: "px-4 py-2 brutal-border bg-[#FF00F5] text-white brutal-shadow flex items-center gap-2" }, [React.createElement(Pin, { className: "w-3 h-3 fill-current" }), "PINNED"])
-                  ]),
-                  React.createElement('div', { className: "flex items-center gap-3 opacity-60" }, [React.createElement(Clock, { className: "w-4 h-4" }), `STAMPED: ${new Date(activeNote.updatedAt).toLocaleString()}`])
-                ])
-              ])
-            )
-          ]),
-
-          // Global Footer
-          React.createElement('footer', { className: `h-12 border-t-[4px] border-black px-8 flex items-center justify-center text-[11px] font-black italic uppercase tracking-[0.3em] ${theme === 'dark' ? 'bg-black text-[#00FF41]' : 'bg-white text-black'}` }, "Everything saves automatically."),
-
-          // Delete Modal
-          noteToDelete && React.createElement('div', { className: "fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm", onClick: () => setNoteToDelete(null) }, 
-            React.createElement('div', { className: "bg-[#FFE600] text-black brutal-border brutal-shadow-lg p-10 max-w-md w-full modal-animate relative", onClick: (e) => e.stopPropagation() }, [
-              React.createElement('div', { className: "flex flex-col items-center text-center" }, [
-                React.createElement('div', { className: "p-4 bg-red-500 brutal-border brutal-shadow mb-6 rotate-3" }, React.createElement(AlertTriangle, { className: "w-12 h-12 text-white" })),
-                React.createElement('h2', { className: "text-4xl font-black uppercase italic tracking-tighter mb-4 leading-none" }, "CRITICAL ACTION"),
-                React.createElement('p', { className: "text-xl font-bold mb-10 leading-tight uppercase" }, "PERMANENTLY ERASE THIS DATA FROM THE SYSTEM?"),
-                React.createElement('div', { className: "flex flex-col sm:flex-row gap-4 w-full" }, [
-                  React.createElement('button', { className: "flex-1 py-4 brutal-border brutal-shadow brutal-btn bg-black text-white font-black uppercase tracking-widest text-sm", onClick: () => setNoteToDelete(null) }, "NO, KEEP IT"),
-                  React.createElement('button', { className: "flex-1 py-4 brutal-border brutal-shadow brutal-btn bg-red-500 text-white font-black uppercase tracking-widest text-sm", onClick: confirmDelete }, "YES, ERASE IT")
-                ])
-              ])
-            ])
-          )
-        ]);
+        noteList.innerHTML = filtered.map(note => `
+          <button onclick="openEditor('${note.id}')" class="group w-full text-left px-6 py-8 rounded-[32px] transition-standard flex flex-col gap-2 ${state.activeId === note.id ? 'note-card-active scale-[1.02]' : 'note-card-inactive hover:bg-black/10 dark:hover:bg-white/10'}">
+            <div class="flex justify-between items-start w-full">
+              <h3 class="font-bold text-2xl truncate flex-1 transition-standard ${state.activeId === note.id ? 'sidebar-item-active' : ''}">
+                ${note.pinned ? '<i data-lucide="pin" class="inline w-5 h-5 mr-3 fill-current text-[#FF8C19]"></i>' : ''}
+                ${note.title || 'Untitled.'}
+              </h3>
+              <div onclick="event.stopPropagation(); showDeleteDialog('${note.id}')" class="md:opacity-0 md:group-hover:opacity-100 opacity-40 hover:opacity-100 text-red-500 transition-standard ml-3 p-1">
+                <i data-lucide="trash-2" class="w-5 h-5"></i>
+              </div>
+            </div>
+            <div class="text-[12px] font-bold uppercase tracking-wider flex justify-between opacity-40">
+              <span>${new Date(note.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+              <div class="flex gap-3">
+                ${note.pinned ? '<span class="text-[#FF8C19]">Pinned</span>' : ''}
+                ${note.attachments?.length ? `<span>${note.attachments.length} Assets</span>` : ''}
+              </div>
+            </div>
+          </button>
+        `).join('');
+        lucide.createIcons();
       };
 
-      const root = ReactDOM.createRoot(document.getElementById('root'));
-      root.render(React.createElement(App));
+      // Editor logic
+      const openEditor = (id) => {
+        state.activeId = id;
+        const note = getActiveNote();
+        editorOverlay.classList.add('is-active');
+        noteTitle.value = note.title;
+        updateEditorUI();
+        renderNoteList(); // Re-render to show active state
+      };
+
+      const closeEditor = () => {
+        state.activeId = null;
+        editorOverlay.classList.remove('is-active');
+        renderNoteList();
+      };
+
+      const updateEditorUI = () => {
+        const note = getActiveNote();
+        if (!note) return;
+
+        // Mode buttons
+        document.querySelectorAll('.text-mode-btn').forEach(btn => {
+          const mode = btn.id.split('-')[1];
+          const isActive = note.mode === mode;
+          btn.classList.toggle('text-[#FF8C19]', isActive);
+          btn.classList.toggle('opacity-50', !isActive && state.theme === 'light');
+          btn.classList.toggle('opacity-30', !isActive && state.theme === 'dark');
+        });
+
+        // Pin icon
+        const pinBtn = document.getElementById('toggle-pin');
+        pinBtn.classList.toggle('text-[#FF8C19]', note.pinned);
+        pinBtn.classList.toggle('bg-[#FF8C19]/10', note.pinned);
+
+        // Status & Time
+        document.getElementById('note-status').textContent = note.mode === 'checklist' ? 'Master List' : note.mode === 'doodle' ? 'Creative Sketch' : 'Personal Draft';
+        document.getElementById('note-time').textContent = new Date(note.updatedAt).toLocaleString([], { hour:'2-digit', minute:'2-digit', month: 'short', day: 'numeric' });
+
+        // Content
+        renderEditorContent();
+        renderAssets();
+      };
+
+      const renderEditorContent = () => {
+        const note = getActiveNote();
+        if (note.mode === 'text') {
+          contentArea.innerHTML = `<textarea id="note-body" class="flex-1 w-full bg-transparent text-2xl md:text-3xl font-medium leading-relaxed placeholder:opacity-30 focus:outline-none resize-none min-h-[400px] mt-8 transition-standard text-black dark:text-white" placeholder="Begin your session...">${note.content || ''}</textarea>`;
+          document.getElementById('note-body').addEventListener('input', e => {
+            note.content = e.target.value;
+            note.updatedAt = Date.now();
+            save();
+          });
+        } else if (note.mode === 'checklist') {
+          contentArea.innerHTML = `
+            <div class="flex flex-col gap-12 mt-8">
+              <div class="flex gap-4 items-center bg-black/5 dark:bg-white/5 p-3 rounded-full px-8">
+                <input id="new-item-input" type="text" placeholder="New task." class="flex-1 bg-transparent py-2 text-xl font-bold transition-standard text-black dark:text-white">
+                <button onclick="addChecklistItem()" class="bg-black text-white dark:bg-white dark:text-black w-10 h-10 rounded-full flex items-center justify-center transition-standard hover:scale-110 shadow-lg">
+                  <i data-lucide="plus" class="w-5 h-5"></i>
+                </button>
+              </div>
+              <div id="checklist-items" class="space-y-8"></div>
+            </div>
+          `;
+          document.getElementById('new-item-input').addEventListener('keydown', e => e.key === 'Enter' && addChecklistItem());
+          renderChecklistItems();
+        } else if (note.mode === 'doodle') {
+          contentArea.innerHTML = `
+            <div class="flex-1 flex flex-col gap-4 h-full">
+              <div class="flex justify-end"><button onclick="clearCanvas()" class="text-[11px] font-bold tracking-widest uppercase opacity-40 hover:opacity-100 flex items-center gap-2 transition-standard text-black dark:text-white"><i data-lucide="rotate-ccw" class="w-3 h-3"></i>Clear Canvas</button></div>
+              <canvas id="sketch-canvas" class="flex-1 w-full bg-white dark:bg-black rounded-[32px] flat-border shadow-sm min-h-[400px]"></canvas>
+            </div>
+          `;
+          initCanvas();
+        }
+        lucide.createIcons();
+      };
+
+      const renderChecklistItems = () => {
+        const note = getActiveNote();
+        const container = document.getElementById('checklist-items');
+        if (!container) return;
+        container.innerHTML = (note.items || []).map(item => `
+          <div class="flex items-center gap-6 group px-4">
+            <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleChecklistItem('${item.id}')" class="custom-checkbox shrink-0 scale-125 text-black dark:text-white">
+            <span class="flex-1 text-2xl font-bold transition-standard text-black dark:text-white ${item.completed ? 'opacity-20 line-through' : ''}">${item.text}</span>
+            <button onclick="removeChecklistItem('${item.id}')" class="md:opacity-0 group-hover:opacity-40 hover:opacity-100 transition-standard text-black dark:text-white">
+              <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+          </div>
+        `).join('');
+        lucide.createIcons();
+      };
+
+      const renderAssets = () => {
+        const note = getActiveNote();
+        if (!note.attachments?.length) {
+          assetsArea.classList.add('hidden');
+          return;
+        }
+        assetsArea.classList.remove('hidden');
+        assetsGrid.innerHTML = note.attachments.map(att => `
+          <div class="relative group aspect-square flex flex-col rounded-[40px] overflow-hidden bg-black/5 dark:bg-white/5 flat-border">
+            <button onclick="removeAttachment('${att.id}')" class="absolute top-5 right-5 p-2.5 bg-white dark:bg-black rounded-full border flat-border md:opacity-0 group-hover:opacity-100 z-10 transition-standard shadow-lg text-black dark:text-white">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+            ${att.type === 'image' ? `<img src="${att.data}" class="w-full h-full object-cover group-hover:scale-105 transition-standard grayscale hover:grayscale-0">` : 
+              att.type === 'voice' ? `
+                <div class="w-full h-full flex flex-col items-center justify-center gap-6 p-8">
+                  <i data-lucide="music" class="w-10 h-10 text-[#FF8C19]"></i>
+                  <span class="text-[11px] font-black uppercase tracking-widest opacity-40 text-center truncate w-full text-black dark:text-white">${att.name}</span>
+                  <audio src="${att.data}" controls class="w-full h-8 scale-90 opacity-60"></audio>
+                </div>
+              ` : `
+                <div class="w-full h-full flex flex-col items-center justify-center gap-6 p-8 hover:bg-black/5 transition-standard cursor-pointer">
+                  <i data-lucide="file-text" class="w-12 h-12 opacity-30 text-black dark:text-white"></i>
+                  <span class="text-[11px] font-black uppercase tracking-widest opacity-40 text-center truncate w-full px-4 text-black dark:text-white">${att.name}</span>
+                  <a href="${att.data}" download="${att.name}" class="opacity-40 hover:opacity-100 p-3 bg-black/10 rounded-full text-black dark:text-white"><i data-lucide="download" class="w-6 h-6"></i></a>
+                </div>
+              `}
+          </div>
+        `).join('');
+        lucide.createIcons();
+      };
+
+      // Canvas logic
+      let canvasCtx = null, drawing = false;
+      const initCanvas = () => {
+        const canvas = document.getElementById('sketch-canvas');
+        if (!canvas) return;
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        canvasCtx = canvas.getContext('2d');
+        canvasCtx.lineCap = 'round';
+        canvasCtx.lineWidth = 3;
+        canvasCtx.strokeStyle = state.theme === 'dark' ? 'white' : 'black';
+
+        const note = getActiveNote();
+        if (note.doodleData) {
+          const img = new Image();
+          img.onload = () => canvasCtx.drawImage(img, 0, 0);
+          img.src = note.doodleData;
+        }
+
+        const getXY = (e) => {
+          const rect = canvas.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          return [clientX - rect.left, clientY - rect.top];
+        };
+
+        const start = (e) => { drawing = true; canvasCtx.beginPath(); canvasCtx.moveTo(...getXY(e)); };
+        const draw = (e) => { if (!drawing) return; canvasCtx.lineTo(...getXY(e)); canvasCtx.stroke(); };
+        const stop = () => { 
+          if (!drawing) return;
+          drawing = false; canvasCtx.closePath(); 
+          note.doodleData = canvas.toDataURL(); 
+          note.updatedAt = Date.now();
+          save();
+        };
+
+        canvas.onmousedown = start; canvas.onmousemove = draw; canvas.onmouseup = stop; canvas.onmouseout = stop;
+        canvas.ontouchstart = start; canvas.ontouchmove = draw; canvas.ontouchend = stop;
+      };
+
+      const clearCanvas = () => {
+        const canvas = document.getElementById('sketch-canvas');
+        canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+        const note = getActiveNote();
+        note.doodleData = null;
+        save();
+      };
+
+      // Voice recording
+      let mediaRecorder = null, audioChunks = [];
+      const toggleMic = async () => {
+        if (state.isRecording) {
+          mediaRecorder.stop();
+          state.isRecording = false;
+          updateMicUI();
+        } else {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+              const blob = new Blob(audioChunks, { type: 'audio/webm' });
+              const reader = new FileReader();
+              reader.onload = e => {
+                const note = getActiveNote();
+                note.attachments = [...(note.attachments || []), { id: Date.now()+'-v', type: 'voice', name: `Rec ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`, data: e.target.result }];
+                note.updatedAt = Date.now();
+                save();
+                renderAssets();
+              };
+              reader.readAsDataURL(blob);
+              stream.getTracks().forEach(t => t.stop());
+            };
+            mediaRecorder.start();
+            state.isRecording = true;
+            updateMicUI();
+          } catch (err) { alert("Mic access denied."); }
+        }
+      };
+
+      const updateMicUI = () => {
+        const btn = document.getElementById('toggle-mic');
+        btn.classList.toggle('bg-red-500', state.isRecording);
+        btn.classList.toggle('text-white', state.isRecording);
+        btn.classList.toggle('animate-pulse', state.isRecording);
+        const icon = btn.querySelector('i');
+        icon.setAttribute('data-lucide', state.isRecording ? 'square' : 'mic');
+        lucide.createIcons();
+      };
+
+      // Event Handlers
+      window.showDeleteDialog = (id) => {
+        state.noteToDelete = id;
+        deleteDialog.classList.remove('hidden');
+      };
+
+      document.getElementById('confirm-delete').onclick = () => {
+        state.notes = state.notes.filter(n => n.id !== state.noteToDelete);
+        if (state.activeId === state.noteToDelete) closeEditor();
+        save();
+        renderNoteList();
+        deleteDialog.classList.add('hidden');
+      };
+
+      document.getElementById('cancel-delete').onclick = () => deleteDialog.classList.add('hidden');
+
+      document.getElementById('add-note').onclick = () => {
+        const newNote = { id: Date.now().toString(), title: '', content: '', mode: 'text', items: [], pinned: false, updatedAt: Date.now(), attachments: [] };
+        state.notes.push(newNote);
+        save();
+        openEditor(newNote.id);
+        noteTitle.focus();
+      };
+
+      document.getElementById('theme-toggle').onclick = () => {
+        state.theme = state.theme === 'light' ? 'dark' : 'light';
+        applyTheme();
+        if (state.activeId) updateEditorUI();
+      };
+
+      document.getElementById('search-input').oninput = (e) => {
+        state.searchQuery = e.target.value;
+        renderNoteList();
+      };
+
+      document.getElementById('close-editor').onclick = closeEditor;
+
+      noteTitle.oninput = (e) => {
+        const note = getActiveNote();
+        note.title = e.target.value;
+        note.updatedAt = Date.now();
+        save();
+      };
+
+      noteTitle.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const body = document.getElementById('note-body');
+          if (body) body.focus();
+        }
+      };
+
+      document.querySelectorAll('.text-mode-btn').forEach(btn => {
+        btn.onclick = () => {
+          const note = getActiveNote();
+          note.mode = btn.id.split('-')[1];
+          note.updatedAt = Date.now();
+          save();
+          updateEditorUI();
+        };
+      });
+
+      document.getElementById('toggle-pin').onclick = () => {
+        const note = getActiveNote();
+        note.pinned = !note.pinned;
+        note.updatedAt = Date.now();
+        save();
+        updateEditorUI();
+      };
+
+      document.getElementById('toggle-mic').onclick = toggleMic;
+
+      // File Handlers
+      document.getElementById('attach-image').onclick = () => document.getElementById('image-input').click();
+      document.getElementById('attach-file').onclick = () => document.getElementById('file-input').click();
+
+      const handleFile = (e, type) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const note = getActiveNote();
+          note.attachments.push({ id: Date.now()+'-f', type, name: file.name, data: event.target.result });
+          note.updatedAt = Date.now();
+          save();
+          renderAssets();
+          e.target.value = '';
+        };
+        reader.readAsDataURL(file);
+      };
+
+      document.getElementById('image-input').onchange = e => handleFile(e, 'image');
+      document.getElementById('file-input').onchange = e => handleFile(e, 'file');
+
+      // Checklist helpers
+      window.addChecklistItem = () => {
+        const input = document.getElementById('new-item-input');
+        if (!input?.value.trim()) return;
+        const note = getActiveNote();
+        note.items.push({ id: Date.now().toString(), text: input.value.trim(), completed: false });
+        note.updatedAt = Date.now();
+        save();
+        input.value = '';
+        renderChecklistItems();
+      };
+
+      window.toggleChecklistItem = (id) => {
+        const note = getActiveNote();
+        const item = note.items.find(i => i.id === id);
+        item.completed = !item.completed;
+        note.updatedAt = Date.now();
+        save();
+        renderChecklistItems();
+      };
+
+      window.removeChecklistItem = (id) => {
+        const note = getActiveNote();
+        note.items = note.items.filter(i => i.id !== id);
+        note.updatedAt = Date.now();
+        save();
+        renderChecklistItems();
+      };
+
+      window.removeAttachment = (id) => {
+        const note = getActiveNote();
+        note.attachments = note.attachments.filter(a => a.id !== id);
+        note.updatedAt = Date.now();
+        save();
+        renderAssets();
+      };
+
+      init();
     </script>
 </body>
 </html>
