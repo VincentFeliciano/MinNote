@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Vivari</title>
+    <title>TL;DR</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-      @import url('https://fonts.googleapis.com/css2?family=Orelega+One&display=swap');
       
       * { 
         margin: 0; 
@@ -541,60 +540,6 @@
         background: rgba(255, 255, 255, 0.06);
       }
 
-      .password-modal {
-        position: fixed;
-        inset: 0;
-        z-index: 600;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(8px);
-      }
-      .dark .password-modal {
-        background: rgba(0, 0, 0, 0.6);
-      }
-
-      .password-input {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-        font-size: 16px;
-        text-align: center;
-        letter-spacing: 4px;
-      }
-      .dark .password-input {
-        border-color: rgba(255, 255, 255, 0.1);
-        background: rgba(255, 255, 255, 0.05);
-      }
-      .password-input:focus {
-        outline: none;
-        border-color: rgba(0, 0, 0, 0.3);
-      }
-      .dark .password-input:focus {
-        border-color: rgba(255, 255, 255, 0.3);
-      }
-
-      .locked-indicator {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        color: rgba(0, 0, 0, 0.4);
-      }
-      .dark .locked-indicator {
-        color: rgba(255, 255, 255, 0.4);
-      }
-
-      .locked-overlay {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 400px;
-        gap: 16px;
-      }
-
       .mode-tab {
         padding: 6px 12px;
         border-radius: 4px;
@@ -720,8 +665,6 @@
         gap: 12px;
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
         z-index: 100;
-        min-width: 300px;
-        max-width: 90vw;
       }
       .dark .multi-select-bar {
         background: #ffffff;
@@ -730,18 +673,6 @@
       
       .dark .multi-select-bar button {
         color: #000000;
-      }
-
-      @media (max-width: 768px) {
-        .multi-select-bar {
-          min-width: 320px;
-          padding: 16px 20px;
-          gap: 16px;
-        }
-        
-        #selected-count {
-          min-width: 80px;
-        }
       }
 
       .attachment-card {
@@ -790,12 +721,9 @@
       <!-- Sidebar -->
       <aside class="sidebar bg-main flex flex-col">
         <!-- Sidebar Header -->
-        <div class="px-5 flex items-center justify-between shrink-0 gap-2" style="padding-top: 20px; padding-bottom: 20px;">
-          <div class="flex items-center gap-2 shrink-0">
-            <img src="data:image/png;base64,UklGRjwEAABXRUJQVlA4WAoAAAAwAAAAIwAAIwAASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADZBTFBIowAAAA2As23b8eaOk822jS2jk8nFys1ju+kfcPLWsUc32926Wz/ANt6v5hQRE4B37ms+G+/ffCu+nxfNm63ffptni8qKt18vqMf2E+i78/dfrSQEoinZ8mqUyztuAkEL88lo36vJ6jIgrs5T2AT2qaAGr6rHq0ucwPRzb1hYicvEm/0rbSep/frn9gdO7p5jEKpJeyvFjU9qe/GmTYM8YB9vvXyGbzAAVlA4IKIBAACwCgCdASokACQAPlEkj0WjoiERxYA4BQS0gAZzl8B+LuiA/quOW/rv43eJn+IHKu6wB/Nv7N9uXwS/znlZzMv9MOXnvdXiQB0f+plWtUb3oDWl7WRi8ErF9eVo3DMgAP7/nXF9SZK1/xt2dqmj80tbnkacP4iZ//hjDtf/Qgn//mBr5YVKUI33/o/+53t6p1U5dLgUDGlTfK3g1rNv/vzCYUCkd9q+ZIHmLWH1GKJ0s1Hpfm3cBC1L/swwG2KnGzcR+iGwMXnr+Fa/REl/uD8wt7jGsb/P3E/3ESAKPLvYjbfnEUf7rYs/ssYe2wL9wLM0DOIvJeLtlB2aYjz6VdlJVp5/oSajgvlRV143dPl7mXDzLN1+v/3UODTdaLAe1r4kNusqf40Hf/5ESs/licZIobBWARCljb+UAdBNHbRw7goHHjrTcYe9gfYL+f3q72PVySKjgvyb5wo89DhbxYtoSDvyWIh80twas8jrE7DSwf/3WFZlvjtTarEQ48Es1Cl/i65B7tWV61u3+qXdFoZ3bbDaw6wKiFKwtf6LvzWkAAAA" alt="Vivari" class="h-7" style="height: 28px;">
-            <span class="text-2xl font-bold text-main whitespace-nowrap" style="font-family: 'Orelega One', serif;">Vivari</span>
-          </div>
-          <div class="flex items-center flex-shrink-0" style="gap: 0px; margin: -5px;">
+        <div class="px-5 py-6 flex items-center justify-between shrink-0">
+          <h1 class="text-xl font-bold tracking-tight">TL;DR</h1>
+          <div class="flex items-center gap-1">
             <button id="search-toggle" class="icon-btn hidden" title="Search">
               <i data-lucide="search" class="w-4 h-4"></i>
             </button>
@@ -879,7 +807,7 @@
 
         <div id="editor-container" class="hidden h-full flex flex-col">
           <!-- Editor Header -->
-          <div class="px-8 py-6 flex items-center justify-between shrink-0 overflow-x-auto gap-4">
+          <div class="px-8 py-6 flex items-center justify-between shrink-0 border-b border-black/4 dark:border-white/4 overflow-x-auto gap-4">
             <div class="flex items-center gap-2 min-w-0">
               <button id="close-editor-mobile" class="icon-btn md:hidden shrink-0" title="Back">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
@@ -891,9 +819,6 @@
             <div class="flex items-center gap-1 shrink-0">
               <button id="preview-toggle" class="icon-btn hidden" title="Toggle preview">
                 <i data-lucide="eye" class="w-4 h-4"></i>
-              </button>
-              <button id="toggle-lock" class="icon-btn" title="Lock/Unlock note">
-                <i data-lucide="lock" class="w-4 h-4"></i>
               </button>
               <button id="toggle-pin" class="icon-btn" title="Pin note">
                 <i data-lucide="pin" class="w-4 h-4"></i>
@@ -927,14 +852,14 @@
 
             <div id="content-area" class="shrink-0"></div>
             
-            <div id="attachments-area" class="hidden mt-auto pt-8 shrink-0">
+            <div id="attachments-area" class="hidden mt-auto pt-8 border-t border-black/4 dark:border-white/4 shrink-0">
               <div class="text-xs font-medium text-muted mb-4 uppercase tracking-wide">Attachments</div>
               <div id="attachments-grid" class="grid grid-cols-3 gap-4"></div>
             </div>
           </div>
 
           <!-- Editor Footer -->
-          <div class="px-8 py-4 flex items-center justify-between shrink-0">
+          <div class="px-8 py-4 border-t border-black/4 dark:border-white/4 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-1">
               <button id="attach-image" class="icon-btn" title="Add image">
                 <i data-lucide="image" class="w-4 h-4"></i>
@@ -960,11 +885,11 @@
 
     <!-- Multi-Select Action Bar -->
     <div id="multi-select-bar" class="hidden multi-select-bar">
-      <span id="selected-count" class="text-sm font-medium whitespace-nowrap">0 selected</span>
-      <button id="delete-selected" class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap" style="background: rgba(239, 68, 68, 1); color: white;" onmouseover="this.style.background='rgba(220, 38, 38, 1)'" onmouseout="this.style.background='rgba(239, 68, 68, 1)'">
+      <span id="selected-count" class="text-sm font-medium">0 selected</span>
+      <button id="delete-selected" class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors" style="background: rgba(239, 68, 68, 1); color: white;" onmouseover="this.style.background='rgba(220, 38, 38, 1)'" onmouseout="this.style.background='rgba(239, 68, 68, 1)'">
         Delete
       </button>
-      <button id="cancel-select" class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap" style="background: rgba(255, 255, 255, 0.15);" onmouseover="this.style.background='rgba(255, 255, 255, 0.25)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'">
+      <button id="cancel-select" class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors" style="background: rgba(255, 255, 255, 0.15);" onmouseover="this.style.background='rgba(255, 255, 255, 0.25)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'">
         Cancel
       </button>
     </div>
@@ -1048,33 +973,6 @@
       </div>
     </div>
 
-    <!-- Password Protection Modal -->
-    <div id="password-modal" class="hidden password-modal">
-      <div class="bg-main rounded-xl p-8 max-w-sm w-full mx-4 border border-black/6 dark:border-white/6" style="box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);">
-        <div class="text-center mb-6">
-          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
-            <i data-lucide="lock" class="w-8 h-8"></i>
-          </div>
-          <h2 class="text-xl font-semibold mb-2" id="password-modal-title">Set Password</h2>
-          <p class="text-sm text-muted" id="password-modal-desc">Enter a 4-digit PIN to protect this note</p>
-        </div>
-        
-        <div class="mb-6">
-          <input type="password" id="password-input" class="password-input text-main" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="••••">
-          <div id="password-error" class="hidden text-sm text-red-500 mt-2 text-center">Incorrect PIN</div>
-        </div>
-        
-        <div class="flex gap-3">
-          <button id="cancel-password" class="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors bg-black/4 dark:bg-white/4 hover:bg-black/8 dark:hover:bg-white/8">
-            Cancel
-          </button>
-          <button id="confirm-password" class="flex-1 py-2.5 px-4 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
-            Confirm
-          </button>
-        </div>
-      </div>
-    </div>
-
     <script>
       let state = {
         notes: JSON.parse(localStorage.getItem('notes') || '[]'),
@@ -1093,9 +991,7 @@
           status: [] // 'pinned', 'attachments'
         },
         previewMode: false,
-        minimalMode: localStorage.getItem('minimalMode') === 'true' || false,
-        unlockedNotes: [], // Track which locked notes are currently unlocked in this session
-        passwordAction: null // 'set', 'unlock', 'remove'
+        minimalMode: localStorage.getItem('minimalMode') === 'true' || false
       };
 
       const save = () => {
@@ -1291,11 +1187,8 @@
               <button onclick="openEditor('${note.id}')" class="flex-1 min-w-0 text-left flex items-start gap-3">
                 ${note.pinned ? '<i data-lucide="pin" class="w-3 h-3 mt-0.5 shrink-0 opacity-30"></i>' : ''}
                 <div class="flex-1 min-w-0">
-                  <div class="font-medium text-sm mb-0.5 truncate flex items-center gap-2">
-                    ${note.title || 'Untitled'}
-                    ${note.locked ? '<span class="locked-indicator"><i data-lucide="lock" class="w-3 h-3"></i></span>' : ''}
-                  </div>
-                  <div class="text-xs text-muted truncate">${note.locked && !state.unlockedNotes.includes(note.id) ? 'Locked' : preview}</div>
+                  <div class="font-medium text-sm mb-0.5 truncate">${note.title || 'Untitled'}</div>
+                  <div class="text-xs text-muted truncate">${preview}</div>
                   ${note.tags && note.tags.length > 0 ? `
                     <div class="flex gap-1 mt-1">
                       ${note.tags.slice(0, 2).map(tag => `<span class="text-xs opacity-40">#${tag}</span>`).join(' ')}
@@ -1320,18 +1213,9 @@
       };
 
       const openEditor = (id) => {
-        const note = state.notes.find(n => n.id === id);
-        
-        // Check if note is locked and not unlocked in current session
-        if (note.locked && !state.unlockedNotes.includes(id)) {
-          state.activeId = id;
-          state.passwordAction = 'unlock';
-          showPasswordModal('Unlock Note', 'Enter PIN to unlock this note');
-          return;
-        }
-        
         state.activeId = id;
         state.previewMode = false;
+        const note = getActiveNote();
         document.getElementById('empty-state').classList.add('hidden');
         document.getElementById('editor-container').classList.remove('hidden');
         document.getElementById('editor-area').classList.add('active');
@@ -1359,17 +1243,6 @@
 
         const pinBtn = document.getElementById('toggle-pin');
         pinBtn.classList.toggle('active', note.pinned);
-
-        // Update lock button
-        const lockBtn = document.getElementById('toggle-lock');
-        const lockIcon = lockBtn.querySelector('i');
-        if (note.locked) {
-          lockIcon.setAttribute('data-lucide', 'lock');
-          lockBtn.classList.add('active');
-        } else {
-          lockIcon.setAttribute('data-lucide', 'unlock');
-          lockBtn.classList.remove('active');
-        }
 
         // Show/hide preview button based on mode
         const previewBtn = document.getElementById('preview-toggle');
@@ -1405,7 +1278,6 @@
         }
         
         renderAttachments();
-        lucide.createIcons();
       };
 
       const renderNoteTags = () => {
@@ -2026,108 +1898,6 @@
 
       document.getElementById('preview-toggle').onclick = () => {
         togglePreview();
-      };
-
-      document.getElementById('toggle-lock').onclick = () => {
-        const note = getActiveNote();
-        if (!note) return;
-        
-        if (note.locked) {
-          // Remove lock
-          state.passwordAction = 'remove';
-          showPasswordModal('Remove Lock', 'Enter PIN to remove protection');
-        } else {
-          // Set lock
-          state.passwordAction = 'set';
-          showPasswordModal('Set Password', 'Enter a 4-digit PIN to protect this note');
-        }
-      };
-
-      const showPasswordModal = (title, description) => {
-        document.getElementById('password-modal-title').textContent = title;
-        document.getElementById('password-modal-desc').textContent = description;
-        document.getElementById('password-input').value = '';
-        document.getElementById('password-error').classList.add('hidden');
-        document.getElementById('password-modal').classList.remove('hidden');
-        setTimeout(() => document.getElementById('password-input').focus(), 100);
-      };
-
-      document.getElementById('cancel-password').onclick = () => {
-        document.getElementById('password-modal').classList.add('hidden');
-        if (state.passwordAction === 'unlock') {
-          // If unlocking was cancelled, go back to note list
-          closeEditor();
-        }
-        state.passwordAction = null;
-      };
-
-      document.getElementById('confirm-password').onclick = () => {
-        handlePasswordConfirm();
-      };
-
-      document.getElementById('password-input').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          handlePasswordConfirm();
-        }
-      });
-
-      const handlePasswordConfirm = () => {
-        const pin = document.getElementById('password-input').value;
-        const note = getActiveNote();
-        
-        if (!pin || pin.length !== 4) {
-          document.getElementById('password-error').textContent = 'PIN must be 4 digits';
-          document.getElementById('password-error').classList.remove('hidden');
-          return;
-        }
-
-        if (state.passwordAction === 'set') {
-          // Set password
-          note.locked = true;
-          note.password = btoa(pin); // Simple encoding (not secure, just obfuscation)
-          note.updatedAt = Date.now();
-          save();
-          document.getElementById('password-modal').classList.add('hidden');
-          updateEditorUI();
-        } else if (state.passwordAction === 'unlock') {
-          // Verify password and unlock
-          if (note.password === btoa(pin)) {
-            state.unlockedNotes.push(note.id);
-            document.getElementById('password-modal').classList.add('hidden');
-            // Now actually open the editor
-            state.previewMode = false;
-            document.getElementById('empty-state').classList.add('hidden');
-            document.getElementById('editor-container').classList.remove('hidden');
-            document.getElementById('editor-area').classList.add('active');
-            document.getElementById('note-title').value = note.title;
-            updateEditorUI();
-            renderNoteList();
-          } else {
-            document.getElementById('password-error').textContent = 'Incorrect PIN';
-            document.getElementById('password-error').classList.remove('hidden');
-            document.getElementById('password-input').value = '';
-            return;
-          }
-        } else if (state.passwordAction === 'remove') {
-          // Verify password and remove lock
-          if (note.password === btoa(pin)) {
-            note.locked = false;
-            note.password = null;
-            note.updatedAt = Date.now();
-            // Remove from unlocked list if present
-            state.unlockedNotes = state.unlockedNotes.filter(id => id !== note.id);
-            save();
-            document.getElementById('password-modal').classList.add('hidden');
-            updateEditorUI();
-          } else {
-            document.getElementById('password-error').textContent = 'Incorrect PIN';
-            document.getElementById('password-error').classList.remove('hidden');
-            document.getElementById('password-input').value = '';
-            return;
-          }
-        }
-        
-        state.passwordAction = null;
       };
 
       // Folder selector
