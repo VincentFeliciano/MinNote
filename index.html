@@ -3,296 +3,280 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Notes.</title>
+    <title>Notes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
       
-      :root {
-        --accent-orange: #ffd438;
-        --grey-muted: rgba(0, 0, 0, 0.4);
-        --grey-border: rgba(0, 0, 0, 0.06);
-        --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-        --card-shadow-hover: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
-      }
-
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      
       body {
-        font-family: 'Inter Tight', sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         overflow: hidden;
         -webkit-font-smoothing: antialiased;
-        touch-action: manipulation;
+        -moz-osx-font-smoothing: grayscale;
       }
 
-      .bg-soft-grey { background-color: #F8F8F8; }
-      .dark .bg-soft-grey { background-color: #18181b; }
+      .bg-main { background-color: #ffffff; }
+      .dark .bg-main { background-color: #1a1a1a; }
 
-      .bg-dot-grid {
-        background-image: radial-gradient(rgba(0,0,0,0.05) 1.5px, transparent 1.5px);
-        background-size: 24px 24px;
+      .text-main { color: #000000; }
+      .dark .text-main { color: #ffffff; }
+
+      .text-muted { color: rgba(0, 0, 0, 0.4); }
+      .dark .text-muted { color: rgba(255, 255, 255, 0.4); }
+
+      .note-item {
+        background: transparent;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        transition: background 0.2s ease;
       }
-      .dark .bg-dot-grid {
-        background-image: radial-gradient(rgba(255,255,255,0.05) 1.5px, transparent 1.5px);
+      .dark .note-item {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .note-item:active {
+        background: rgba(0, 0, 0, 0.02);
+      }
+      .dark .note-item:active {
+        background: rgba(255, 255, 255, 0.02);
       }
 
-      .flat-border {
-        border: 1px solid var(--grey-border);
+      .fab {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: #000000;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        cursor: pointer;
+        transition: transform 0.2s ease;
+        z-index: 100;
       }
-      .dark .flat-border {
-        border: 1px solid rgba(255, 255, 255, 0.08);
+      .dark .fab {
+        background: #ffffff;
+        color: #000000;
+      }
+      .fab:active {
+        transform: scale(0.95);
       }
 
-      ::-webkit-scrollbar { width: 4px; }
-      ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb {
-        background: rgba(128, 128, 128, 0.2);
-        border-radius: 10px;
+      .editor-overlay {
+        position: fixed;
+        inset: 0;
+        background: #ffffff;
+        z-index: 200;
+        transform: translateX(100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
-      
-      textarea:focus, input:focus { outline: none; }
+      .dark .editor-overlay {
+        background: #1a1a1a;
+      }
+      .editor-overlay.active {
+        transform: translateX(0);
+      }
+
+      textarea, input {
+        border: none;
+        outline: none;
+        background: transparent;
+        resize: none;
+        font-family: inherit;
+      }
 
       .custom-checkbox {
         appearance: none;
         width: 20px;
         height: 20px;
-        border: 1.5px solid currentColor;
+        border: 2px solid currentColor;
         border-radius: 50%;
         cursor: pointer;
         position: relative;
-        background: transparent;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.2s ease;
       }
-      
       .custom-checkbox:checked {
-        background: var(--accent-orange);
-        border-color: var(--accent-orange);
+        background: #000000;
+        border-color: #000000;
       }
-      
+      .dark .custom-checkbox:checked {
+        background: #ffffff;
+        border-color: #ffffff;
+      }
       .custom-checkbox:checked::after {
         content: '';
         position: absolute;
-        width: 8px;
-        height: 4px;
-        border-left: 2px solid white;
-        border-bottom: 2px solid white;
-        top: 45%;
+        width: 6px;
+        height: 3px;
+        border-left: 2px solid #ffffff;
+        border-bottom: 2px solid #ffffff;
+        top: 50%;
         left: 50%;
-        transform: translate(-50%, -50%) rotate(-45deg);
+        transform: translate(-50%, -60%) rotate(-45deg);
+      }
+      .dark .custom-checkbox:checked::after {
+        border-color: #000000;
       }
 
-      .transition-standard {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-
-      .transition-slide {
-        transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-      }
-
-      .sidebar-item-active {
-        color: var(--accent-orange) !important;
-      }
-
-      /* ========== NOTE CARDS: MINIMAL STYLE ========== */
-      .note-card-inactive {
-        background-color: #FFFFFF;
-        border: 1px solid rgba(0, 0, 0, 0.03);
-        box-shadow: var(--card-shadow);
-        color: #000000;
-      }
-      .dark .note-card-inactive {
-        background-color: #18181b;
-        border: 1px solid rgba(255, 255, 255, 0.03);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        color: #FFFFFF;
-      }
-
-      .note-card-active {
-        background-color: #FFFFFF;
-        border: 1px solid rgba(0, 0, 0, 0.08);
-        box-shadow: var(--card-shadow-hover);
-        color: #000000;
-      }
-      .dark .note-card-active {
-        background-color: #27272a;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-        color: #FFFFFF;
-      }
-
-      /* Hover states for cards */
-      .note-card-inactive:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--card-shadow-hover);
-      }
-      .dark .note-card-inactive:hover {
-        background-color: #27272a;
-      }
-
-      /* ========== EDITOR MINIMAL FIXES ========== */
-
-      .editor-sheet {
-        color: #18181b;
-      }
-
-      .dark .editor-sheet {
-        color: #f4f4f5;
-      }
-
-      .editor-sheet #note-title,
-      .editor-sheet #note-body {
-        color: inherit;
-      }
-
-      .editor-sheet input::placeholder,
-      .editor-sheet textarea::placeholder {
-        color: rgba(0, 0, 0, 0.2) !important;
-      }
-
-      .dark .editor-sheet input::placeholder,
-      .dark .editor-sheet textarea::placeholder {
-        color: rgba(255, 255, 255, 0.15) !important;
-      }
-
-      .editor-container {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        top: 0;
-        z-index: 150;
-        transform: translateY(105%);
+      .menu-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
         display: flex;
+        align-items: center;
         justify-content: center;
-        align-items: flex-end;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+      .menu-btn:active {
         background: rgba(0, 0, 0, 0.05);
-        backdrop-filter: blur(8px);
-        pointer-events: none;
       }
-      .editor-container.is-active {
-        transform: translateY(0);
-        pointer-events: auto;
+      .dark .menu-btn:active {
+        background: rgba(255, 255, 255, 0.05);
       }
-      .editor-sheet {
-        width: 100%;
-        max-width: 800px;
-        height: 94vh;
-        border-radius: 40px 40px 0 0;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        box-shadow: 0 -20px 50px -20px rgba(0, 0, 0, 0.1);
-        background-color: #FFFFFF; 
-      }
-      .dark .editor-sheet {
-        background-color: #18181b;
-        box-shadow: 0 -20px 80px -20px rgba(0, 0, 0, 0.6);
+
+      ::-webkit-scrollbar { display: none; }
+      
+      .canvas-container {
+        touch-action: none;
       }
 
       #sketch-canvas {
-        background-color: #fafafa;
+        background: #fafafa;
+        border: 1px solid rgba(0, 0, 0, 0.06);
       }
       .dark #sketch-canvas {
-        background-color: #27272a;
+        background: #0a0a0a;
+        border: 1px solid rgba(255, 255, 255, 0.06);
       }
 
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
+      .asset-card {
+        aspect-ratio: 1;
+        border-radius: 12px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.02);
+        border: 1px solid rgba(0, 0, 0, 0.06);
       }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
+      .dark .asset-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .modal-backdrop {
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(8px);
+      }
+      .dark .modal-backdrop {
+        background: rgba(0, 0, 0, 0.6);
       }
     </style>
 </head>
-<body class="transition-colors duration-500 bg-soft-grey text-black dark:text-white">
-    <div id="root" class="h-screen w-full flex flex-col overflow-hidden relative">
-      <div class="absolute inset-0 bg-dot-grid pointer-events-none"></div>
-
+<body class="bg-main text-main transition-colors duration-300">
+    <div id="root" class="h-screen w-full flex flex-col overflow-hidden">
       <!-- Header -->
-      <header class="h-20 px-6 md:px-10 flex items-center justify-between z-50 shrink-0">
-        <div class="flex items-center gap-4">
-          <!-- Logo text changed to strictly zinc-950 (black) in light mode -->
-          <h1 class="text-2xl font-black tracking-tighter text-zinc-950 dark:text-white">Vault.</h1>
-        </div>
-        <div class="flex-1 max-w-md mx-8">
-          <div class="relative w-full">
-            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50 text-white dark:text-black"></i>
-            <input id="search-input" type="text" placeholder="Search entries..." class="w-full bg-black text-white dark:bg-white dark:text-black py-2.5 pl-11 pr-4 text-sm font-bold rounded-2xl border-none transition-standard focus:scale-[1.01] shadow-xl placeholder:text-white/40 dark:placeholder:text-black/40">
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <button id="theme-toggle" class="flex items-center justify-center bg-black text-white dark:bg-white dark:text-black w-10 h-10 rounded-2xl shadow-xl hover:scale-105 transition-standard active:scale-95">
-            <i data-lucide="moon" id="theme-icon" class="w-5 h-5"></i>
+      <header class="px-6 py-4 flex items-center justify-between shrink-0">
+        <h1 class="text-3xl font-light tracking-tight">Notes</h1>
+        <div class="flex items-center gap-2">
+          <button id="search-toggle" class="menu-btn">
+            <i data-lucide="search" class="w-5 h-5"></i>
           </button>
-          <button id="add-note" class="flex items-center justify-center bg-black text-white dark:bg-white dark:text-black w-10 h-10 rounded-2xl shadow-xl hover:scale-105 transition-standard active:scale-95">
-            <i data-lucide="plus" class="w-5 h-5"></i>
+          <button id="theme-toggle" class="menu-btn">
+            <i data-lucide="moon" id="theme-icon" class="w-5 h-5"></i>
           </button>
         </div>
       </header>
 
-      <!-- Main List -->
-      <main id="note-list" class="flex-1 flex flex-col overflow-y-auto no-scrollbar relative px-6 md:px-10 space-y-5 py-8 max-w-4xl mx-auto w-full">
+      <!-- Search Bar (Hidden by default) -->
+      <div id="search-bar" class="hidden px-6 pb-4">
+        <input id="search-input" type="text" placeholder="Search..." class="w-full text-main py-3 px-4 border-b border-black/10 dark:border-white/10">
+      </div>
+
+      <!-- Notes List -->
+      <main id="note-list" class="flex-1 overflow-y-auto">
         <!-- Notes rendered here -->
       </main>
 
-      <!-- Editor Bottom Sheet -->
-      <div id="editor-overlay" class="editor-container transition-slide">
-        <div class="editor-sheet flex flex-col">
-          <div class="px-8 md:px-12 pt-10 pb-4 flex items-center justify-between shrink-0">
-            <div class="flex gap-6 md:gap-8 items-center">
-              <button id="close-editor" class="p-2 bg-black/5 dark:bg-white/5 rounded-2xl hover:scale-110 transition-standard shrink-0">
-                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+      <!-- FAB -->
+      <button id="add-note" class="fab">
+        <i data-lucide="plus" class="w-6 h-6"></i>
+      </button>
+
+      <!-- Editor -->
+      <div id="editor-overlay" class="editor-overlay">
+        <div class="h-full flex flex-col">
+          <!-- Editor Header -->
+          <div class="px-6 py-4 flex items-center justify-between shrink-0">
+            <button id="close-editor" class="menu-btn">
+              <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </button>
+            <div class="flex items-center gap-2">
+              <button id="toggle-pin" class="menu-btn">
+                <i data-lucide="pin" class="w-5 h-5"></i>
               </button>
-              <div class="flex gap-6">
-                <button id="mode-text" class="text-mode-btn text-[11px] font-extrabold tracking-widest uppercase transition-standard">DRAFT</button>
-                <button id="mode-checklist" class="text-mode-btn text-[11px] font-extrabold tracking-widest uppercase transition-standard">LIST</button>
-                <button id="mode-doodle" class="text-mode-btn text-[11px] font-extrabold tracking-widest uppercase transition-standard">DRAW</button>
-              </div>
-            </div>
-            <div class="flex gap-3 items-center shrink-0">
-              <button id="attach-image" class="p-2.5 opacity-40 hover:opacity-100 transition-standard"><i data-lucide="image" class="w-5 h-5"></i></button>
-              <button id="attach-file" class="p-2.5 opacity-40 hover:opacity-100 transition-standard"><i data-lucide="paperclip" class="w-5 h-5"></i></button>
-              <button id="toggle-mic" class="p-2.5 opacity-40 hover:opacity-100 transition-standard"><i data-lucide="mic" class="w-5 h-5"></i></button>
-              <button id="toggle-pin" class="p-2.5 opacity-40 hover:opacity-100 transition-standard"><i data-lucide="pin" class="w-5 h-5"></i></button>
+              <button id="editor-menu" class="menu-btn">
+                <i data-lucide="more-vertical" class="w-5 h-5"></i>
+              </button>
             </div>
           </div>
 
-          <div class="flex-1 flex flex-col px-10 md:px-16 py-4 overflow-y-auto no-scrollbar">
-            <div class="max-w-3xl mx-auto w-full flex-1 flex flex-col">
-              <input id="note-title" type="text" placeholder="Untitled." class="w-full bg-transparent text-5xl font-black placeholder:opacity-10 focus:outline-none py-6 border-none transition-standard tracking-tight">
-              <div id="content-area" class="flex-1 flex flex-col mt-4"></div>
-              <div id="assets-area" class="hidden mt-16 pt-8 border-t flat-border pb-20">
-                <h4 class="text-[12px] font-black tracking-[0.2em] uppercase opacity-20 mb-8 text-black dark:text-white">COLLECTED ASSETS.</h4>
-                <div id="assets-grid" class="grid grid-cols-2 md:grid-cols-3 gap-6"></div>
-              </div>
+          <!-- Mode Tabs -->
+          <div class="px-6 pb-4 flex gap-6 text-sm shrink-0">
+            <button id="mode-text" class="mode-btn opacity-40">Note</button>
+            <button id="mode-checklist" class="mode-btn opacity-40">List</button>
+            <button id="mode-doodle" class="mode-btn opacity-40">Draw</button>
+          </div>
+
+          <!-- Editor Content -->
+          <div class="flex-1 overflow-y-auto px-6">
+            <input id="note-title" type="text" placeholder="Title" class="w-full text-3xl font-semibold text-main mb-6">
+            <div id="content-area" class="pb-32"></div>
+            <div id="assets-area" class="hidden pt-8 pb-32">
+              <div class="text-xs font-medium text-muted mb-4">ATTACHMENTS</div>
+              <div id="assets-grid" class="grid grid-cols-2 gap-4"></div>
             </div>
           </div>
 
-          <div class="px-10 py-6 border-t flat-border flex justify-between items-center text-[11px] font-bold uppercase tracking-widest opacity-30 bg-black/[0.02] dark:bg-white/[0.02] text-black dark:text-white">
-            <div id="note-status">0 Words</div>
-            <div class="flex items-center gap-4">
-              <i data-lucide="clock" class="w-4 h-4"></i>
-              <span id="note-time">Just now</span>
+          <!-- Editor Footer -->
+          <div class="px-6 py-4 border-t border-black/6 dark:border-white/6 flex items-center justify-between shrink-0 bg-main">
+            <div class="flex gap-3">
+              <button id="attach-image" class="menu-btn">
+                <i data-lucide="image" class="w-5 h-5"></i>
+              </button>
+              <button id="attach-file" class="menu-btn">
+                <i data-lucide="paperclip" class="w-5 h-5"></i>
+              </button>
+              <button id="toggle-mic" class="menu-btn">
+                <i data-lucide="mic" class="w-5 h-5"></i>
+              </button>
             </div>
+            <div id="note-time" class="text-xs text-muted">Just now</div>
           </div>
         </div>
       </div>
 
-      <!-- Delete Dialog -->
-      <div id="delete-dialog" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/40 backdrop-blur-md">
-        <div class="bg-white dark:bg-zinc-900 rounded-[40px] p-12 max-w-sm w-full transition-standard flex flex-col items-center text-center gap-8 shadow-2xl">
-          <div class="flex flex-col items-center gap-4">
-            <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center">
-              <i data-lucide="trash-2" class="w-8 h-8 text-red-500"></i>
-            </div>
-            <div class="flex flex-col gap-2">
-              <h2 class="text-2xl font-black tracking-tight text-black dark:text-white">Delete Entry?</h2>
-              <p class="text-sm font-medium opacity-40 text-black dark:text-white">This action cannot be undone.</p>
-            </div>
+      <!-- Editor Menu Modal -->
+      <div id="editor-menu-modal" class="hidden fixed inset-0 z-[300] modal-backdrop flex items-end">
+        <div class="w-full bg-main rounded-t-3xl p-6 space-y-1">
+          <button id="menu-delete" class="w-full py-4 text-left text-red-500 font-medium">Delete Note</button>
+          <button id="menu-cancel" class="w-full py-4 text-left font-medium">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Delete Confirmation -->
+      <div id="delete-dialog" class="hidden fixed inset-0 z-[400] flex items-center justify-center p-6 modal-backdrop">
+        <div class="bg-main rounded-3xl p-8 max-w-xs w-full space-y-6">
+          <div class="text-center space-y-2">
+            <h2 class="text-xl font-semibold">Delete Note?</h2>
+            <p class="text-sm text-muted">This cannot be undone.</p>
           </div>
-          <div class="flex flex-col gap-3 w-full">
-            <button id="confirm-delete" class="w-full py-4 bg-red-500 text-white text-sm font-bold rounded-2xl transition-standard hover:bg-red-600 shadow-xl shadow-red-500/20 active:scale-95">Delete Forever</button>
-            <button id="cancel-delete" class="w-full py-4 bg-black/5 dark:bg-white/5 text-black dark:text-white text-sm font-bold rounded-2xl transition-standard hover:bg-black/10 active:scale-95">Keep Entry</button>
+          <div class="space-y-3">
+            <button id="confirm-delete" class="w-full py-3 bg-red-500 text-white rounded-full font-medium">Delete</button>
+            <button id="cancel-delete" class="w-full py-3 bg-black/5 dark:bg-white/5 rounded-full font-medium">Cancel</button>
           </div>
         </div>
       </div>
@@ -308,19 +292,12 @@
         searchQuery: '',
         theme: localStorage.getItem('theme') || 'light',
         isRecording: false,
-        noteToDelete: null
+        noteToDelete: null,
+        searchVisible: false
       };
 
       const save = () => localStorage.setItem('notes', JSON.stringify(state.notes));
       const getActiveNote = () => state.notes.find(n => n.id === state.activeId);
-
-      const noteList = document.getElementById('note-list');
-      const editorOverlay = document.getElementById('editor-overlay');
-      const noteTitle = document.getElementById('note-title');
-      const contentArea = document.getElementById('content-area');
-      const assetsArea = document.getElementById('assets-area');
-      const assetsGrid = document.getElementById('assets-grid');
-      const deleteDialog = document.getElementById('delete-dialog');
 
       const init = () => {
         applyTheme();
@@ -348,114 +325,104 @@
             return b.updatedAt - a.updatedAt;
           });
 
+        const noteList = document.getElementById('note-list');
+        
         if (filtered.length === 0) {
-          noteList.innerHTML = `<div class="py-24 text-center text-[11px] font-black tracking-[0.2em] uppercase opacity-20">Nothing found in vault.</div>`;
+          noteList.innerHTML = '<div class="py-20 text-center text-muted text-sm">No notes yet</div>';
           return;
         }
 
-        noteList.innerHTML = filtered.map(note => `
-          <button onclick="openEditor('${note.id}')" class="group w-full text-left px-8 py-8 rounded-[36px] transition-standard flex flex-col gap-2 ${state.activeId === note.id ? 'note-card-active scale-[1.02]' : 'note-card-inactive'}">
-            <div class="flex justify-between items-start w-full">
-              <h3 class="font-bold text-xl truncate flex-1 ${state.activeId === note.id ? 'sidebar-item-active' : ''}">
-                ${note.pinned ? '<i data-lucide="pin" class="inline w-4 h-4 mr-2 fill-current text-[#FF8C19]"></i>' : ''}
-                ${note.title || 'Untitled Entry'}
-              </h3>
-              <div onclick="event.stopPropagation(); showDeleteDialog('${note.id}')" class="opacity-0 group-hover:opacity-100 text-red-500/40 hover:text-red-500 transition-standard ml-2 p-1">
-                <i data-lucide="trash-2" class="w-5 h-5"></i>
+        noteList.innerHTML = filtered.map(note => {
+          const preview = note.mode === 'text' ? (note.content || '').substring(0, 100) :
+                         note.mode === 'checklist' ? `${(note.items || []).length} items` :
+                         'Drawing';
+          return `
+            <button onclick="openEditor('${note.id}')" class="note-item w-full text-left px-6 py-4 flex items-start gap-4">
+              ${note.pinned ? '<i data-lucide="pin" class="w-4 h-4 mt-1 shrink-0 opacity-40"></i>' : '<div class="w-4"></div>'}
+              <div class="flex-1 min-w-0">
+                <div class="font-medium mb-1">${note.title || 'Untitled'}</div>
+                <div class="text-sm text-muted truncate">${preview}</div>
               </div>
-            </div>
-            <div class="text-[11px] font-bold uppercase tracking-widest flex justify-between opacity-40">
-              <span>${new Date(note.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
-              <div class="flex gap-4">
-                ${note.pinned ? '<span class="text-[#FF8C19]">PINNED</span>' : ''}
-                ${note.attachments?.length ? `<span>${note.attachments.length} ASSETS</span>` : ''}
-              </div>
-            </div>
-          </button>
-        `).join('');
+              <div class="text-xs text-muted shrink-0 mt-1">${new Date(note.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</div>
+            </button>
+          `;
+        }).join('');
         lucide.createIcons();
       };
 
       const openEditor = (id) => {
         state.activeId = id;
         const note = getActiveNote();
-        editorOverlay.classList.add('is-active');
-        noteTitle.value = note.title;
+        document.getElementById('editor-overlay').classList.add('active');
+        document.getElementById('note-title').value = note.title;
         updateEditorUI();
-        renderNoteList(); 
       };
 
       const closeEditor = () => {
         state.activeId = null;
-        editorOverlay.classList.remove('is-active');
+        document.getElementById('editor-overlay').classList.remove('active');
         renderNoteList();
-      };
-
-      const updateFooterStatus = () => {
-        const note = getActiveNote();
-        if (!note) return;
-        const statusEl = document.getElementById('note-status');
-        if (note.mode === 'text') {
-          const totalText = note.content || "";
-          const count = totalText.trim() === "" ? 0 : totalText.trim().split(/\s+/).filter(word => word.length > 0).length;
-          statusEl.textContent = `${count} Word${count === 1 ? '' : 's'}`;
-        } else if (note.mode === 'checklist') {
-          const items = note.items || [];
-          const total = items.length;
-          const completed = items.filter(i => i.completed).length;
-          statusEl.textContent = `${completed} of ${total} Items`;
-        } else if (note.mode === 'doodle') {
-          statusEl.textContent = "Doodle Draft";
-        }
       };
 
       const updateEditorUI = () => {
         const note = getActiveNote();
         if (!note) return;
-        document.querySelectorAll('.text-mode-btn').forEach(btn => {
+
+        document.querySelectorAll('.mode-btn').forEach(btn => {
           const mode = btn.id.split('-')[1];
-          const isActive = note.mode === mode;
-          btn.classList.toggle('text-[#FF8C19]', isActive);
-          btn.classList.toggle('opacity-30', !isActive);
+          btn.classList.toggle('opacity-100', note.mode === mode);
+          btn.classList.toggle('opacity-40', note.mode !== mode);
+          btn.classList.toggle('font-semibold', note.mode === mode);
         });
+
         const pinBtn = document.getElementById('toggle-pin');
-        pinBtn.classList.toggle('text-[#FF8C19]', note.pinned);
-        pinBtn.classList.toggle('opacity-100', note.pinned);
-        updateFooterStatus();
-        document.getElementById('note-time').textContent = new Date(note.updatedAt).toLocaleString([], { hour:'2-digit', minute:'2-digit', month: 'short', day: 'numeric' });
+        pinBtn.style.opacity = note.pinned ? '1' : '0.4';
+
+        document.getElementById('note-time').textContent = new Date(note.updatedAt).toLocaleString([], { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          month: 'short', 
+          day: 'numeric' 
+        });
+
         renderEditorContent();
         renderAssets();
       };
 
       const renderEditorContent = () => {
         const note = getActiveNote();
+        const contentArea = document.getElementById('content-area');
+
         if (note.mode === 'text') {
-          contentArea.innerHTML = `<textarea id="note-body" class="flex-1 w-full bg-transparent text-xl font-medium leading-relaxed placeholder:opacity-10 focus:outline-none resize-none min-h-[400px] text-black/80 dark:text-white/80" placeholder="Begin writing...">${note.content || ''}</textarea>`;
+          contentArea.innerHTML = `<textarea id="note-body" class="w-full text-main text-base leading-relaxed" placeholder="Start writing..." style="min-height: 400px;">${note.content || ''}</textarea>`;
           document.getElementById('note-body').addEventListener('input', e => {
             note.content = e.target.value;
             note.updatedAt = Date.now();
             save();
-            updateFooterStatus();
           });
         } else if (note.mode === 'checklist') {
           contentArea.innerHTML = `
-            <div class="flex flex-col gap-10">
-              <div class="flex gap-4 items-center bg-black/5 dark:bg-white/5 p-3 rounded-2xl px-6">
-                <input id="new-item-input" type="text" placeholder="Add task..." class="flex-1 bg-transparent py-1 text-lg font-bold placeholder:opacity-30">
-                <button onclick="addChecklistItem()" class="bg-black text-white dark:bg-white dark:text-black w-10 h-10 rounded-xl flex items-center justify-center transition-standard hover:scale-105 active:scale-95">
-                  <i data-lucide="plus" class="w-5 h-5"></i>
+            <div class="space-y-4">
+              <div class="flex gap-3 items-center pb-4 border-b border-black/6 dark:border-white/6">
+                <input id="new-item-input" type="text" placeholder="Add item..." class="flex-1 text-main py-2">
+                <button onclick="addChecklistItem()" class="w-10 h-10 rounded-full bg-black dark:bg-white flex items-center justify-center shrink-0">
+                  <i data-lucide="plus" class="w-5 h-5 text-white dark:text-black"></i>
                 </button>
               </div>
-              <div id="checklist-items" class="space-y-5"></div>
+              <div id="checklist-items" class="space-y-3"></div>
             </div>
           `;
           document.getElementById('new-item-input').addEventListener('keydown', e => e.key === 'Enter' && addChecklistItem());
           renderChecklistItems();
         } else if (note.mode === 'doodle') {
           contentArea.innerHTML = `
-            <div class="flex-1 flex flex-col gap-4 h-full">
-              <div class="flex justify-end"><button onclick="clearCanvas()" class="text-[10px] font-black tracking-widest uppercase opacity-20 hover:opacity-100 flex items-center gap-2 transition-standard"><i data-lucide="rotate-ccw" class="w-3 h-3"></i>RESET</button></div>
-              <canvas id="sketch-canvas" class="flex-1 w-full rounded-[32px] flat-border min-h-[400px] shadow-inner"></canvas>
+            <div class="space-y-4">
+              <div class="flex justify-end">
+                <button onclick="clearCanvas()" class="text-xs text-muted">Clear</button>
+              </div>
+              <div class="canvas-container">
+                <canvas id="sketch-canvas" class="w-full rounded-2xl" style="height: 400px;"></canvas>
+              </div>
             </div>
           `;
           initCanvas();
@@ -467,11 +434,14 @@
         const note = getActiveNote();
         const container = document.getElementById('checklist-items');
         if (!container) return;
+
         container.innerHTML = (note.items || []).map(item => `
-          <div class="flex items-center gap-5 group px-3">
+          <div class="flex items-center gap-3 group">
             <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleChecklistItem('${item.id}')" class="custom-checkbox shrink-0">
-            <span class="flex-1 text-lg font-semibold transition-standard ${item.completed ? 'opacity-20 line-through' : 'opacity-80'}">${item.text}</span>
-            <button onclick="removeChecklistItem('${item.id}')" class="opacity-0 group-hover:opacity-40 transition-standard hover:text-red-500"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <span class="flex-1 ${item.completed ? 'line-through opacity-40' : ''}">${item.text}</span>
+            <button onclick="removeChecklistItem('${item.id}')" class="opacity-0 group-hover:opacity-40 text-red-500">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
           </div>
         `).join('');
         lucide.createIcons();
@@ -479,17 +449,23 @@
 
       const renderAssets = () => {
         const note = getActiveNote();
+        const assetsArea = document.getElementById('assets-area');
+        const assetsGrid = document.getElementById('assets-grid');
+
         if (!note.attachments?.length) {
           assetsArea.classList.add('hidden');
           return;
         }
+
         assetsArea.classList.remove('hidden');
         assetsGrid.innerHTML = note.attachments.map(att => `
-          <div class="relative group aspect-square rounded-[32px] overflow-hidden bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 transition-standard hover:shadow-xl">
-            <button onclick="removeAttachment('${att.id}')" class="absolute top-4 right-4 p-2 bg-white dark:bg-black rounded-xl shadow-lg opacity-0 group-hover:opacity-100 z-10 transition-standard"><i data-lucide="x" class="w-4 h-4 text-red-500"></i></button>
-            ${att.type === 'image' ? `<img src="${att.data}" class="w-full h-full object-cover">` : 
-              att.type === 'voice' ? `<div class="w-full h-full flex flex-col items-center justify-center p-6 gap-4 text-center"><i data-lucide="music" class="w-8 h-8 opacity-40"></i><span class="text-[9px] font-bold uppercase truncate w-full opacity-40">${att.name}</span><audio src="${att.data}" controls class="w-full h-8 scale-75"></audio></div>` :
-              `<div class="w-full h-full flex flex-col items-center justify-center p-6 gap-4 text-center"><i data-lucide="file-text" class="w-10 h-10 opacity-40"></i><span class="text-[9px] font-bold uppercase truncate w-full opacity-40">${att.name}</span><a href="${att.data}" download="${att.name}" class="p-3 bg-black/10 rounded-2xl transition-standard hover:bg-black/20"><i data-lucide="download" class="w-5 h-5"></i></a></div>`}
+          <div class="asset-card relative group">
+            <button onclick="removeAttachment('${att.id}')" class="absolute top-2 right-2 w-8 h-8 bg-white dark:bg-black rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 z-10">
+              <i data-lucide="x" class="w-4 h-4 text-red-500"></i>
+            </button>
+            ${att.type === 'image' ? `<img src="${att.data}" class="w-full h-full object-cover">` :
+              att.type === 'voice' ? `<div class="w-full h-full flex flex-col items-center justify-center p-4 gap-2"><i data-lucide="music" class="w-8 h-8 opacity-40"></i><audio src="${att.data}" controls class="w-full"></audio></div>` :
+              `<div class="w-full h-full flex flex-col items-center justify-center p-4 gap-2"><i data-lucide="file-text" class="w-8 h-8 opacity-40"></i><a href="${att.data}" download="${att.name}" class="text-xs">Download</a></div>`}
           </div>
         `).join('');
         lucide.createIcons();
@@ -499,32 +475,75 @@
       const initCanvas = () => {
         const canvas = document.getElementById('sketch-canvas');
         if (!canvas) return;
-        const resize = () => {
-          canvas.width = canvas.offsetWidth;
-          canvas.height = canvas.offsetHeight;
-          canvasCtx = canvas.getContext('2d');
-          canvasCtx.lineCap = 'round';
-          canvasCtx.lineWidth = 4;
-          canvasCtx.strokeStyle = state.theme === 'dark' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)';
-          const note = getActiveNote();
-          if (note.doodleData) { const img = new Image(); img.onload = () => canvasCtx.drawImage(img, 0, 0); img.src = note.doodleData; }
+
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        canvasCtx = canvas.getContext('2d');
+        canvasCtx.lineCap = 'round';
+        canvasCtx.lineWidth = 3;
+        canvasCtx.strokeStyle = state.theme === 'dark' ? '#ffffff' : '#000000';
+
+        const note = getActiveNote();
+        if (note.doodleData) {
+          const img = new Image();
+          img.onload = () => canvasCtx.drawImage(img, 0, 0);
+          img.src = note.doodleData;
+        }
+
+        const getXY = (e) => {
+          const rect = canvas.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          return [clientX - rect.left, clientY - rect.top];
         };
-        resize();
-        window.addEventListener('resize', resize);
-        
-        const getXY = (e) => { const rect = canvas.getBoundingClientRect(); const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY; return [clientX - rect.left, clientY - rect.top]; };
-        const start = (e) => { drawing = true; canvasCtx.beginPath(); canvasCtx.moveTo(...getXY(e)); };
-        const draw = (e) => { if (!drawing) return; canvasCtx.lineTo(...getXY(e)); canvasCtx.stroke(); };
-        const stop = () => { if (!drawing) return; drawing = false; canvasCtx.closePath(); note.doodleData = canvas.toDataURL(); note.updatedAt = Date.now(); save(); };
-        canvas.onmousedown = start; canvas.onmousemove = draw; canvas.onmouseup = stop; canvas.onmouseout = stop;
-        canvas.ontouchstart = start; canvas.ontouchmove = draw; canvas.ontouchend = stop;
+
+        const start = (e) => {
+          e.preventDefault();
+          drawing = true;
+          canvasCtx.beginPath();
+          canvasCtx.moveTo(...getXY(e));
+        };
+
+        const draw = (e) => {
+          e.preventDefault();
+          if (!drawing) return;
+          canvasCtx.lineTo(...getXY(e));
+          canvasCtx.stroke();
+        };
+
+        const stop = () => {
+          if (!drawing) return;
+          drawing = false;
+          canvasCtx.closePath();
+          note.doodleData = canvas.toDataURL();
+          note.updatedAt = Date.now();
+          save();
+        };
+
+        canvas.addEventListener('mousedown', start);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stop);
+        canvas.addEventListener('mouseout', stop);
+        canvas.addEventListener('touchstart', start);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stop);
       };
 
-      const clearCanvas = () => { const canvas = document.getElementById('sketch-canvas'); canvasCtx.clearRect(0, 0, canvas.width, canvas.height); const note = getActiveNote(); note.doodleData = null; save(); };
+      window.clearCanvas = () => {
+        const canvas = document.getElementById('sketch-canvas');
+        canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+        const note = getActiveNote();
+        note.doodleData = null;
+        save();
+      };
 
       let mediaRecorder = null, audioChunks = [];
       const toggleMic = async () => {
-        if (state.isRecording) { mediaRecorder.stop(); state.isRecording = false; updateMicUI(); } else {
+        if (state.isRecording) {
+          mediaRecorder.stop();
+          state.isRecording = false;
+          updateMicUI();
+        } else {
           try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRecorder = new MediaRecorder(stream);
@@ -535,55 +554,198 @@
               const reader = new FileReader();
               reader.onload = e => {
                 const note = getActiveNote();
-                note.attachments = [...(note.attachments || []), { id: Date.now()+'-v', type: 'voice', name: `Recording_${new Date().getTime()}`, data: e.target.result }];
-                note.updatedAt = Date.now(); save(); renderAssets(); updateFooterStatus();
+                note.attachments = [...(note.attachments || []), {
+                  id: Date.now() + '-v',
+                  type: 'voice',
+                  name: `Recording_${new Date().getTime()}`,
+                  data: e.target.result
+                }];
+                note.updatedAt = Date.now();
+                save();
+                renderAssets();
               };
-              reader.readAsDataURL(blob); stream.getTracks().forEach(t => t.stop());
+              reader.readAsDataURL(blob);
+              stream.getTracks().forEach(t => t.stop());
             };
-            mediaRecorder.start(); state.isRecording = true; updateMicUI();
-          } catch (err) { alert("Microphone access required for voice notes."); }
+            mediaRecorder.start();
+            state.isRecording = true;
+            updateMicUI();
+          } catch (err) {
+            alert("Microphone access required");
+          }
         }
       };
 
       const updateMicUI = () => {
         const btn = document.getElementById('toggle-mic');
-        btn.classList.toggle('text-red-500', state.isRecording);
-        btn.classList.toggle('opacity-100', state.isRecording);
+        btn.style.opacity = state.isRecording ? '1' : '0.4';
         const icon = btn.querySelector('i');
         icon.setAttribute('data-lucide', state.isRecording ? 'square' : 'mic');
         lucide.createIcons();
       };
 
-      window.showDeleteDialog = (id) => { state.noteToDelete = id; deleteDialog.classList.remove('hidden'); };
-      document.getElementById('confirm-delete').onclick = () => { state.notes = state.notes.filter(n => n.id !== state.noteToDelete); if (state.activeId === state.noteToDelete) closeEditor(); save(); renderNoteList(); deleteDialog.classList.add('hidden'); };
-      document.getElementById('cancel-delete').onclick = () => deleteDialog.classList.add('hidden');
-      document.getElementById('add-note').onclick = () => { const newNote = { id: Date.now().toString(), title: '', content: '', mode: 'text', items: [], pinned: false, updatedAt: Date.now(), attachments: [] }; state.notes.push(newNote); save(); openEditor(newNote.id); noteTitle.focus(); };
-      document.getElementById('theme-toggle').onclick = () => { state.theme = state.theme === 'light' ? 'dark' : 'light'; applyTheme(); if (state.activeId) updateEditorUI(); };
-      document.getElementById('search-input').oninput = (e) => { state.searchQuery = e.target.value; renderNoteList(); };
+      // Event Listeners
+      document.getElementById('add-note').onclick = () => {
+        const newNote = {
+          id: Date.now().toString(),
+          title: '',
+          content: '',
+          mode: 'text',
+          items: [],
+          pinned: false,
+          updatedAt: Date.now(),
+          attachments: []
+        };
+        state.notes.push(newNote);
+        save();
+        openEditor(newNote.id);
+        setTimeout(() => document.getElementById('note-title').focus(), 300);
+      };
+
+      document.getElementById('theme-toggle').onclick = () => {
+        state.theme = state.theme === 'light' ? 'dark' : 'light';
+        applyTheme();
+        if (state.activeId) updateEditorUI();
+      };
+
+      document.getElementById('search-toggle').onclick = () => {
+        state.searchVisible = !state.searchVisible;
+        const searchBar = document.getElementById('search-bar');
+        searchBar.classList.toggle('hidden', !state.searchVisible);
+        if (state.searchVisible) {
+          document.getElementById('search-input').focus();
+        }
+      };
+
+      document.getElementById('search-input').oninput = (e) => {
+        state.searchQuery = e.target.value;
+        renderNoteList();
+      };
+
       document.getElementById('close-editor').onclick = closeEditor;
-      noteTitle.oninput = (e) => { const note = getActiveNote(); note.title = e.target.value; note.updatedAt = Date.now(); save(); };
-      noteTitle.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); const body = document.getElementById('note-body'); if (body) body.focus(); } };
-      document.querySelectorAll('.text-mode-btn').forEach(btn => { btn.onclick = () => { const note = getActiveNote(); note.mode = btn.id.split('-')[1]; note.updatedAt = Date.now(); save(); updateEditorUI(); }; });
-      document.getElementById('toggle-pin').onclick = () => { const note = getActiveNote(); note.pinned = !note.pinned; note.updatedAt = Date.now(); save(); updateEditorUI(); };
+
+      document.getElementById('note-title').oninput = (e) => {
+        const note = getActiveNote();
+        note.title = e.target.value;
+        note.updatedAt = Date.now();
+        save();
+      };
+
+      document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.onclick = () => {
+          const note = getActiveNote();
+          note.mode = btn.id.split('-')[1];
+          note.updatedAt = Date.now();
+          save();
+          updateEditorUI();
+        };
+      });
+
+      document.getElementById('toggle-pin').onclick = () => {
+        const note = getActiveNote();
+        note.pinned = !note.pinned;
+        note.updatedAt = Date.now();
+        save();
+        updateEditorUI();
+      };
+
+      document.getElementById('editor-menu').onclick = () => {
+        document.getElementById('editor-menu-modal').classList.remove('hidden');
+      };
+
+      document.getElementById('menu-delete').onclick = () => {
+        document.getElementById('editor-menu-modal').classList.add('hidden');
+        document.getElementById('delete-dialog').classList.remove('hidden');
+        state.noteToDelete = state.activeId;
+      };
+
+      document.getElementById('menu-cancel').onclick = () => {
+        document.getElementById('editor-menu-modal').classList.add('hidden');
+      };
+
+      document.getElementById('confirm-delete').onclick = () => {
+        state.notes = state.notes.filter(n => n.id !== state.noteToDelete);
+        save();
+        closeEditor();
+        document.getElementById('delete-dialog').classList.add('hidden');
+      };
+
+      document.getElementById('cancel-delete').onclick = () => {
+        document.getElementById('delete-dialog').classList.add('hidden');
+      };
+
       document.getElementById('toggle-mic').onclick = toggleMic;
-      document.getElementById('attach-image').onclick = () => document.getElementById('image-input').click();
-      document.getElementById('attach-file').onclick = () => document.getElementById('file-input').click();
+
+      document.getElementById('attach-image').onclick = () => {
+        document.getElementById('image-input').click();
+      };
+
+      document.getElementById('attach-file').onclick = () => {
+        document.getElementById('file-input').click();
+      };
+
       const handleFile = (e, type) => {
-        const file = e.target.files[0]; if (!file) return;
+        const file = e.target.files[0];
+        if (!file) return;
         const reader = new FileReader();
-        reader.onload = (ev) => { const note = getActiveNote(); note.attachments.push({ id: Date.now()+'-f', type, name: file.name, data: ev.target.result }); note.updatedAt = Date.now(); save(); renderAssets(); updateFooterStatus(); e.target.value = ''; };
+        reader.onload = (ev) => {
+          const note = getActiveNote();
+          note.attachments.push({
+            id: Date.now() + '-f',
+            type,
+            name: file.name,
+            data: ev.target.result
+          });
+          note.updatedAt = Date.now();
+          save();
+          renderAssets();
+          e.target.value = '';
+        };
         reader.readAsDataURL(file);
       };
+
       document.getElementById('image-input').onchange = e => handleFile(e, 'image');
       document.getElementById('file-input').onchange = e => handleFile(e, 'file');
+
       window.addChecklistItem = () => {
-        const input = document.getElementById('new-item-input'); if (!input?.value.trim()) return;
-        const note = getActiveNote(); note.items.push({ id: Date.now().toString(), text: input.value.trim(), completed: false });
-        note.updatedAt = Date.now(); save(); input.value = ''; renderChecklistItems(); updateFooterStatus();
+        const input = document.getElementById('new-item-input');
+        if (!input?.value.trim()) return;
+        const note = getActiveNote();
+        note.items.push({
+          id: Date.now().toString(),
+          text: input.value.trim(),
+          completed: false
+        });
+        note.updatedAt = Date.now();
+        save();
+        input.value = '';
+        renderChecklistItems();
       };
-      window.toggleChecklistItem = (id) => { const note = getActiveNote(); const item = note.items.find(i => i.id === id); item.completed = !item.completed; note.updatedAt = Date.now(); save(); renderChecklistItems(); updateFooterStatus(); };
-      window.removeChecklistItem = (id) => { const note = getActiveNote(); note.items = note.items.filter(i => i.id !== id); note.updatedAt = Date.now(); save(); renderChecklistItems(); updateFooterStatus(); };
-      window.removeAttachment = (id) => { const note = getActiveNote(); note.attachments = note.attachments.filter(a => a.id !== id); note.updatedAt = Date.now(); save(); renderAssets(); updateFooterStatus(); };
+
+      window.toggleChecklistItem = (id) => {
+        const note = getActiveNote();
+        const item = note.items.find(i => i.id === id);
+        item.completed = !item.completed;
+        note.updatedAt = Date.now();
+        save();
+        renderChecklistItems();
+      };
+
+      window.removeChecklistItem = (id) => {
+        const note = getActiveNote();
+        note.items = note.items.filter(i => i.id !== id);
+        note.updatedAt = Date.now();
+        save();
+        renderChecklistItems();
+      };
+
+      window.removeAttachment = (id) => {
+        const note = getActiveNote();
+        note.attachments = note.attachments.filter(a => a.id !== id);
+        note.updatedAt = Date.now();
+        save();
+        renderAssets();
+      };
 
       init();
     </script>
