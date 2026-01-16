@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>TL;DR</title>
+    <title>Vivari</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -879,7 +879,7 @@
 
         <div id="editor-container" class="hidden h-full flex flex-col">
           <!-- Editor Header -->
-          <div class="px-8 py-6 flex items-center justify-between shrink-0 border-b border-black/4 dark:border-white/4 overflow-x-auto gap-4">
+          <div class="px-8 py-6 flex items-center justify-between shrink-0 overflow-x-auto gap-4">
             <div class="flex items-center gap-2 min-w-0">
               <button id="close-editor-mobile" class="icon-btn md:hidden shrink-0" title="Back">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
@@ -927,14 +927,14 @@
 
             <div id="content-area" class="shrink-0"></div>
             
-            <div id="attachments-area" class="hidden mt-auto pt-8 border-t border-black/4 dark:border-white/4 shrink-0">
+            <div id="attachments-area" class="hidden mt-auto pt-8 shrink-0">
               <div class="text-xs font-medium text-muted mb-4 uppercase tracking-wide">Attachments</div>
               <div id="attachments-grid" class="grid grid-cols-3 gap-4"></div>
             </div>
           </div>
 
           <!-- Editor Footer -->
-          <div class="px-8 py-4 border-t border-black/4 dark:border-white/4 flex items-center justify-between shrink-0">
+          <div class="px-8 py-4 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-1">
               <button id="attach-image" class="icon-btn" title="Add image">
                 <i data-lucide="image" class="w-4 h-4"></i>
