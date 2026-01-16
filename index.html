@@ -2,14 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Notes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>TL;DR</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
       
-      * { margin: 0; padding: 0; box-sizing: border-box; }
+      * { 
+        margin: 0; 
+        padding: 0; 
+        box-sizing: border-box; 
+      }
       
       body {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -18,68 +22,115 @@
         -moz-osx-font-smoothing: grayscale;
       }
 
-      .bg-main { background-color: #ffffff; }
-      .dark .bg-main { background-color: #1a1a1a; }
+      .bg-main { background-color: #fafafa; }
+      .dark .bg-main { background-color: #0a0a0a; }
 
       .text-main { color: #000000; }
       .dark .text-main { color: #ffffff; }
 
-      .text-muted { color: rgba(0, 0, 0, 0.4); }
-      .dark .text-muted { color: rgba(255, 255, 255, 0.4); }
+      .text-muted { color: rgba(0, 0, 0, 0.35); }
+      .dark .text-muted { color: rgba(255, 255, 255, 0.35); }
+
+      .sidebar {
+        width: 280px;
+        border-right: 1px solid rgba(0, 0, 0, 0.04);
+      }
+      .dark .sidebar {
+        border-right: 1px solid rgba(255, 255, 255, 0.04);
+      }
+
+      @media (max-width: 768px) {
+        .sidebar {
+          width: 100%;
+          border-right: none;
+        }
+        
+        #editor-area {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 200;
+          transform: translateX(100%);
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        #editor-area.active {
+          transform: translateX(0);
+        }
+        
+        .multi-select-bar {
+          left: 50%;
+          right: auto;
+          bottom: 80px;
+        }
+
+        #editor-container > div:nth-child(2) {
+          padding-left: 1.5rem;
+          padding-right: 1.5rem;
+        }
+
+        #editor-container > div:first-child {
+          padding-left: 1rem;
+          padding-right: 1rem;
+          padding-top: 1rem;
+          padding-bottom: 1rem;
+        }
+
+        .mode-tab {
+          font-size: 12px;
+          padding: 5px 10px;
+          white-space: nowrap;
+        }
+      }
 
       .note-item {
         background: transparent;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        transition: background 0.2s ease;
+        border-radius: 6px;
+        transition: background 0.15s ease;
+        cursor: pointer;
       }
-      .dark .note-item {
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-      }
-      .note-item:active {
+      .note-item:hover {
         background: rgba(0, 0, 0, 0.02);
       }
-      .dark .note-item:active {
+      .dark .note-item:hover {
         background: rgba(255, 255, 255, 0.02);
       }
+      .note-item.active {
+        background: rgba(0, 0, 0, 0.04);
+      }
+      .dark .note-item.active {
+        background: rgba(255, 255, 255, 0.04);
+      }
 
-      .fab {
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        background: #000000;
-        color: #ffffff;
+      .icon-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         cursor: pointer;
-        transition: transform 0.2s ease;
-        z-index: 100;
+        transition: all 0.15s ease;
+        color: rgba(0, 0, 0, 1);
       }
-      .dark .fab {
-        background: #ffffff;
-        color: #000000;
+      .dark .icon-btn {
+        color: rgba(255, 255, 255, 1);
       }
-      .fab:active {
-        transform: scale(0.95);
+      .icon-btn:hover {
+        background: rgba(0, 0, 0, 0.03);
+        color: rgba(0, 0, 0, 1);
       }
-
-      .editor-overlay {
-        position: fixed;
-        inset: 0;
-        background: #ffffff;
-        z-index: 200;
-        transform: translateX(100%);
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      .dark .icon-btn:hover {
+        background: rgba(255, 255, 255, 0.03);
+        color: rgba(255, 255, 255, 1);
       }
-      .dark .editor-overlay {
-        background: #1a1a1a;
+      .icon-btn.active {
+        color: rgba(0, 0, 0, 1);
       }
-      .editor-overlay.active {
-        transform: translateX(0);
+      .dark .icon-btn.active {
+        color: rgba(255, 255, 255, 1);
       }
 
       textarea, input {
@@ -88,17 +139,27 @@
         background: transparent;
         resize: none;
         font-family: inherit;
+        color: inherit;
       }
 
       .custom-checkbox {
         appearance: none;
-        width: 20px;
-        height: 20px;
-        border: 2px solid currentColor;
-        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
         cursor: pointer;
         position: relative;
-        transition: all 0.2s ease;
+        transition: all 0.15s ease;
+      }
+      .dark .custom-checkbox {
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+      .custom-checkbox:hover {
+        border-color: rgba(0, 0, 0, 0.4);
+      }
+      .dark .custom-checkbox:hover {
+        border-color: rgba(255, 255, 255, 0.4);
       }
       .custom-checkbox:checked {
         background: #000000;
@@ -111,197 +172,965 @@
       .custom-checkbox:checked::after {
         content: '';
         position: absolute;
-        width: 6px;
-        height: 3px;
-        border-left: 2px solid #ffffff;
-        border-bottom: 2px solid #ffffff;
+        width: 4px;
+        height: 2px;
+        border-left: 1.5px solid #ffffff;
+        border-bottom: 1.5px solid #ffffff;
         top: 50%;
         left: 50%;
-        transform: translate(-50%, -60%) rotate(-45deg);
+        transform: translate(-50%, -65%) rotate(-45deg);
       }
       .dark .custom-checkbox:checked::after {
         border-color: #000000;
       }
 
-      .menu-btn {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: background 0.2s ease;
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { 
+        background: rgba(0, 0, 0, 0.1); 
+        border-radius: 4px;
       }
-      .menu-btn:active {
-        background: rgba(0, 0, 0, 0.05);
+      .dark ::-webkit-scrollbar-thumb { 
+        background: rgba(255, 255, 255, 0.1); 
       }
-      .dark .menu-btn:active {
-        background: rgba(255, 255, 255, 0.05);
+      ::-webkit-scrollbar-thumb:hover { 
+        background: rgba(0, 0, 0, 0.15); 
+      }
+      .dark ::-webkit-scrollbar-thumb:hover { 
+        background: rgba(255, 255, 255, 0.15); 
       }
 
-      ::-webkit-scrollbar { display: none; }
-      
       .canvas-container {
         touch-action: none;
       }
 
-      #sketch-canvas {
+      .folder-item {
+        background: transparent;
+        border-radius: 6px;
+        transition: background 0.15s ease;
+        cursor: pointer;
+      }
+      .folder-item:hover {
+        background: rgba(0, 0, 0, 0.02);
+      }
+      .dark .folder-item:hover {
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .folder-item.active {
+        background: rgba(0, 0, 0, 0.04);
+      }
+      .dark .folder-item.active {
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .folder-nested {
+        padding-left: 20px;
+        border-left: 1px solid rgba(0, 0, 0, 0.06);
+        margin-left: 10px;
+      }
+      .dark .folder-nested {
+        border-left: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .tag-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        background: rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        gap: 4px;
+      }
+      .dark .tag-badge {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .tag-input {
+        padding: 6px 10px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 4px;
+        font-size: 12px;
+      }
+      .dark .tag-input {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .folder-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        margin-top: 4px;
         background: #fafafa;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 50;
+      }
+      .dark .folder-dropdown {
+        background: #0a0a0a;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .section-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: rgba(0, 0, 0, 0.4);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+      }
+      .dark .section-title {
+        color: rgba(255, 255, 255, 0.4);
+      }
+
+      .filter-btn {
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        background: transparent;
+        transition: all 0.15s ease;
+        cursor: pointer;
+      }
+      .dark .filter-btn {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .filter-btn:hover {
+        background: rgba(0, 0, 0, 0.02);
+      }
+      .dark .filter-btn:hover {
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .filter-btn.active {
+        background: rgba(0, 0, 0, 0.06);
+        border-color: rgba(0, 0, 0, 0.12);
+      }
+      .dark .filter-btn.active {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.12);
+      }
+
+      .sort-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        margin-top: 4px;
+        background: #fafafa;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 8px;
+        min-width: 180px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 50;
+      }
+      .dark .sort-dropdown {
+        background: #0a0a0a;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .filter-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .filter-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        background: rgba(0, 0, 0, 0.06);
+        gap: 4px;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .dark .filter-chip {
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .filter-chip:hover {
+        background: rgba(0, 0, 0, 0.1);
+      }
+      .dark .filter-chip:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .formatting-toolbar {
+        display: flex;
+        gap: 2px;
+        padding: 8px;
         border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.02);
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+      .dark .formatting-toolbar {
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .format-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        background: transparent;
+        border: none;
+        color: rgba(0, 0, 0, 1);
+      }
+      .dark .format-btn {
+        color: rgba(255, 255, 255, 1);
+      }
+      .format-btn:hover {
+        background: rgba(0, 0, 0, 0.04);
+      }
+      .dark .format-btn:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .format-btn.active {
+        background: rgba(0, 0, 0, 0.08);
+      }
+      .dark .format-btn.active {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .format-divider {
+        width: 1px;
+        height: 24px;
+        background: rgba(0, 0, 0, 0.08);
+        margin: 4px 4px;
+      }
+      .dark .format-divider {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .formatted-content {
+        line-height: 1.6;
+      }
+      .formatted-content strong {
+        font-weight: 600;
+      }
+      .formatted-content em {
+        font-style: italic;
+      }
+      .formatted-content h1 {
+        font-size: 2em;
+        font-weight: 600;
+        margin: 0.67em 0;
+      }
+      .formatted-content h2 {
+        font-size: 1.5em;
+        font-weight: 600;
+        margin: 0.75em 0;
+      }
+      .formatted-content h3 {
+        font-size: 1.17em;
+        font-weight: 600;
+        margin: 0.83em 0;
+      }
+      .formatted-content ul {
+        list-style-type: disc;
+        margin: 1em 0;
+        padding-left: 2em;
+      }
+      .formatted-content ol {
+        list-style-type: decimal;
+        margin: 1em 0;
+        padding-left: 2em;
+      }
+      .formatted-content li {
+        margin: 0.25em 0;
+      }
+      .formatted-content code {
+        font-family: 'Monaco', 'Courier New', monospace;
+        background: rgba(0, 0, 0, 0.06);
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.9em;
+      }
+      .dark .formatted-content code {
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .formatted-content pre {
+        font-family: 'Monaco', 'Courier New', monospace;
+        background: rgba(0, 0, 0, 0.06);
+        padding: 12px;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin: 1em 0;
+        font-size: 0.9em;
+      }
+      .dark .formatted-content pre {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      #note-body {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      .note-link {
+        color: #0066cc;
+        text-decoration: none;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(0, 102, 204, 0.3);
+        transition: all 0.15s ease;
+      }
+      .dark .note-link {
+        color: #66b3ff;
+        border-bottom-color: rgba(102, 179, 255, 0.3);
+      }
+      .note-link:hover {
+        background: rgba(0, 102, 204, 0.05);
+        border-bottom-color: rgba(0, 102, 204, 0.6);
+      }
+      .dark .note-link:hover {
+        background: rgba(102, 179, 255, 0.05);
+        border-bottom-color: rgba(102, 179, 255, 0.6);
+      }
+      .note-link.broken {
+        color: #999;
+        border-bottom-color: rgba(153, 153, 153, 0.3);
+        cursor: default;
+      }
+      .dark .note-link.broken {
+        color: #666;
+        border-bottom-color: rgba(102, 102, 102, 0.3);
+      }
+
+      .link-suggestion {
+        position: absolute;
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 100;
+        min-width: 200px;
+      }
+      .dark .link-suggestion {
+        background: #1a1a1a;
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+      .link-suggestion-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .link-suggestion-item:hover {
+        background: rgba(0, 0, 0, 0.04);
+      }
+      .dark .link-suggestion-item:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .link-suggestion-item.selected {
+        background: rgba(0, 0, 0, 0.06);
+      }
+      .dark .link-suggestion-item.selected {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .password-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(8px);
+      }
+      .dark .password-modal {
+        background: rgba(0, 0, 0, 0.6);
+      }
+
+      .password-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        font-size: 16px;
+        text-align: center;
+        letter-spacing: 4px;
+      }
+      .dark .password-input {
+        border-color: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .password-input:focus {
+        outline: none;
+        border-color: rgba(0, 0, 0, 0.3);
+      }
+      .dark .password-input:focus {
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      .locked-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: rgba(0, 0, 0, 0.4);
+      }
+      .dark .locked-indicator {
+        color: rgba(255, 255, 255, 0.4);
+      }
+
+      .locked-overlay {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 400px;
+        gap: 16px;
+      }
+
+      .mode-tab {
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        color: rgba(0, 0, 0, 0.4);
+      }
+      .dark .mode-tab {
+        color: rgba(255, 255, 255, 0.4);
+      }
+      .mode-tab:hover {
+        background: rgba(0, 0, 0, 0.03);
+        color: rgba(0, 0, 0, 0.6);
+      }
+      .dark .mode-tab:hover {
+        background: rgba(255, 255, 255, 0.03);
+        color: rgba(255, 255, 255, 0.6);
+      }
+      .mode-tab.active {
+        background: rgba(0, 0, 0, 0.04);
+        color: rgba(0, 0, 0, 1);
+        font-weight: 500;
+      }
+      .dark .mode-tab.active {
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(255, 255, 255, 1);
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 6px;
+        font-size: 13px;
+        transition: border 0.15s ease;
+      }
+      .dark .search-input {
+        border-color: rgba(255, 255, 255, 0.06);
+      }
+      .search-input:focus {
+        border-color: rgba(0, 0, 0, 0.12);
+      }
+      .dark .search-input:focus {
+        border-color: rgba(255, 255, 255, 0.12);
+      }
+
+      #sketch-canvas {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 8px;
       }
       .dark #sketch-canvas {
-        background: #0a0a0a;
+        background: #000000;
         border: 1px solid rgba(255, 255, 255, 0.06);
       }
 
-      .asset-card {
-        aspect-ratio: 1;
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 12px;
+      }
+
+      .note-actions {
+        opacity: 0;
+        transition: opacity 0.15s ease;
+      }
+      .note-item:hover .note-actions {
+        opacity: 1;
+      }
+
+      .select-checkbox {
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border: 1.5px solid rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+      }
+      .dark .select-checkbox {
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+      .select-checkbox:checked {
+        background: #000000;
+        border-color: #000000;
+      }
+      .dark .select-checkbox:checked {
+        background: #ffffff;
+        border-color: #ffffff;
+      }
+      .select-checkbox:checked::after {
+        content: '';
+        position: absolute;
+        width: 4px;
+        height: 2px;
+        border-left: 1.5px solid #ffffff;
+        border-bottom: 1.5px solid #ffffff;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -65%) rotate(-45deg);
+      }
+      .dark .select-checkbox:checked::after {
+        border-color: #000000;
+      }
+
+      .multi-select-bar {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #000000;
+        color: #ffffff;
+        padding: 14px 24px;
         border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        z-index: 100;
+      }
+      .dark .multi-select-bar {
+        background: #ffffff;
+        color: #000000;
+      }
+      
+      .dark .multi-select-bar button {
+        color: #000000;
+      }
+
+      .attachment-card {
+        position: relative;
+        border-radius: 8px;
         overflow: hidden;
         background: rgba(0, 0, 0, 0.02);
         border: 1px solid rgba(0, 0, 0, 0.06);
       }
-      .dark .asset-card {
+      .dark .attachment-card {
         background: rgba(255, 255, 255, 0.02);
         border: 1px solid rgba(255, 255, 255, 0.06);
       }
 
-      .modal-backdrop {
-        background: rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(8px);
+      .remove-attachment {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+        cursor: pointer;
       }
-      .dark .modal-backdrop {
-        background: rgba(0, 0, 0, 0.6);
+      .dark .remove-attachment {
+        background: rgba(0, 0, 0, 0.9);
+      }
+      .attachment-card:hover .remove-attachment {
+        opacity: 1;
+      }
+      .remove-attachment:hover {
+        background: rgba(255, 255, 255, 1);
+      }
+      .dark .remove-attachment:hover {
+        background: rgba(0, 0, 0, 1);
       }
     </style>
 </head>
-<body class="bg-main text-main transition-colors duration-300">
-    <div id="root" class="h-screen w-full flex flex-col overflow-hidden">
-      <!-- Header -->
-      <header class="px-6 py-4 flex items-center justify-between shrink-0">
-        <h1 class="text-3xl font-light tracking-tight">Notes</h1>
-        <div class="flex items-center gap-2">
-          <button id="search-toggle" class="menu-btn">
-            <i data-lucide="search" class="w-5 h-5"></i>
-          </button>
-          <button id="theme-toggle" class="menu-btn">
-            <i data-lucide="moon" id="theme-icon" class="w-5 h-5"></i>
-          </button>
-        </div>
-      </header>
-
-      <!-- Search Bar (Hidden by default) -->
-      <div id="search-bar" class="hidden px-6 pb-4">
-        <input id="search-input" type="text" placeholder="Search..." class="w-full text-main py-3 px-4 border-b border-black/10 dark:border-white/10">
-      </div>
-
-      <!-- Notes List -->
-      <main id="note-list" class="flex-1 overflow-y-auto">
-        <!-- Notes rendered here -->
-      </main>
-
-      <!-- FAB -->
-      <button id="add-note" class="fab">
-        <i data-lucide="plus" class="w-6 h-6"></i>
-      </button>
-
-      <!-- Editor -->
-      <div id="editor-overlay" class="editor-overlay">
-        <div class="h-full flex flex-col">
-          <!-- Editor Header -->
-          <div class="px-6 py-4 flex items-center justify-between shrink-0">
-            <button id="close-editor" class="menu-btn">
-              <i data-lucide="arrow-left" class="w-5 h-5"></i>
+<body class="bg-main text-main transition-colors duration-200">
+    <div id="root" class="h-screen w-full flex overflow-hidden">
+      <!-- Sidebar -->
+      <aside class="sidebar bg-main flex flex-col">
+        <!-- Sidebar Header -->
+        <div class="px-5 py-6 flex items-center justify-between shrink-0">
+          <h1 class="text-xl font-bold tracking-tight">TL;DR</h1>
+          <div class="flex items-center gap-1">
+            <button id="search-toggle" class="icon-btn hidden" title="Search">
+              <i data-lucide="search" class="w-4 h-4"></i>
             </button>
-            <div class="flex items-center gap-2">
-              <button id="toggle-pin" class="menu-btn">
-                <i data-lucide="pin" class="w-5 h-5"></i>
+            <button id="minimal-mode-toggle" class="icon-btn" title="Toggle minimal mode">
+              <i data-lucide="layout-panel-left" class="w-4 h-4"></i>
+            </button>
+            <button id="multi-select-toggle" class="icon-btn" title="Select multiple">
+              <i data-lucide="check-square" class="w-4 h-4"></i>
+            </button>
+            <button id="add-note" class="icon-btn" title="New note">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+            </button>
+            <button id="theme-toggle" class="icon-btn" title="Toggle theme">
+              <i data-lucide="moon" id="theme-icon" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Folders Section -->
+        <div id="folders-section" class="px-5 pb-3 shrink-0">
+          <div class="flex items-center justify-between mb-3">
+            <div class="section-title">Folders</div>
+            <button id="add-folder" class="icon-btn" title="New folder" style="width: 24px; height: 24px;">
+              <i data-lucide="folder-plus" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+          <div id="folder-list" class="space-y-1"></div>
+        </div>
+
+        <!-- Search -->
+        <div id="search-section" class="px-5 pb-4 shrink-0">
+          <input id="search-input" type="text" placeholder="Search notes..." class="search-input text-main">
+        </div>
+
+        <!-- Sort & Filter Bar -->
+        <div id="sort-filter-section" class="px-5 pb-4 shrink-0">
+          <div class="flex items-center justify-between mb-3">
+            <div class="relative">
+              <button id="sort-toggle" class="filter-btn flex items-center gap-2">
+                <i data-lucide="arrow-down-up" class="w-3.5 h-3.5"></i>
+                <span id="sort-label">Modified</span>
+                <i data-lucide="chevron-down" class="w-3 h-3"></i>
               </button>
-              <button id="editor-menu" class="menu-btn">
-                <i data-lucide="more-vertical" class="w-5 h-5"></i>
+              <div id="sort-dropdown" class="hidden sort-dropdown">
+                <button onclick="setSortBy('modified')" class="w-full text-left px-3 py-2 hover:bg-black/4 dark:hover:bg-white/4 text-sm flex items-center justify-between">
+                  Date Modified
+                  <i data-lucide="check" class="w-3 h-3" id="check-modified"></i>
+                </button>
+                <button onclick="setSortBy('created')" class="w-full text-left px-3 py-2 hover:bg-black/4 dark:hover:bg-white/4 text-sm flex items-center justify-between">
+                  Date Created
+                  <i data-lucide="check" class="w-3 h-3 hidden" id="check-created"></i>
+                </button>
+                <button onclick="setSortBy('title')" class="w-full text-left px-3 py-2 hover:bg-black/4 dark:hover:bg-white/4 text-sm flex items-center justify-between">
+                  Title (A-Z)
+                  <i data-lucide="check" class="w-3 h-3 hidden" id="check-title"></i>
+                </button>
+              </div>
+            </div>
+            <button id="filter-toggle" class="filter-btn flex items-center gap-2">
+              <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+              <span>Filter</span>
+            </button>
+          </div>
+          
+          <!-- Active Filters -->
+          <div id="active-filters" class="hidden filter-chips"></div>
+        </div>
+
+        <!-- Notes List -->
+        <div id="note-list" class="flex-1 overflow-y-auto px-3 pb-4">
+          <!-- Notes rendered here -->
+        </div>
+      </aside>
+
+      <!-- Main Editor Area -->
+      <main id="editor-area" class="flex-1 flex flex-col bg-main">
+        <div id="empty-state" class="empty-state">
+          <i data-lucide="file-text" class="w-12 h-12 text-muted opacity-30"></i>
+          <p class="text-sm text-muted">Select a note or create a new one</p>
+        </div>
+
+        <div id="editor-container" class="hidden h-full flex flex-col">
+          <!-- Editor Header -->
+          <div class="px-8 py-6 flex items-center justify-between shrink-0 border-b border-black/4 dark:border-white/4 overflow-x-auto gap-4">
+            <div class="flex items-center gap-2 min-w-0">
+              <button id="close-editor-mobile" class="icon-btn md:hidden shrink-0" title="Back">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+              </button>
+              <button id="mode-text" class="mode-tab shrink-0">Text</button>
+              <button id="mode-checklist" class="mode-tab shrink-0">Checklist</button>
+              <button id="mode-doodle" class="mode-tab shrink-0">Drawing</button>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <button id="preview-toggle" class="icon-btn hidden" title="Toggle preview">
+                <i data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+              <button id="toggle-lock" class="icon-btn" title="Lock/Unlock note">
+                <i data-lucide="lock" class="w-4 h-4"></i>
+              </button>
+              <button id="toggle-pin" class="icon-btn" title="Pin note">
+                <i data-lucide="pin" class="w-4 h-4"></i>
+              </button>
+              <button id="delete-note" class="icon-btn" title="Delete note">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
               </button>
             </div>
           </div>
 
-          <!-- Mode Tabs -->
-          <div class="px-6 pb-4 flex gap-6 text-sm shrink-0">
-            <button id="mode-text" class="mode-btn opacity-40">Note</button>
-            <button id="mode-checklist" class="mode-btn opacity-40">List</button>
-            <button id="mode-doodle" class="mode-btn opacity-40">Draw</button>
-          </div>
-
           <!-- Editor Content -->
-          <div class="flex-1 overflow-y-auto px-6">
-            <input id="note-title" type="text" placeholder="Title" class="w-full text-3xl font-semibold text-main mb-6">
-            <div id="content-area" class="pb-32"></div>
-            <div id="assets-area" class="hidden pt-8 pb-32">
-              <div class="text-xs font-medium text-muted mb-4">ATTACHMENTS</div>
-              <div id="assets-grid" class="grid grid-cols-2 gap-4"></div>
+          <div class="flex-1 overflow-y-auto px-8 py-8 flex flex-col">
+            <input id="note-title" type="text" placeholder="Untitled" class="w-full text-3xl font-medium text-main mb-4" style="font-weight: 500;">
+            
+            <!-- Folder and Tags -->
+            <div class="mb-6 space-y-3 shrink-0">
+              <div class="relative">
+                <button id="folder-selector" class="flex items-center gap-2 text-sm text-muted hover:text-main transition-colors">
+                  <i data-lucide="folder" class="w-4 h-4"></i>
+                  <span id="current-folder-name">All Notes</span>
+                  <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                </button>
+                <div id="folder-dropdown" class="hidden folder-dropdown"></div>
+              </div>
+              
+              <div class="flex flex-wrap gap-2 items-center">
+                <div id="tags-display" class="flex flex-wrap gap-2"></div>
+                <input id="tag-input" type="text" placeholder="Add tag..." class="tag-input" style="width: 120px;">
+              </div>
+            </div>
+
+            <div id="content-area" class="shrink-0"></div>
+            
+            <div id="attachments-area" class="hidden mt-auto pt-8 border-t border-black/4 dark:border-white/4 shrink-0">
+              <div class="text-xs font-medium text-muted mb-4 uppercase tracking-wide">Attachments</div>
+              <div id="attachments-grid" class="grid grid-cols-3 gap-4"></div>
             </div>
           </div>
 
           <!-- Editor Footer -->
-          <div class="px-6 py-4 border-t border-black/6 dark:border-white/6 flex items-center justify-between shrink-0 bg-main">
-            <div class="flex gap-3">
-              <button id="attach-image" class="menu-btn">
-                <i data-lucide="image" class="w-5 h-5"></i>
+          <div class="px-8 py-4 border-t border-black/4 dark:border-white/4 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-1">
+              <button id="attach-image" class="icon-btn" title="Add image">
+                <i data-lucide="image" class="w-4 h-4"></i>
               </button>
-              <button id="attach-file" class="menu-btn">
-                <i data-lucide="paperclip" class="w-5 h-5"></i>
+              <button id="attach-file" class="icon-btn" title="Add file">
+                <i data-lucide="paperclip" class="w-4 h-4"></i>
               </button>
-              <button id="toggle-mic" class="menu-btn">
-                <i data-lucide="mic" class="w-5 h-5"></i>
+              <button id="toggle-mic" class="icon-btn" title="Record audio">
+                <i data-lucide="mic" class="w-4 h-4"></i>
               </button>
             </div>
-            <div id="note-time" class="text-xs text-muted">Just now</div>
+            <div class="flex items-center gap-4">
+              <div id="word-count" class="text-xs text-muted"></div>
+              <div id="note-time" class="text-xs text-muted"></div>
+            </div>
           </div>
         </div>
-      </div>
-
-      <!-- Editor Menu Modal -->
-      <div id="editor-menu-modal" class="hidden fixed inset-0 z-[300] modal-backdrop flex items-end">
-        <div class="w-full bg-main rounded-t-3xl p-6 space-y-1">
-          <button id="menu-delete" class="w-full py-4 text-left text-red-500 font-medium">Delete Note</button>
-          <button id="menu-cancel" class="w-full py-4 text-left font-medium">Cancel</button>
-        </div>
-      </div>
-
-      <!-- Delete Confirmation -->
-      <div id="delete-dialog" class="hidden fixed inset-0 z-[400] flex items-center justify-center p-6 modal-backdrop">
-        <div class="bg-main rounded-3xl p-8 max-w-xs w-full space-y-6">
-          <div class="text-center space-y-2">
-            <h2 class="text-xl font-semibold">Delete Note?</h2>
-            <p class="text-sm text-muted">This cannot be undone.</p>
-          </div>
-          <div class="space-y-3">
-            <button id="confirm-delete" class="w-full py-3 bg-red-500 text-white rounded-full font-medium">Delete</button>
-            <button id="cancel-delete" class="w-full py-3 bg-black/5 dark:bg-white/5 rounded-full font-medium">Cancel</button>
-          </div>
-        </div>
-      </div>
+      </main>
 
       <input type="file" id="file-input" class="hidden">
       <input type="file" id="image-input" accept="image/*" class="hidden">
     </div>
 
+    <!-- Multi-Select Action Bar -->
+    <div id="multi-select-bar" class="hidden multi-select-bar">
+      <span id="selected-count" class="text-sm font-medium">0 selected</span>
+      <button id="delete-selected" class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors" style="background: rgba(239, 68, 68, 1); color: white;" onmouseover="this.style.background='rgba(220, 38, 38, 1)'" onmouseout="this.style.background='rgba(239, 68, 68, 1)'">
+        Delete
+      </button>
+      <button id="cancel-select" class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors" style="background: rgba(255, 255, 255, 0.15);" onmouseover="this.style.background='rgba(255, 255, 255, 0.25)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'">
+        Cancel
+      </button>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="hidden fixed inset-0 z-[500] flex items-center justify-center p-8" style="background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(4px);">
+      <div class="bg-main rounded-xl p-6 max-w-sm w-full border border-black/6 dark:border-white/6" style="box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);">
+        <div class="mb-6">
+          <h2 class="text-lg font-semibold mb-2" id="delete-modal-title">Delete note?</h2>
+          <p class="text-sm text-muted">This action cannot be undone.</p>
+        </div>
+        <div class="flex gap-3">
+          <button id="cancel-delete" class="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors bg-black/4 dark:bg-white/4 hover:bg-black/8 dark:hover:bg-white/8">
+            Cancel
+          </button>
+          <button id="confirm-delete" class="flex-1 py-2.5 px-4 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div id="filter-modal" class="hidden fixed inset-0 z-[500] flex items-center justify-center p-8" style="background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(4px);">
+      <div class="bg-main rounded-xl p-6 max-w-md w-full border border-black/6 dark:border-white/6" style="box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15); max-height: 80vh; overflow-y: auto;">
+        <div class="mb-6">
+          <h2 class="text-lg font-semibold mb-4">Filter Notes</h2>
+          
+          <!-- Filter by Tags -->
+          <div class="mb-6">
+            <div class="text-sm font-medium mb-3">Tags</div>
+            <div id="filter-tags-list" class="space-y-2"></div>
+          </div>
+
+          <!-- Filter by Note Type -->
+          <div class="mb-6">
+            <div class="text-sm font-medium mb-3">Note Type</div>
+            <div class="space-y-2">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="filter-text" class="custom-checkbox" onchange="toggleTypeFilter('text')">
+                <span class="text-sm">Text Notes</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="filter-checklist" class="custom-checkbox" onchange="toggleTypeFilter('checklist')">
+                <span class="text-sm">Checklists</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="filter-doodle" class="custom-checkbox" onchange="toggleTypeFilter('doodle')">
+                <span class="text-sm">Drawings</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Filter by Status -->
+          <div class="mb-6">
+            <div class="text-sm font-medium mb-3">Status</div>
+            <div class="space-y-2">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="filter-pinned" class="custom-checkbox" onchange="toggleStatusFilter('pinned')">
+                <span class="text-sm">Pinned Only</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="filter-attachments" class="custom-checkbox" onchange="toggleStatusFilter('attachments')">
+                <span class="text-sm">Has Attachments</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex gap-3">
+          <button id="cancel-filter" class="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors bg-black/4 dark:bg-white/4 hover:bg-black/8 dark:hover:bg-white/8">
+            Cancel
+          </button>
+          <button id="clear-filters" class="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors bg-black/4 dark:bg-white/4 hover:bg-black/8 dark:hover:bg-white/8">
+            Clear All
+          </button>
+          <button id="apply-filters" class="flex-1 py-2.5 px-4 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Password Protection Modal -->
+    <div id="password-modal" class="hidden password-modal">
+      <div class="bg-main rounded-xl p-8 max-w-sm w-full mx-4 border border-black/6 dark:border-white/6" style="box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);">
+        <div class="text-center mb-6">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+            <i data-lucide="lock" class="w-8 h-8"></i>
+          </div>
+          <h2 class="text-xl font-semibold mb-2" id="password-modal-title">Set Password</h2>
+          <p class="text-sm text-muted" id="password-modal-desc">Enter a 4-digit PIN to protect this note</p>
+        </div>
+        
+        <div class="mb-6">
+          <input type="password" id="password-input" class="password-input text-main" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="••••">
+          <div id="password-error" class="hidden text-sm text-red-500 mt-2 text-center">Incorrect PIN</div>
+        </div>
+        
+        <div class="flex gap-3">
+          <button id="cancel-password" class="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors bg-black/4 dark:bg-white/4 hover:bg-black/8 dark:hover:bg-white/8">
+            Cancel
+          </button>
+          <button id="confirm-password" class="flex-1 py-2.5 px-4 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script>
       let state = {
         notes: JSON.parse(localStorage.getItem('notes') || '[]'),
+        folders: JSON.parse(localStorage.getItem('folders') || '[{"id":"all","name":"All Notes","parent":null},{"id":"personal","name":"Personal","parent":null},{"id":"work","name":"Work","parent":null}]'),
         activeId: null,
+        activeFolder: 'all',
         searchQuery: '',
         theme: localStorage.getItem('theme') || 'light',
         isRecording: false,
-        noteToDelete: null,
-        searchVisible: false
+        multiSelectMode: false,
+        selectedNotes: [],
+        sortBy: 'modified', // 'modified', 'created', 'title'
+        filters: {
+          tags: [],
+          types: [], // 'text', 'checklist', 'doodle'
+          status: [] // 'pinned', 'attachments'
+        },
+        previewMode: false,
+        minimalMode: localStorage.getItem('minimalMode') === 'true' || false,
+        unlockedNotes: [], // Track which locked notes are currently unlocked in this session
+        passwordAction: null // 'set', 'unlock', 'remove'
       };
 
-      const save = () => localStorage.setItem('notes', JSON.stringify(state.notes));
+      const save = () => {
+        localStorage.setItem('notes', JSON.stringify(state.notes));
+        localStorage.setItem('folders', JSON.stringify(state.folders));
+      };
       const getActiveNote = () => state.notes.find(n => n.id === state.activeId);
 
       const init = () => {
         applyTheme();
+        applyMinimalMode();
+        renderFolderList();
         renderNoteList();
+        lucide.createIcons();
+      };
+
+      const applyMinimalMode = () => {
+        localStorage.setItem('minimalMode', state.minimalMode);
+        
+        // Toggle visibility of sections
+        const foldersSection = document.getElementById('folders-section');
+        const sortFilterSection = document.getElementById('sort-filter-section');
+        const searchSection = document.getElementById('search-section');
+        const searchToggle = document.getElementById('search-toggle');
+        const minimalToggle = document.getElementById('minimal-mode-toggle');
+        
+        if (state.minimalMode) {
+          // Hide folders and sort/filter
+          foldersSection.classList.add('hidden');
+          sortFilterSection.classList.add('hidden');
+          searchSection.classList.add('hidden');
+          
+          // Show search icon
+          searchToggle.classList.remove('hidden');
+          
+          // Update icon to show "expand" state
+          minimalToggle.classList.add('active');
+          
+          // Reset to "All Notes" folder in minimal mode
+          state.activeFolder = 'all';
+        } else {
+          // Show all sections
+          foldersSection.classList.remove('hidden');
+          sortFilterSection.classList.remove('hidden');
+          searchSection.classList.remove('hidden');
+          
+          // Hide search icon
+          searchToggle.classList.add('hidden');
+          
+          // Update icon to show "collapse" state
+          minimalToggle.classList.remove('active');
+        }
+        
         lucide.createIcons();
       };
 
@@ -313,54 +1142,191 @@
         lucide.createIcons();
       };
 
+      const renderFolderList = () => {
+        const folderList = document.getElementById('folder-list');
+        
+        const renderFolder = (folder, level = 0) => {
+          const children = state.folders.filter(f => f.parent === folder.id);
+          const noteCount = folder.id === 'all' 
+            ? state.notes.length 
+            : state.notes.filter(n => n.folderId === folder.id).length;
+          
+          return `
+            <div class="${level > 0 ? 'folder-nested' : ''}">
+              <button onclick="selectFolder('${folder.id}')" class="folder-item w-full text-left px-3 py-2 flex items-center justify-between ${state.activeFolder === folder.id ? 'active' : ''}">
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                  ${children.length > 0 ? `
+                    <button onclick="event.stopPropagation(); toggleFolder('${folder.id}')" class="shrink-0">
+                      <i data-lucide="chevron-${state.expandedFolders?.includes(folder.id) !== false ? 'down' : 'right'}" class="w-3 h-3 opacity-40"></i>
+                    </button>
+                  ` : '<div class="w-3"></div>'}
+                  <i data-lucide="${folder.id === 'all' ? 'layers' : 'folder'}" class="w-3.5 h-3.5 shrink-0 opacity-40"></i>
+                  <span class="text-sm truncate">${folder.name}</span>
+                </div>
+                <span class="text-xs text-muted shrink-0">${noteCount}</span>
+              </button>
+              ${children.length > 0 && (state.expandedFolders?.includes(folder.id) !== false) ? children.map(child => renderFolder(child, level + 1)).join('') : ''}
+            </div>
+          `;
+        };
+
+        const rootFolders = state.folders.filter(f => !f.parent);
+        folderList.innerHTML = rootFolders.map(f => renderFolder(f)).join('');
+        lucide.createIcons();
+      };
+
+      window.selectFolder = (folderId) => {
+        state.activeFolder = folderId;
+        renderFolderList();
+        renderNoteList();
+      };
+
+      window.toggleFolder = (folderId) => {
+        if (!state.expandedFolders) state.expandedFolders = state.folders.map(f => f.id);
+        const index = state.expandedFolders.indexOf(folderId);
+        if (index > -1) {
+          state.expandedFolders.splice(index, 1);
+        } else {
+          state.expandedFolders.push(folderId);
+        }
+        renderFolderList();
+      };
+
       const renderNoteList = () => {
         const filtered = state.notes
           .filter(n => {
+            // Search filter
             const q = state.searchQuery.toLowerCase();
-            return (n.title || '').toLowerCase().includes(q) || (n.content || '').toLowerCase().includes(q);
+            const matchesSearch = (n.title || '').toLowerCase().includes(q) || (n.content || '').toLowerCase().includes(q);
+            
+            // Folder filter (skip in minimal mode)
+            const matchesFolder = state.minimalMode || state.activeFolder === 'all' || n.folderId === state.activeFolder;
+            
+            // Tag filter
+            const matchesTags = state.filters.tags.length === 0 || 
+              (n.tags && state.filters.tags.some(tag => n.tags.includes(tag)));
+            
+            // Type filter
+            const matchesType = state.filters.types.length === 0 || 
+              state.filters.types.includes(n.mode);
+            
+            // Status filter
+            let matchesStatus = true;
+            if (state.filters.status.includes('pinned')) {
+              matchesStatus = matchesStatus && n.pinned;
+            }
+            if (state.filters.status.includes('attachments')) {
+              matchesStatus = matchesStatus && n.attachments && n.attachments.length > 0;
+            }
+            
+            return matchesSearch && matchesFolder && matchesTags && matchesType && matchesStatus;
           })
           .sort((a, b) => {
+            // Pinned notes always first
             if (a.pinned && !b.pinned) return -1;
             if (!a.pinned && b.pinned) return 1;
-            return b.updatedAt - a.updatedAt;
+            
+            // Then sort by selected criteria
+            if (state.sortBy === 'modified') {
+              return b.updatedAt - a.updatedAt;
+            } else if (state.sortBy === 'created') {
+              return parseInt(b.id) - parseInt(a.id);
+            } else if (state.sortBy === 'title') {
+              const titleA = (a.title || 'Untitled').toLowerCase();
+              const titleB = (b.title || 'Untitled').toLowerCase();
+              return titleA.localeCompare(titleB);
+            }
+            return 0;
           });
 
         const noteList = document.getElementById('note-list');
         
         if (filtered.length === 0) {
-          noteList.innerHTML = '<div class="py-20 text-center text-muted text-sm">No notes yet</div>';
+          noteList.innerHTML = '<div class="py-12 text-center text-muted text-xs">No notes found</div>';
           return;
         }
 
         noteList.innerHTML = filtered.map(note => {
-          const preview = note.mode === 'text' ? (note.content || '').substring(0, 100) :
-                         note.mode === 'checklist' ? `${(note.items || []).length} items` :
-                         'Drawing';
+          let preview = '';
+          if (note.mode === 'text') {
+            // Strip markdown for preview
+            const stripped = (note.content || '')
+              .replace(/\*\*(.*?)\*\*/g, '$1') // bold
+              .replace(/\*(.*?)\*/g, '$1') // italic
+              .replace(/`(.*?)`/g, '$1') // code
+              .replace(/#{1,3}\s/g, '') // headers
+              .replace(/^[-*]\s/gm, '') // lists
+              .replace(/^\d+\.\s/gm, ''); // numbered lists
+            preview = stripped.substring(0, 60);
+          } else if (note.mode === 'checklist') {
+            preview = `${(note.items || []).length} items`;
+          } else {
+            preview = 'Drawing';
+          }
+          
+          const isSelected = state.selectedNotes.includes(note.id);
           return `
-            <button onclick="openEditor('${note.id}')" class="note-item w-full text-left px-6 py-4 flex items-start gap-4">
-              ${note.pinned ? '<i data-lucide="pin" class="w-4 h-4 mt-1 shrink-0 opacity-40"></i>' : '<div class="w-4"></div>'}
-              <div class="flex-1 min-w-0">
-                <div class="font-medium mb-1">${note.title || 'Untitled'}</div>
-                <div class="text-sm text-muted truncate">${preview}</div>
-              </div>
-              <div class="text-xs text-muted shrink-0 mt-1">${new Date(note.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</div>
-            </button>
+            <div class="note-item px-3 py-3 flex items-start gap-3 mb-1 ${state.activeId === note.id ? 'active' : ''}">
+              ${state.multiSelectMode ? `
+                <input type="checkbox" class="select-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleNoteSelection('${note.id}')" onclick="event.stopPropagation()">
+              ` : ''}
+              <button onclick="openEditor('${note.id}')" class="flex-1 min-w-0 text-left flex items-start gap-3">
+                ${note.pinned ? '<i data-lucide="pin" class="w-3 h-3 mt-0.5 shrink-0 opacity-30"></i>' : ''}
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-sm mb-0.5 truncate flex items-center gap-2">
+                    ${note.title || 'Untitled'}
+                    ${note.locked ? '<span class="locked-indicator"><i data-lucide="lock" class="w-3 h-3"></i></span>' : ''}
+                  </div>
+                  <div class="text-xs text-muted truncate">${note.locked && !state.unlockedNotes.includes(note.id) ? 'Locked' : preview}</div>
+                  ${note.tags && note.tags.length > 0 ? `
+                    <div class="flex gap-1 mt-1">
+                      ${note.tags.slice(0, 2).map(tag => `<span class="text-xs opacity-40">#${tag}</span>`).join(' ')}
+                    </div>
+                  ` : ''}
+                </div>
+              </button>
+              ${!state.multiSelectMode ? `
+                <div class="note-actions flex items-center gap-1">
+                  <button onclick="togglePin('${note.id}')" class="icon-btn" title="${note.pinned ? 'Unpin' : 'Pin'}" style="width: 28px; height: 28px;">
+                    <i data-lucide="${note.pinned ? 'pin-off' : 'pin'}" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button onclick="deleteNote('${note.id}')" class="icon-btn" title="Delete" style="width: 28px; height: 28px;">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-500"></i>
+                  </button>
+                </div>
+              ` : ''}
+            </div>
           `;
         }).join('');
         lucide.createIcons();
       };
 
       const openEditor = (id) => {
+        const note = state.notes.find(n => n.id === id);
+        
+        // Check if note is locked and not unlocked in current session
+        if (note.locked && !state.unlockedNotes.includes(id)) {
+          state.activeId = id;
+          state.passwordAction = 'unlock';
+          showPasswordModal('Unlock Note', 'Enter PIN to unlock this note');
+          return;
+        }
+        
         state.activeId = id;
-        const note = getActiveNote();
-        document.getElementById('editor-overlay').classList.add('active');
+        state.previewMode = false;
+        document.getElementById('empty-state').classList.add('hidden');
+        document.getElementById('editor-container').classList.remove('hidden');
+        document.getElementById('editor-area').classList.add('active');
         document.getElementById('note-title').value = note.title;
         updateEditorUI();
+        renderNoteList();
       };
 
       const closeEditor = () => {
         state.activeId = null;
-        document.getElementById('editor-overlay').classList.remove('active');
+        document.getElementById('empty-state').classList.remove('hidden');
+        document.getElementById('editor-container').classList.add('hidden');
+        document.getElementById('editor-area').classList.remove('active');
         renderNoteList();
       };
 
@@ -368,46 +1334,204 @@
         const note = getActiveNote();
         if (!note) return;
 
-        document.querySelectorAll('.mode-btn').forEach(btn => {
+        document.querySelectorAll('.mode-tab').forEach(btn => {
           const mode = btn.id.split('-')[1];
-          btn.classList.toggle('opacity-100', note.mode === mode);
-          btn.classList.toggle('opacity-40', note.mode !== mode);
-          btn.classList.toggle('font-semibold', note.mode === mode);
+          btn.classList.toggle('active', note.mode === mode);
         });
 
         const pinBtn = document.getElementById('toggle-pin');
-        pinBtn.style.opacity = note.pinned ? '1' : '0.4';
+        pinBtn.classList.toggle('active', note.pinned);
+
+        // Update lock button
+        const lockBtn = document.getElementById('toggle-lock');
+        const lockIcon = lockBtn.querySelector('i');
+        if (note.locked) {
+          lockIcon.setAttribute('data-lucide', 'lock');
+          lockBtn.classList.add('active');
+        } else {
+          lockIcon.setAttribute('data-lucide', 'unlock');
+          lockBtn.classList.remove('active');
+        }
+
+        // Show/hide preview button based on mode
+        const previewBtn = document.getElementById('preview-toggle');
+        if (note.mode === 'text') {
+          previewBtn.classList.remove('hidden');
+          previewBtn.classList.toggle('active', state.previewMode);
+        } else {
+          previewBtn.classList.add('hidden');
+          state.previewMode = false;
+        }
 
         document.getElementById('note-time').textContent = new Date(note.updatedAt).toLocaleString([], { 
-          hour: '2-digit', 
-          minute: '2-digit', 
           month: 'short', 
-          day: 'numeric' 
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit', 
+          minute: '2-digit'
         });
 
-        renderEditorContent();
-        renderAssets();
+        // Update folder selector
+        const folder = state.folders.find(f => f.id === note.folderId) || state.folders.find(f => f.id === 'all');
+        document.getElementById('current-folder-name').textContent = folder.name;
+
+        // Render tags
+        renderNoteTags();
+
+        updateWordCount();
+        
+        if (state.previewMode && note.mode === 'text') {
+          togglePreview(); // This will render preview
+        } else {
+          renderEditorContent();
+        }
+        
+        renderAttachments();
+        lucide.createIcons();
+      };
+
+      const renderNoteTags = () => {
+        const note = getActiveNote();
+        const tagsDisplay = document.getElementById('tags-display');
+        
+        if (!note.tags || note.tags.length === 0) {
+          tagsDisplay.innerHTML = '';
+          return;
+        }
+
+        tagsDisplay.innerHTML = note.tags.map(tag => `
+          <span class="tag-badge">
+            #${tag}
+            <button onclick="removeTag('${tag}')" class="hover:text-red-500">
+              <i data-lucide="x" class="w-3 h-3"></i>
+            </button>
+          </span>
+        `).join('');
+        lucide.createIcons();
+      };
+
+      window.removeTag = (tag) => {
+        const note = getActiveNote();
+        note.tags = note.tags.filter(t => t !== tag);
+        note.updatedAt = Date.now();
+        save();
+        renderNoteTags();
+        renderNoteList();
+      };
+
+      const updateWordCount = () => {
+        const note = getActiveNote();
+        if (!note) return;
+
+        let count = 0;
+        if (note.mode === 'text' && note.content) {
+          count = note.content.trim().split(/\s+/).filter(w => w.length > 0).length;
+        } else if (note.mode === 'checklist') {
+          count = (note.items || []).length;
+        }
+
+        const wordCountEl = document.getElementById('word-count');
+        if (note.mode === 'text') {
+          wordCountEl.textContent = count === 1 ? '1 word' : `${count} words`;
+        } else if (note.mode === 'checklist') {
+          wordCountEl.textContent = count === 1 ? '1 item' : `${count} items`;
+        } else {
+          wordCountEl.textContent = '';
+        }
       };
 
       const renderEditorContent = () => {
         const note = getActiveNote();
         const contentArea = document.getElementById('content-area');
+        const hasAttachments = note.attachments && note.attachments.length > 0;
+        const minHeight = hasAttachments ? '200px' : '500px';
 
         if (note.mode === 'text') {
-          contentArea.innerHTML = `<textarea id="note-body" class="w-full text-main text-base leading-relaxed" placeholder="Start writing..." style="min-height: 400px;">${note.content || ''}</textarea>`;
+          contentArea.innerHTML = `
+            <div class="formatting-toolbar">
+              <button class="format-btn" onclick="applyFormat('bold')" title="Bold (Ctrl+B)">
+                <i data-lucide="bold" class="w-4 h-4"></i>
+              </button>
+              <button class="format-btn" onclick="applyFormat('italic')" title="Italic (Ctrl+I)">
+                <i data-lucide="italic" class="w-4 h-4"></i>
+              </button>
+              <div class="format-divider"></div>
+              <button class="format-btn" onclick="applyFormat('h1')" title="Heading 1">
+                <span class="text-sm font-semibold">H1</span>
+              </button>
+              <button class="format-btn" onclick="applyFormat('h2')" title="Heading 2">
+                <span class="text-sm font-semibold">H2</span>
+              </button>
+              <button class="format-btn" onclick="applyFormat('h3')" title="Heading 3">
+                <span class="text-sm font-semibold">H3</span>
+              </button>
+              <div class="format-divider"></div>
+              <button class="format-btn" onclick="applyFormat('ul')" title="Bullet List">
+                <i data-lucide="list" class="w-4 h-4"></i>
+              </button>
+              <button class="format-btn" onclick="applyFormat('ol')" title="Numbered List">
+                <i data-lucide="list-ordered" class="w-4 h-4"></i>
+              </button>
+              <div class="format-divider"></div>
+              <button class="format-btn" onclick="applyFormat('link')" title="Link to Note [[Note]]">
+                <i data-lucide="link" class="w-4 h-4"></i>
+              </button>
+              <button class="format-btn" onclick="applyFormat('code')" title="Code">
+                <i data-lucide="code" class="w-4 h-4"></i>
+              </button>
+              <button class="format-btn" onclick="applyFormat('codeblock')" title="Code Block">
+                <i data-lucide="braces" class="w-4 h-4"></i>
+              </button>
+            </div>
+            <textarea id="note-body" class="w-full text-main text-base leading-relaxed formatted-content" placeholder="Start writing..." style="min-height: ${minHeight};">${note.content || ''}</textarea>
+          `;
           document.getElementById('note-body').addEventListener('input', e => {
             note.content = e.target.value;
             note.updatedAt = Date.now();
             save();
+            updateWordCount();
+            
+            // Check for [[ to trigger note link autocomplete
+            handleLinkAutocomplete(e.target);
           });
+          
+          // Add keyboard shortcuts
+          document.getElementById('note-body').addEventListener('keydown', e => {
+            if (e.ctrlKey || e.metaKey) {
+              if (e.key === 'b') {
+                e.preventDefault();
+                applyFormat('bold');
+              } else if (e.key === 'i') {
+                e.preventDefault();
+                applyFormat('italic');
+              }
+            }
+            
+            // Handle autocomplete navigation
+            const suggestionBox = document.getElementById('link-suggestions');
+            if (suggestionBox && !suggestionBox.classList.contains('hidden')) {
+              if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                navigateSuggestions(1);
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                navigateSuggestions(-1);
+              } else if (e.key === 'Enter') {
+                e.preventDefault();
+                selectCurrentSuggestion();
+              } else if (e.key === 'Escape') {
+                e.preventDefault();
+                closeSuggestions();
+              }
+            }
+          });
+          
+          lucide.createIcons();
         } else if (note.mode === 'checklist') {
           contentArea.innerHTML = `
-            <div class="space-y-4">
-              <div class="flex gap-3 items-center pb-4 border-b border-black/6 dark:border-white/6">
-                <input id="new-item-input" type="text" placeholder="Add item..." class="flex-1 text-main py-2">
-                <button onclick="addChecklistItem()" class="w-10 h-10 rounded-full bg-black dark:bg-white flex items-center justify-center shrink-0">
-                  <i data-lucide="plus" class="w-5 h-5 text-white dark:text-black"></i>
-                </button>
+            <div class="space-y-5">
+              <div class="flex gap-3 items-center">
+                <input id="new-item-input" type="text" placeholder="Add item..." class="flex-1 text-main py-2 text-sm border-b border-black/6 dark:border-white/6">
               </div>
               <div id="checklist-items" class="space-y-3"></div>
             </div>
@@ -415,18 +1539,283 @@
           document.getElementById('new-item-input').addEventListener('keydown', e => e.key === 'Enter' && addChecklistItem());
           renderChecklistItems();
         } else if (note.mode === 'doodle') {
+          const canvasHeight = hasAttachments ? '300px' : '500px';
           contentArea.innerHTML = `
             <div class="space-y-4">
-              <div class="flex justify-end">
-                <button onclick="clearCanvas()" class="text-xs text-muted">Clear</button>
+              <div class="flex justify-end gap-2">
+                <button onclick="clearCanvas()" class="icon-btn text-xs">Clear</button>
               </div>
               <div class="canvas-container">
-                <canvas id="sketch-canvas" class="w-full rounded-2xl" style="height: 400px;"></canvas>
+                <canvas id="sketch-canvas" class="w-full" style="height: ${canvasHeight};"></canvas>
               </div>
             </div>
           `;
           initCanvas();
         }
+        lucide.createIcons();
+      };
+
+      window.applyFormat = (format) => {
+        const textarea = document.getElementById('note-body');
+        if (!textarea) return;
+        
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = textarea.value.substring(start, end);
+        const beforeText = textarea.value.substring(0, start);
+        const afterText = textarea.value.substring(end);
+        
+        let newText = '';
+        let cursorOffset = 0;
+        
+        switch(format) {
+          case 'bold':
+            newText = `**${selectedText}**`;
+            cursorOffset = selectedText ? newText.length : 2;
+            break;
+          case 'italic':
+            newText = `*${selectedText}*`;
+            cursorOffset = selectedText ? newText.length : 1;
+            break;
+          case 'h1':
+            newText = `# ${selectedText}`;
+            cursorOffset = newText.length;
+            break;
+          case 'h2':
+            newText = `## ${selectedText}`;
+            cursorOffset = newText.length;
+            break;
+          case 'h3':
+            newText = `### ${selectedText}`;
+            cursorOffset = newText.length;
+            break;
+          case 'ul':
+            newText = `- ${selectedText}`;
+            cursorOffset = newText.length;
+            break;
+          case 'ol':
+            newText = `1. ${selectedText}`;
+            cursorOffset = newText.length;
+            break;
+          case 'code':
+            newText = `\`${selectedText}\``;
+            cursorOffset = selectedText ? newText.length : 1;
+            break;
+          case 'codeblock':
+            newText = `\`\`\`\n${selectedText}\n\`\`\``;
+            cursorOffset = selectedText ? newText.length : 4;
+            break;
+          case 'link':
+            newText = `[[${selectedText}]]`;
+            cursorOffset = selectedText ? newText.length : 2;
+            break;
+        }
+        
+        textarea.value = beforeText + newText + afterText;
+        textarea.focus();
+        textarea.setSelectionRange(start + cursorOffset, start + cursorOffset);
+        
+        // Trigger input event to save
+        const event = new Event('input', { bubbles: true });
+        textarea.dispatchEvent(event);
+      };
+
+      let linkAutocompleteState = {
+        selectedIndex: 0,
+        startPos: 0,
+        searchQuery: ''
+      };
+
+      const handleLinkAutocomplete = (textarea) => {
+        const cursorPos = textarea.selectionStart;
+        const textBeforeCursor = textarea.value.substring(0, cursorPos);
+        
+        // Check if we just typed [[
+        const match = textBeforeCursor.match(/\[\[([^\]]*?)$/);
+        
+        if (match) {
+          linkAutocompleteState.startPos = cursorPos - match[1].length;
+          linkAutocompleteState.searchQuery = match[1].toLowerCase();
+          showLinkSuggestions(textarea, match[1]);
+        } else {
+          closeSuggestions();
+        }
+      };
+
+      const showLinkSuggestions = (textarea, query) => {
+        const lowerQuery = query.toLowerCase();
+        const currentNote = getActiveNote();
+        
+        // Filter notes by title, exclude current note
+        const matches = state.notes
+          .filter(n => n.id !== currentNote.id && (n.title || '').toLowerCase().includes(lowerQuery))
+          .slice(0, 10);
+        
+        if (matches.length === 0) {
+          closeSuggestions();
+          return;
+        }
+
+        // Remove old suggestion box if exists
+        const oldBox = document.getElementById('link-suggestions');
+        if (oldBox) oldBox.remove();
+
+        // Create suggestion box
+        const suggestionBox = document.createElement('div');
+        suggestionBox.id = 'link-suggestions';
+        suggestionBox.className = 'link-suggestion';
+        
+        // Position it near the cursor
+        const rect = textarea.getBoundingClientRect();
+        suggestionBox.style.position = 'absolute';
+        suggestionBox.style.left = '20px';
+        suggestionBox.style.top = `${textarea.offsetTop + 100}px`;
+        
+        matches.forEach((note, index) => {
+          const item = document.createElement('div');
+          item.className = 'link-suggestion-item text-sm';
+          if (index === 0) item.classList.add('selected');
+          item.textContent = note.title || 'Untitled';
+          item.onclick = () => insertNoteLink(textarea, note.title || 'Untitled');
+          suggestionBox.appendChild(item);
+        });
+        
+        textarea.parentElement.style.position = 'relative';
+        textarea.parentElement.appendChild(suggestionBox);
+        linkAutocompleteState.selectedIndex = 0;
+      };
+
+      const navigateSuggestions = (direction) => {
+        const suggestionBox = document.getElementById('link-suggestions');
+        if (!suggestionBox) return;
+        
+        const items = suggestionBox.querySelectorAll('.link-suggestion-item');
+        if (items.length === 0) return;
+        
+        items[linkAutocompleteState.selectedIndex].classList.remove('selected');
+        
+        linkAutocompleteState.selectedIndex += direction;
+        if (linkAutocompleteState.selectedIndex < 0) linkAutocompleteState.selectedIndex = items.length - 1;
+        if (linkAutocompleteState.selectedIndex >= items.length) linkAutocompleteState.selectedIndex = 0;
+        
+        items[linkAutocompleteState.selectedIndex].classList.add('selected');
+        items[linkAutocompleteState.selectedIndex].scrollIntoView({ block: 'nearest' });
+      };
+
+      const selectCurrentSuggestion = () => {
+        const suggestionBox = document.getElementById('link-suggestions');
+        if (!suggestionBox) return;
+        
+        const selectedItem = suggestionBox.querySelector('.link-suggestion-item.selected');
+        if (selectedItem) {
+          selectedItem.click();
+        }
+      };
+
+      const insertNoteLink = (textarea, title) => {
+        const cursorPos = textarea.selectionStart;
+        const textBefore = textarea.value.substring(0, cursorPos);
+        const textAfter = textarea.value.substring(cursorPos);
+        
+        // Find where [[ starts
+        const match = textBefore.match(/\[\[([^\]]*?)$/);
+        if (!match) return;
+        
+        const beforeLink = textBefore.substring(0, textBefore.length - match[0].length);
+        const newText = beforeLink + `[[${title}]]` + textAfter;
+        
+        textarea.value = newText;
+        const newCursorPos = beforeLink.length + title.length + 4; // +4 for [[]]
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+        
+        // Trigger save
+        const event = new Event('input', { bubbles: true });
+        textarea.dispatchEvent(event);
+        
+        closeSuggestions();
+        textarea.focus();
+      };
+
+      const closeSuggestions = () => {
+        const suggestionBox = document.getElementById('link-suggestions');
+        if (suggestionBox) {
+          suggestionBox.remove();
+        }
+      };
+
+      const markdownToHtml = (markdown) => {
+        if (!markdown) return '';
+        
+        let html = markdown
+          // Note links - process before code blocks to avoid conflicts
+          .replace(/\[\[([^\]]+)\]\]/g, (match, title) => {
+            const linkedNote = state.notes.find(n => (n.title || '').toLowerCase() === title.toLowerCase());
+            if (linkedNote) {
+              return `<a class="note-link" href="#" onclick="openNoteByTitle('${title.replace(/'/g, "\\'")}'); return false;">${title}</a>`;
+            } else {
+              return `<span class="note-link broken" title="Note not found">${title}</span>`;
+            }
+          })
+          // Code blocks
+          .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+          // Inline code
+          .replace(/`([^`]+)`/g, '<code>$1</code>')
+          // Headers
+          .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+          .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+          .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+          // Bold
+          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+          // Italic
+          .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+          // Unordered lists
+          .replace(/^\- (.*)$/gim, '<li>$1</li>')
+          // Ordered lists
+          .replace(/^\d+\. (.*)$/gim, '<li>$1</li>')
+          // Line breaks
+          .replace(/\n/g, '<br>');
+        
+        // Wrap consecutive <li> in <ul> or <ol>
+        html = html.replace(/(<li>.*?<\/li>(\s|<br>)*)+/g, (match) => {
+          return '<ul>' + match.replace(/<br>/g, '') + '</ul>';
+        });
+        
+        return html;
+      };
+
+      window.openNoteByTitle = (title) => {
+        const note = state.notes.find(n => (n.title || '').toLowerCase() === title.toLowerCase());
+        if (note) {
+          openEditor(note.id);
+        }
+      };
+
+      const togglePreview = () => {
+        const note = getActiveNote();
+        if (!note || note.mode !== 'text') return;
+        
+        state.previewMode = !state.previewMode;
+        const previewBtn = document.getElementById('preview-toggle');
+        const contentArea = document.getElementById('content-area');
+        const hasAttachments = note.attachments && note.attachments.length > 0;
+        const minHeight = hasAttachments ? '200px' : '500px';
+        
+        previewBtn.classList.toggle('active', state.previewMode);
+        
+        if (state.previewMode) {
+          // Show preview
+          const html = markdownToHtml(note.content);
+          contentArea.innerHTML = `
+            <div class="formatting-toolbar">
+              <div class="text-xs text-muted px-2">Preview Mode - Click eye icon to edit</div>
+            </div>
+            <div class="formatted-content text-base leading-relaxed" style="min-height: ${minHeight};">${html || '<span class="text-muted">No content yet</span>'}</div>
+          `;
+        } else {
+          // Show editor
+          renderEditorContent();
+        }
+        
         lucide.createIcons();
       };
 
@@ -438,34 +1827,43 @@
         container.innerHTML = (note.items || []).map(item => `
           <div class="flex items-center gap-3 group">
             <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleChecklistItem('${item.id}')" class="custom-checkbox shrink-0">
-            <span class="flex-1 ${item.completed ? 'line-through opacity-40' : ''}">${item.text}</span>
-            <button onclick="removeChecklistItem('${item.id}')" class="opacity-0 group-hover:opacity-40 text-red-500">
-              <i data-lucide="x" class="w-4 h-4"></i>
+            <span class="flex-1 text-sm ${item.completed ? 'line-through opacity-30' : ''}">${item.text}</span>
+            <button onclick="removeChecklistItem('${item.id}')" class="opacity-0 group-hover:opacity-100 transition-opacity">
+              <i data-lucide="x" class="w-3 h-3 text-muted"></i>
             </button>
           </div>
         `).join('');
         lucide.createIcons();
       };
 
-      const renderAssets = () => {
+      const renderAttachments = () => {
         const note = getActiveNote();
-        const assetsArea = document.getElementById('assets-area');
-        const assetsGrid = document.getElementById('assets-grid');
+        const attachmentsArea = document.getElementById('attachments-area');
+        const attachmentsGrid = document.getElementById('attachments-grid');
 
         if (!note.attachments?.length) {
-          assetsArea.classList.add('hidden');
+          attachmentsArea.classList.add('hidden');
           return;
         }
 
-        assetsArea.classList.remove('hidden');
-        assetsGrid.innerHTML = note.attachments.map(att => `
-          <div class="asset-card relative group">
-            <button onclick="removeAttachment('${att.id}')" class="absolute top-2 right-2 w-8 h-8 bg-white dark:bg-black rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 z-10">
-              <i data-lucide="x" class="w-4 h-4 text-red-500"></i>
+        attachmentsArea.classList.remove('hidden');
+        attachmentsGrid.innerHTML = note.attachments.map(att => `
+          <div class="attachment-card aspect-square">
+            <button onclick="removeAttachment('${att.id}')" class="remove-attachment">
+              <i data-lucide="x" class="w-3 h-3 text-red-500"></i>
             </button>
-            ${att.type === 'image' ? `<img src="${att.data}" class="w-full h-full object-cover">` :
-              att.type === 'voice' ? `<div class="w-full h-full flex flex-col items-center justify-center p-4 gap-2"><i data-lucide="music" class="w-8 h-8 opacity-40"></i><audio src="${att.data}" controls class="w-full"></audio></div>` :
-              `<div class="w-full h-full flex flex-col items-center justify-center p-4 gap-2"><i data-lucide="file-text" class="w-8 h-8 opacity-40"></i><a href="${att.data}" download="${att.name}" class="text-xs">Download</a></div>`}
+            ${att.type === 'image' ? 
+              `<img src="${att.data}" class="w-full h-full object-cover">` :
+              att.type === 'voice' ? 
+              `<div class="w-full h-full flex flex-col items-center justify-center p-4 gap-3">
+                <i data-lucide="mic" class="w-8 h-8 opacity-30"></i>
+                <audio src="${att.data}" controls class="w-full"></audio>
+              </div>` :
+              `<div class="w-full h-full flex flex-col items-center justify-center p-4 gap-2">
+                <i data-lucide="file-text" class="w-8 h-8 opacity-30"></i>
+                <div class="text-xs text-center text-muted px-2 truncate w-full">${att.name}</div>
+                <a href="${att.data}" download="${att.name}" class="text-xs hover:underline">Download</a>
+              </div>`}
           </div>
         `).join('');
         lucide.createIcons();
@@ -480,7 +1878,8 @@
         canvas.height = canvas.offsetHeight;
         canvasCtx = canvas.getContext('2d');
         canvasCtx.lineCap = 'round';
-        canvasCtx.lineWidth = 3;
+        canvasCtx.lineJoin = 'round';
+        canvasCtx.lineWidth = 2;
         canvasCtx.strokeStyle = state.theme === 'dark' ? '#ffffff' : '#000000';
 
         const note = getActiveNote();
@@ -523,7 +1922,7 @@
         canvas.addEventListener('mousedown', start);
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', stop);
-        canvas.addEventListener('mouseout', stop);
+        canvas.addEventListener('mouseleave', stop);
         canvas.addEventListener('touchstart', start);
         canvas.addEventListener('touchmove', draw);
         canvas.addEventListener('touchend', stop);
@@ -534,54 +1933,8 @@
         canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
         const note = getActiveNote();
         note.doodleData = null;
+        note.updatedAt = Date.now();
         save();
-      };
-
-      let mediaRecorder = null, audioChunks = [];
-      const toggleMic = async () => {
-        if (state.isRecording) {
-          mediaRecorder.stop();
-          state.isRecording = false;
-          updateMicUI();
-        } else {
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-            mediaRecorder.onstop = () => {
-              const blob = new Blob(audioChunks, { type: 'audio/webm' });
-              const reader = new FileReader();
-              reader.onload = e => {
-                const note = getActiveNote();
-                note.attachments = [...(note.attachments || []), {
-                  id: Date.now() + '-v',
-                  type: 'voice',
-                  name: `Recording_${new Date().getTime()}`,
-                  data: e.target.result
-                }];
-                note.updatedAt = Date.now();
-                save();
-                renderAssets();
-              };
-              reader.readAsDataURL(blob);
-              stream.getTracks().forEach(t => t.stop());
-            };
-            mediaRecorder.start();
-            state.isRecording = true;
-            updateMicUI();
-          } catch (err) {
-            alert("Microphone access required");
-          }
-        }
-      };
-
-      const updateMicUI = () => {
-        const btn = document.getElementById('toggle-mic');
-        btn.style.opacity = state.isRecording ? '1' : '0.4';
-        const icon = btn.querySelector('i');
-        icon.setAttribute('data-lucide', state.isRecording ? 'square' : 'mic');
-        lucide.createIcons();
       };
 
       // Event Listeners
@@ -593,28 +1946,400 @@
           mode: 'text',
           items: [],
           pinned: false,
+          createdAt: Date.now(),
           updatedAt: Date.now(),
-          attachments: []
+          attachments: [],
+          folderId: state.activeFolder === 'all' ? null : state.activeFolder,
+          tags: []
         };
         state.notes.push(newNote);
         save();
         openEditor(newNote.id);
-        setTimeout(() => document.getElementById('note-title').focus(), 300);
+        setTimeout(() => document.getElementById('note-title').focus(), 100);
       };
 
       document.getElementById('theme-toggle').onclick = () => {
         state.theme = state.theme === 'light' ? 'dark' : 'light';
         applyTheme();
-        if (state.activeId) updateEditorUI();
+        if (state.activeId) {
+          updateEditorUI();
+          if (getActiveNote().mode === 'doodle') {
+            const canvas = document.getElementById('sketch-canvas');
+            if (canvas && canvasCtx) {
+              canvasCtx.strokeStyle = state.theme === 'dark' ? '#ffffff' : '#000000';
+            }
+          }
+        }
+      };
+
+      document.getElementById('minimal-mode-toggle').onclick = () => {
+        state.minimalMode = !state.minimalMode;
+        applyMinimalMode();
+        renderNoteList();
       };
 
       document.getElementById('search-toggle').onclick = () => {
-        state.searchVisible = !state.searchVisible;
-        const searchBar = document.getElementById('search-bar');
-        searchBar.classList.toggle('hidden', !state.searchVisible);
-        if (state.searchVisible) {
-          document.getElementById('search-input').focus();
+        const searchSection = document.getElementById('search-section');
+        const isHidden = searchSection.classList.contains('hidden');
+        
+        if (isHidden) {
+          searchSection.classList.remove('hidden');
+          setTimeout(() => document.getElementById('search-input').focus(), 100);
+        } else {
+          searchSection.classList.add('hidden');
+          state.searchQuery = '';
+          document.getElementById('search-input').value = '';
+          renderNoteList();
         }
+      };
+
+      document.getElementById('multi-select-toggle').onclick = () => {
+        state.multiSelectMode = !state.multiSelectMode;
+        state.selectedNotes = [];
+        const btn = document.getElementById('multi-select-toggle');
+        btn.classList.toggle('active', state.multiSelectMode);
+        updateMultiSelectBar();
+        renderNoteList();
+      };
+
+      document.getElementById('close-editor-mobile').onclick = () => {
+        closeEditor();
+      };
+
+      document.getElementById('preview-toggle').onclick = () => {
+        togglePreview();
+      };
+
+      document.getElementById('toggle-lock').onclick = () => {
+        const note = getActiveNote();
+        if (!note) return;
+        
+        if (note.locked) {
+          // Remove lock
+          state.passwordAction = 'remove';
+          showPasswordModal('Remove Lock', 'Enter PIN to remove protection');
+        } else {
+          // Set lock
+          state.passwordAction = 'set';
+          showPasswordModal('Set Password', 'Enter a 4-digit PIN to protect this note');
+        }
+      };
+
+      const showPasswordModal = (title, description) => {
+        document.getElementById('password-modal-title').textContent = title;
+        document.getElementById('password-modal-desc').textContent = description;
+        document.getElementById('password-input').value = '';
+        document.getElementById('password-error').classList.add('hidden');
+        document.getElementById('password-modal').classList.remove('hidden');
+        setTimeout(() => document.getElementById('password-input').focus(), 100);
+      };
+
+      document.getElementById('cancel-password').onclick = () => {
+        document.getElementById('password-modal').classList.add('hidden');
+        if (state.passwordAction === 'unlock') {
+          // If unlocking was cancelled, go back to note list
+          closeEditor();
+        }
+        state.passwordAction = null;
+      };
+
+      document.getElementById('confirm-password').onclick = () => {
+        handlePasswordConfirm();
+      };
+
+      document.getElementById('password-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          handlePasswordConfirm();
+        }
+      });
+
+      const handlePasswordConfirm = () => {
+        const pin = document.getElementById('password-input').value;
+        const note = getActiveNote();
+        
+        if (!pin || pin.length !== 4) {
+          document.getElementById('password-error').textContent = 'PIN must be 4 digits';
+          document.getElementById('password-error').classList.remove('hidden');
+          return;
+        }
+
+        if (state.passwordAction === 'set') {
+          // Set password
+          note.locked = true;
+          note.password = btoa(pin); // Simple encoding (not secure, just obfuscation)
+          note.updatedAt = Date.now();
+          save();
+          document.getElementById('password-modal').classList.add('hidden');
+          updateEditorUI();
+        } else if (state.passwordAction === 'unlock') {
+          // Verify password and unlock
+          if (note.password === btoa(pin)) {
+            state.unlockedNotes.push(note.id);
+            document.getElementById('password-modal').classList.add('hidden');
+            // Now actually open the editor
+            state.previewMode = false;
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('editor-container').classList.remove('hidden');
+            document.getElementById('editor-area').classList.add('active');
+            document.getElementById('note-title').value = note.title;
+            updateEditorUI();
+            renderNoteList();
+          } else {
+            document.getElementById('password-error').textContent = 'Incorrect PIN';
+            document.getElementById('password-error').classList.remove('hidden');
+            document.getElementById('password-input').value = '';
+            return;
+          }
+        } else if (state.passwordAction === 'remove') {
+          // Verify password and remove lock
+          if (note.password === btoa(pin)) {
+            note.locked = false;
+            note.password = null;
+            note.updatedAt = Date.now();
+            // Remove from unlocked list if present
+            state.unlockedNotes = state.unlockedNotes.filter(id => id !== note.id);
+            save();
+            document.getElementById('password-modal').classList.add('hidden');
+            updateEditorUI();
+          } else {
+            document.getElementById('password-error').textContent = 'Incorrect PIN';
+            document.getElementById('password-error').classList.remove('hidden');
+            document.getElementById('password-input').value = '';
+            return;
+          }
+        }
+        
+        state.passwordAction = null;
+      };
+
+      // Folder selector
+      document.getElementById('folder-selector').onclick = () => {
+        const dropdown = document.getElementById('folder-dropdown');
+        const isHidden = dropdown.classList.contains('hidden');
+        
+        if (isHidden) {
+          const note = getActiveNote();
+          const renderFolderOption = (folder, level = 0) => {
+            const children = state.folders.filter(f => f.parent === folder.id && f.id !== 'all');
+            return `
+              <button onclick="changeFolderForNote('${folder.id}')" class="w-full text-left px-3 py-2 hover:bg-black/4 dark:hover:bg-white/4 text-sm flex items-center gap-2" style="padding-left: ${12 + level * 16}px;">
+                <i data-lucide="${folder.id === 'all' ? 'layers' : 'folder'}" class="w-3.5 h-3.5 opacity-40"></i>
+                ${folder.name}
+                ${note.folderId === folder.id ? '<i data-lucide="check" class="w-3 h-3 ml-auto"></i>' : ''}
+              </button>
+              ${children.map(child => renderFolderOption(child, level + 1)).join('')}
+            `;
+          };
+          
+          dropdown.innerHTML = state.folders.filter(f => !f.parent).map(f => renderFolderOption(f)).join('');
+          dropdown.classList.remove('hidden');
+          lucide.createIcons();
+        } else {
+          dropdown.classList.add('hidden');
+        }
+      };
+
+      window.changeFolderForNote = (folderId) => {
+        const note = getActiveNote();
+        note.folderId = folderId === 'all' ? null : folderId;
+        note.updatedAt = Date.now();
+        save();
+        document.getElementById('folder-dropdown').classList.add('hidden');
+        updateEditorUI();
+        renderFolderList();
+        renderNoteList();
+      };
+
+      // Tag input
+      document.getElementById('tag-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target.value.trim()) {
+          const note = getActiveNote();
+          const tag = e.target.value.trim().toLowerCase().replace(/^#/, '');
+          if (!note.tags) note.tags = [];
+          if (!note.tags.includes(tag)) {
+            note.tags.push(tag);
+            note.updatedAt = Date.now();
+            save();
+            renderNoteTags();
+            renderNoteList();
+          }
+          e.target.value = '';
+        }
+      });
+
+      // Add folder
+      document.getElementById('add-folder').onclick = () => {
+        const name = prompt('Folder name:');
+        if (!name?.trim()) return;
+        
+        const newFolder = {
+          id: Date.now().toString(),
+          name: name.trim(),
+          parent: null
+        };
+        state.folders.push(newFolder);
+        save();
+        renderFolderList();
+      };
+
+      // Sort functionality
+      document.getElementById('sort-toggle').onclick = () => {
+        const dropdown = document.getElementById('sort-dropdown');
+        dropdown.classList.toggle('hidden');
+      };
+
+      window.setSortBy = (sortType) => {
+        state.sortBy = sortType;
+        document.getElementById('sort-dropdown').classList.add('hidden');
+        
+        // Update label
+        const labels = { modified: 'Modified', created: 'Created', title: 'Title' };
+        document.getElementById('sort-label').textContent = labels[sortType];
+        
+        // Update checkmarks
+        ['modified', 'created', 'title'].forEach(type => {
+          const check = document.getElementById(`check-${type}`);
+          if (check) {
+            check.classList.toggle('hidden', type !== sortType);
+          }
+        });
+        
+        renderNoteList();
+        lucide.createIcons();
+      };
+
+      // Filter functionality
+      document.getElementById('filter-toggle').onclick = () => {
+        document.getElementById('filter-modal').classList.remove('hidden');
+        renderFilterModal();
+      };
+
+      const renderFilterModal = () => {
+        // Get all unique tags from notes
+        const allTags = [...new Set(state.notes.flatMap(n => n.tags || []))];
+        const tagsListEl = document.getElementById('filter-tags-list');
+        
+        if (allTags.length === 0) {
+          tagsListEl.innerHTML = '<div class="text-xs text-muted">No tags yet</div>';
+        } else {
+          tagsListEl.innerHTML = allTags.map(tag => `
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" class="custom-checkbox" ${state.filters.tags.includes(tag) ? 'checked' : ''} onchange="toggleTagFilter('${tag}')">
+              <span class="text-sm">#${tag}</span>
+            </label>
+          `).join('');
+        }
+
+        // Update type checkboxes
+        ['text', 'checklist', 'doodle'].forEach(type => {
+          const el = document.getElementById(`filter-${type}`);
+          if (el) el.checked = state.filters.types.includes(type);
+        });
+
+        // Update status checkboxes
+        ['pinned', 'attachments'].forEach(status => {
+          const el = document.getElementById(`filter-${status}`);
+          if (el) el.checked = state.filters.status.includes(status);
+        });
+
+        lucide.createIcons();
+      };
+
+      window.toggleTagFilter = (tag) => {
+        const index = state.filters.tags.indexOf(tag);
+        if (index > -1) {
+          state.filters.tags.splice(index, 1);
+        } else {
+          state.filters.tags.push(tag);
+        }
+      };
+
+      window.toggleTypeFilter = (type) => {
+        const index = state.filters.types.indexOf(type);
+        if (index > -1) {
+          state.filters.types.splice(index, 1);
+        } else {
+          state.filters.types.push(type);
+        }
+      };
+
+      window.toggleStatusFilter = (status) => {
+        const index = state.filters.status.indexOf(status);
+        if (index > -1) {
+          state.filters.status.splice(index, 1);
+        } else {
+          state.filters.status.push(status);
+        }
+      };
+
+      document.getElementById('clear-filters').onclick = () => {
+        state.filters = { tags: [], types: [], status: [] };
+        renderFilterModal();
+        updateActiveFilters();
+      };
+
+      document.getElementById('cancel-filter').onclick = () => {
+        document.getElementById('filter-modal').classList.add('hidden');
+      };
+
+      document.getElementById('apply-filters').onclick = () => {
+        document.getElementById('filter-modal').classList.add('hidden');
+        updateActiveFilters();
+        renderNoteList();
+      };
+
+      const updateActiveFilters = () => {
+        const activeFiltersEl = document.getElementById('active-filters');
+        const totalFilters = state.filters.tags.length + state.filters.types.length + state.filters.status.length;
+        
+        if (totalFilters === 0) {
+          activeFiltersEl.classList.add('hidden');
+          return;
+        }
+
+        activeFiltersEl.classList.remove('hidden');
+        const allFilters = [
+          ...state.filters.tags.map(tag => ({ type: 'tag', value: tag, label: `#${tag}` })),
+          ...state.filters.types.map(type => ({ type: 'type', value: type, label: type })),
+          ...state.filters.status.map(status => ({ type: 'status', value: status, label: status }))
+        ];
+
+        activeFiltersEl.innerHTML = allFilters.map(filter => `
+          <span class="filter-chip" onclick="removeFilter('${filter.type}', '${filter.value}')">
+            ${filter.label}
+            <i data-lucide="x" class="w-3 h-3"></i>
+          </span>
+        `).join('');
+        lucide.createIcons();
+      };
+
+      window.removeFilter = (type, value) => {
+        if (type === 'tag') {
+          state.filters.tags = state.filters.tags.filter(t => t !== value);
+        } else if (type === 'type') {
+          state.filters.types = state.filters.types.filter(t => t !== value);
+        } else if (type === 'status') {
+          state.filters.status = state.filters.status.filter(s => s !== value);
+        }
+        updateActiveFilters();
+        renderNoteList();
+      };
+
+      document.getElementById('delete-selected').onclick = () => {
+        if (state.selectedNotes.length === 0) return;
+        state.noteToDelete = null;
+        const title = document.getElementById('delete-modal-title');
+        title.textContent = `Delete ${state.selectedNotes.length} note${state.selectedNotes.length > 1 ? 's' : ''}?`;
+        document.getElementById('delete-modal').classList.remove('hidden');
+      };
+
+      document.getElementById('cancel-select').onclick = () => {
+        state.multiSelectMode = false;
+        state.selectedNotes = [];
+        const btn = document.getElementById('multi-select-toggle');
+        btn.classList.remove('active');
+        updateMultiSelectBar();
+        renderNoteList();
       };
 
       document.getElementById('search-input').oninput = (e) => {
@@ -622,20 +2347,20 @@
         renderNoteList();
       };
 
-      document.getElementById('close-editor').onclick = closeEditor;
-
       document.getElementById('note-title').oninput = (e) => {
         const note = getActiveNote();
         note.title = e.target.value;
         note.updatedAt = Date.now();
         save();
+        renderNoteList();
       };
 
-      document.querySelectorAll('.mode-btn').forEach(btn => {
+      document.querySelectorAll('.mode-tab').forEach(btn => {
         btn.onclick = () => {
           const note = getActiveNote();
           note.mode = btn.id.split('-')[1];
           note.updatedAt = Date.now();
+          state.previewMode = false;
           save();
           updateEditorUI();
         };
@@ -647,65 +2372,44 @@
         note.updatedAt = Date.now();
         save();
         updateEditorUI();
+        renderNoteList();
       };
 
-      document.getElementById('editor-menu').onclick = () => {
-        document.getElementById('editor-menu-modal').classList.remove('hidden');
-      };
-
-      document.getElementById('menu-delete').onclick = () => {
-        document.getElementById('editor-menu-modal').classList.add('hidden');
-        document.getElementById('delete-dialog').classList.remove('hidden');
+      document.getElementById('delete-note').onclick = () => {
         state.noteToDelete = state.activeId;
-      };
-
-      document.getElementById('menu-cancel').onclick = () => {
-        document.getElementById('editor-menu-modal').classList.add('hidden');
-      };
-
-      document.getElementById('confirm-delete').onclick = () => {
-        state.notes = state.notes.filter(n => n.id !== state.noteToDelete);
-        save();
-        closeEditor();
-        document.getElementById('delete-dialog').classList.add('hidden');
+        document.getElementById('delete-modal-title').textContent = 'Delete note?';
+        document.getElementById('delete-modal').classList.remove('hidden');
       };
 
       document.getElementById('cancel-delete').onclick = () => {
-        document.getElementById('delete-dialog').classList.add('hidden');
+        state.noteToDelete = null;
+        document.getElementById('delete-modal').classList.add('hidden');
       };
 
-      document.getElementById('toggle-mic').onclick = toggleMic;
-
-      document.getElementById('attach-image').onclick = () => {
-        document.getElementById('image-input').click();
+      document.getElementById('confirm-delete').onclick = () => {
+        if (state.noteToDelete) {
+          // Delete single note
+          state.notes = state.notes.filter(n => n.id !== state.noteToDelete);
+          if (state.activeId === state.noteToDelete) {
+            closeEditor();
+          }
+          state.noteToDelete = null;
+        } else if (state.selectedNotes.length > 0) {
+          // Delete multiple notes
+          state.notes = state.notes.filter(n => !state.selectedNotes.includes(n.id));
+          if (state.selectedNotes.includes(state.activeId)) {
+            closeEditor();
+          }
+          state.selectedNotes = [];
+          state.multiSelectMode = false;
+          const btn = document.getElementById('multi-select-toggle');
+          btn.classList.remove('active');
+          updateMultiSelectBar();
+        }
+        save();
+        renderNoteList();
+        document.getElementById('delete-modal').classList.add('hidden');
       };
-
-      document.getElementById('attach-file').onclick = () => {
-        document.getElementById('file-input').click();
-      };
-
-      const handleFile = (e, type) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const note = getActiveNote();
-          note.attachments.push({
-            id: Date.now() + '-f',
-            type,
-            name: file.name,
-            data: ev.target.result
-          });
-          note.updatedAt = Date.now();
-          save();
-          renderAssets();
-          e.target.value = '';
-        };
-        reader.readAsDataURL(file);
-      };
-
-      document.getElementById('image-input').onchange = e => handleFile(e, 'image');
-      document.getElementById('file-input').onchange = e => handleFile(e, 'file');
 
       window.addChecklistItem = () => {
         const input = document.getElementById('new-item-input');
@@ -720,6 +2424,7 @@
         save();
         input.value = '';
         renderChecklistItems();
+        updateWordCount();
       };
 
       window.toggleChecklistItem = (id) => {
@@ -737,6 +2442,7 @@
         note.updatedAt = Date.now();
         save();
         renderChecklistItems();
+        updateWordCount();
       };
 
       window.removeAttachment = (id) => {
@@ -744,8 +2450,135 @@
         note.attachments = note.attachments.filter(a => a.id !== id);
         note.updatedAt = Date.now();
         save();
-        renderAssets();
+        renderAttachments();
       };
+
+      window.togglePin = (noteId) => {
+        const note = state.notes.find(n => n.id === noteId);
+        note.pinned = !note.pinned;
+        note.updatedAt = Date.now();
+        save();
+        renderNoteList();
+        renderFolderList();
+        if (state.activeId === noteId) {
+          updateEditorUI();
+        }
+      };
+
+      window.deleteNote = (noteId) => {
+        state.noteToDelete = noteId;
+        document.getElementById('delete-modal-title').textContent = 'Delete note?';
+        document.getElementById('delete-modal').classList.remove('hidden');
+      };
+
+      window.toggleNoteSelection = (noteId) => {
+        const index = state.selectedNotes.indexOf(noteId);
+        if (index > -1) {
+          state.selectedNotes.splice(index, 1);
+        } else {
+          state.selectedNotes.push(noteId);
+        }
+        updateMultiSelectBar();
+        renderNoteList();
+      };
+
+      const updateMultiSelectBar = () => {
+        const bar = document.getElementById('multi-select-bar');
+        const count = document.getElementById('selected-count');
+        
+        if (state.selectedNotes.length > 0) {
+          bar.classList.remove('hidden');
+          count.textContent = `${state.selectedNotes.length} selected`;
+        } else {
+          bar.classList.add('hidden');
+        }
+      };
+
+      // Attachment handlers
+      document.getElementById('attach-image').onclick = () => {
+        document.getElementById('image-input').click();
+      };
+
+      document.getElementById('attach-file').onclick = () => {
+        document.getElementById('file-input').click();
+      };
+
+      const handleFile = (e, type) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const note = getActiveNote();
+          if (!note.attachments) note.attachments = [];
+          note.attachments.push({
+            id: Date.now() + '-' + type,
+            type,
+            name: file.name,
+            data: ev.target.result
+          });
+          note.updatedAt = Date.now();
+          save();
+          renderAttachments();
+          e.target.value = '';
+        };
+        reader.readAsDataURL(file);
+      };
+
+      document.getElementById('image-input').onchange = e => handleFile(e, 'image');
+      document.getElementById('file-input').onchange = e => handleFile(e, 'file');
+
+      // Voice recording
+      let mediaRecorder = null, audioChunks = [];
+      
+      const toggleMic = async () => {
+        const micBtn = document.getElementById('toggle-mic');
+        const micIcon = micBtn.querySelector('i');
+        
+        if (state.isRecording) {
+          mediaRecorder.stop();
+          state.isRecording = false;
+          micBtn.classList.remove('active');
+          micIcon.setAttribute('data-lucide', 'mic');
+          lucide.createIcons();
+        } else {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+              const blob = new Blob(audioChunks, { type: 'audio/webm' });
+              const reader = new FileReader();
+              reader.onload = e => {
+                const note = getActiveNote();
+                if (!note.attachments) note.attachments = [];
+                note.attachments.push({
+                  id: Date.now() + '-voice',
+                  type: 'voice',
+                  name: `Recording_${new Date().toLocaleTimeString()}`,
+                  data: e.target.result
+                });
+                note.updatedAt = Date.now();
+                save();
+                renderAttachments();
+              };
+              reader.readAsDataURL(blob);
+              stream.getTracks().forEach(t => t.stop());
+            };
+            
+            mediaRecorder.start();
+            state.isRecording = true;
+            micBtn.classList.add('active');
+            micIcon.setAttribute('data-lucide', 'square');
+            lucide.createIcons();
+          } catch (err) {
+            alert("Microphone access is required for audio recording");
+          }
+        }
+      };
+
+      document.getElementById('toggle-mic').onclick = toggleMic;
 
       init();
     </script>
