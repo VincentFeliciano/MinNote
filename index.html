@@ -6,6 +6,13 @@
     <title>Vivari</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
       @import url('https://fonts.googleapis.com/css2?family=Orelega+One&display=swap');
@@ -474,6 +481,59 @@
       .dark .formatted-content pre {
         background: rgba(255, 255, 255, 0.06);
       }
+      .formatted-content pre code {
+        background: transparent;
+        padding: 0;
+      }
+      
+      /* Prism theme override for dark mode */
+      .dark .token.comment,
+      .dark .token.prolog,
+      .dark .token.doctype,
+      .dark .token.cdata {
+        color: #6a9955;
+      }
+      .dark .token.punctuation {
+        color: #d4d4d4;
+      }
+      .dark .token.property,
+      .dark .token.tag,
+      .dark .token.boolean,
+      .dark .token.number,
+      .dark .token.constant,
+      .dark .token.symbol,
+      .dark .token.deleted {
+        color: #b5cea8;
+      }
+      .dark .token.selector,
+      .dark .token.attr-name,
+      .dark .token.string,
+      .dark .token.char,
+      .dark .token.builtin,
+      .dark .token.inserted {
+        color: #ce9178;
+      }
+      .dark .token.operator,
+      .dark .token.entity,
+      .dark .token.url,
+      .dark .language-css .token.string,
+      .dark .style .token.string {
+        color: #d4d4d4;
+      }
+      .dark .token.atrule,
+      .dark .token.attr-value,
+      .dark .token.keyword {
+        color: #c586c0;
+      }
+      .dark .token.function,
+      .dark .token.class-name {
+        color: #dcdcaa;
+      }
+      .dark .token.regex,
+      .dark .token.important,
+      .dark .token.variable {
+        color: #d16969;
+      }
 
       #note-body {
         white-space: pre-wrap;
@@ -825,6 +885,9 @@
               <button id="preview-toggle" class="icon-btn hidden" title="Toggle preview">
                 <i data-lucide="eye" class="w-4 h-4"></i>
               </button>
+              <button id="show-graph" class="icon-btn" title="View connections">
+                <i data-lucide="git-branch" class="w-4 h-4"></i>
+              </button>
               <button id="toggle-pin" class="icon-btn" title="Pin note">
                 <i data-lucide="pin" class="w-4 h-4"></i>
               </button>
@@ -897,6 +960,24 @@
       <button id="cancel-select" class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors" style="background: rgba(255, 255, 255, 0.15);" onmouseover="this.style.background='rgba(255, 255, 255, 0.25)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'">
         Cancel
       </button>
+    </div>
+
+    <!-- Graph View Modal -->
+    <div id="graph-modal" class="hidden fixed inset-0 z-[500] flex items-center justify-center p-4" style="background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);">
+      <div class="bg-main rounded-xl p-6 w-full max-w-4xl border border-black/6 dark:border-white/6" style="box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15); max-height: 85vh;">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold">Note Connections</h2>
+          <button id="close-graph" class="icon-btn">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div id="graph-container" class="bg-black/2 dark:bg-white/2 rounded-lg" style="height: 500px; overflow: hidden;">
+          <canvas id="graph-canvas" style="width: 100%; height: 100%;"></canvas>
+        </div>
+        <div class="mt-4 text-xs text-muted">
+          <p><strong>Current note</strong> is highlighted. Click on nodes to navigate.</p>
+        </div>
+      </div>
     </div>
 
     <!-- Delete Confirmation Modal -->
@@ -1651,8 +1732,15 @@
               return `<span class="note-link broken" title="Note not found">${title}</span>`;
             }
           })
-          // Code blocks
-          .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+          // Code blocks with language
+          .replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, lang, code) => {
+            const language = lang || 'javascript';
+            const escapedCode = code.trim()
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;');
+            return `<pre><code class="language-${language}">${escapedCode}</code></pre>`;
+          })
           // Inline code
           .replace(/`([^`]+)`/g, '<code>$1</code>')
           // Headers
@@ -1706,6 +1794,10 @@
             </div>
             <div class="formatted-content text-base leading-relaxed" style="min-height: ${minHeight};">${html || '<span class="text-muted">No content yet</span>'}</div>
           `;
+          // Trigger syntax highlighting
+          if (typeof Prism !== 'undefined') {
+            Prism.highlightAll();
+          }
         } else {
           // Show editor
           renderEditorContent();
@@ -2372,6 +2464,235 @@
       };
 
       document.getElementById('toggle-mic').onclick = toggleMic;
+
+      // Graph visualization
+      let graphCanvas, graphCtx, graphNodes = [], graphLinks = [];
+
+      const showGraphView = () => {
+        const currentNote = getActiveNote();
+        if (!currentNote) return;
+
+        document.getElementById('graph-modal').classList.remove('hidden');
+        
+        // Build graph data
+        buildGraphData(currentNote.id);
+        
+        // Initialize canvas
+        setTimeout(() => {
+          graphCanvas = document.getElementById('graph-canvas');
+          const container = document.getElementById('graph-container');
+          graphCanvas.width = container.clientWidth;
+          graphCanvas.height = container.clientHeight;
+          graphCtx = graphCanvas.getContext('2d');
+          
+          // Draw graph
+          drawGraph();
+          
+          // Add click handler
+          graphCanvas.onclick = handleGraphClick;
+        }, 100);
+      };
+
+      const buildGraphData = (startNoteId) => {
+        graphNodes = [];
+        graphLinks = [];
+        const visited = new Set();
+        const queue = [startNoteId];
+        
+        while (queue.length > 0 && graphNodes.length < 50) {
+          const noteId = queue.shift();
+          if (visited.has(noteId)) continue;
+          visited.add(noteId);
+          
+          const note = state.notes.find(n => n.id === noteId);
+          if (!note) continue;
+          
+          // Add node with temporary position
+          graphNodes.push({
+            id: noteId,
+            title: note.title || 'Untitled',
+            x: 0,
+            y: 0,
+            isCurrent: noteId === startNoteId
+          });
+          
+          // Find linked notes
+          const content = note.content || '';
+          const linkMatches = content.matchAll(/\[\[([^\]]+)\]\]/g);
+          
+          for (const match of linkMatches) {
+            const linkedTitle = match[1];
+            const linkedNote = state.notes.find(n => 
+              (n.title || '').toLowerCase() === linkedTitle.toLowerCase()
+            );
+            
+            if (linkedNote && !visited.has(linkedNote.id)) {
+              queue.push(linkedNote.id);
+              graphLinks.push({
+                source: noteId,
+                target: linkedNote.id
+              });
+            }
+          }
+        }
+        
+        // Position nodes with force-directed layout
+        layoutGraph();
+      };
+      
+      const layoutGraph = () => {
+        if (!graphCanvas || graphNodes.length === 0) return;
+        
+        const padding = 80; // Space from edges
+        const width = graphCanvas.width - padding * 2;
+        const height = graphCanvas.height - padding * 2;
+        const centerX = graphCanvas.width / 2;
+        const centerY = graphCanvas.height / 2;
+        
+        if (graphNodes.length === 1) {
+          // Single node - center it
+          graphNodes[0].x = centerX;
+          graphNodes[0].y = centerY;
+          return;
+        }
+        
+        // Calculate ideal radius based on number of nodes
+        const nodeCount = graphNodes.length;
+        const circumference = nodeCount * 80; // 80px spacing between nodes
+        const radius = Math.min(
+          circumference / (2 * Math.PI),
+          Math.min(width, height) / 2 - 50
+        );
+        
+        // Place current note in center
+        const currentNode = graphNodes.find(n => n.isCurrent);
+        if (currentNode) {
+          currentNode.x = centerX;
+          currentNode.y = centerY;
+        }
+        
+        // Place other nodes in circle around current
+        const otherNodes = graphNodes.filter(n => !n.isCurrent);
+        otherNodes.forEach((node, i) => {
+          const angle = (i / otherNodes.length) * Math.PI * 2 - Math.PI / 2;
+          node.x = centerX + Math.cos(angle) * radius;
+          node.y = centerY + Math.sin(angle) * radius;
+        });
+        
+        // Apply force simulation to improve layout
+        for (let iteration = 0; iteration < 50; iteration++) {
+          // Repulsion between nodes
+          for (let i = 0; i < graphNodes.length; i++) {
+            for (let j = i + 1; j < graphNodes.length; j++) {
+              const node1 = graphNodes[i];
+              const node2 = graphNodes[j];
+              
+              if (node1.isCurrent || node2.isCurrent) continue; // Don't move center node
+              
+              const dx = node2.x - node1.x;
+              const dy = node2.y - node1.y;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+              
+              if (distance < 100 && distance > 0) {
+                const force = (100 - distance) / distance * 0.5;
+                const fx = dx * force;
+                const fy = dy * force;
+                
+                node1.x -= fx;
+                node1.y -= fy;
+                node2.x += fx;
+                node2.y += fy;
+              }
+            }
+          }
+          
+          // Keep nodes within bounds
+          graphNodes.forEach(node => {
+            if (node.isCurrent) return; // Don't constrain center node
+            
+            node.x = Math.max(padding + 30, Math.min(graphCanvas.width - padding - 30, node.x));
+            node.y = Math.max(padding + 30, Math.min(graphCanvas.height - padding - 30, node.y));
+          });
+        }
+      };
+
+      const drawGraph = () => {
+        if (!graphCtx || !graphCanvas) return;
+        
+        const isDark = state.theme === 'dark';
+        
+        // Clear canvas
+        graphCtx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+        
+        // Draw links
+        graphCtx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)';
+        graphCtx.lineWidth = 2;
+        
+        graphLinks.forEach(link => {
+          const sourceNode = graphNodes.find(n => n.id === link.source);
+          const targetNode = graphNodes.find(n => n.id === link.target);
+          
+          if (sourceNode && targetNode) {
+            graphCtx.beginPath();
+            graphCtx.moveTo(sourceNode.x, sourceNode.y);
+            graphCtx.lineTo(targetNode.x, targetNode.y);
+            graphCtx.stroke();
+          }
+        });
+        
+        // Draw nodes
+        graphNodes.forEach(node => {
+          // Node circle
+          graphCtx.beginPath();
+          graphCtx.arc(node.x, node.y, node.isCurrent ? 30 : 20, 0, Math.PI * 2);
+          
+          if (node.isCurrent) {
+            graphCtx.fillStyle = isDark ? '#ffffff' : '#000000';
+          } else {
+            graphCtx.fillStyle = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)';
+          }
+          graphCtx.fill();
+          
+          // Border
+          graphCtx.strokeStyle = isDark ? '#ffffff' : '#000000';
+          graphCtx.lineWidth = node.isCurrent ? 3 : 1;
+          graphCtx.stroke();
+          
+          // Label
+          graphCtx.fillStyle = isDark ? '#ffffff' : '#000000';
+          graphCtx.font = node.isCurrent ? 'bold 14px Inter' : '12px Inter';
+          graphCtx.textAlign = 'center';
+          graphCtx.textBaseline = 'middle';
+          
+          const label = node.title.length > 20 ? node.title.substring(0, 20) + '...' : node.title;
+          graphCtx.fillText(label, node.x, node.y + (node.isCurrent ? 45 : 35));
+        });
+      };
+
+      const handleGraphClick = (e) => {
+        const rect = graphCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Check if clicked on a node
+        for (const node of graphNodes) {
+          const dx = x - node.x;
+          const dy = y - node.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < (node.isCurrent ? 30 : 20)) {
+            // Navigate to note
+            document.getElementById('graph-modal').classList.add('hidden');
+            openEditor(node.id);
+            break;
+          }
+        }
+      };
+
+      document.getElementById('show-graph').onclick = showGraphView;
+      document.getElementById('close-graph').onclick = () => {
+        document.getElementById('graph-modal').classList.add('hidden');
+      };
 
       init();
     </script>
